@@ -202,7 +202,7 @@ public struct Card: BlockElement {
     }
     public func render(context: PublishingContext) -> String {
         Group {
-            if let image, contentPosition.addImageFirst {
+            if let image, !contentPosition.addImageFirst {
                 if imageOpacity != 1 {
                     image
                         .class(contentPosition.imageClass)
