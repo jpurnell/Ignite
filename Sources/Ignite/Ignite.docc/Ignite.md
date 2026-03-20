@@ -79,6 +79,7 @@ Ignite doesn't try to convert SwiftUI code to HTML, or simply map HTML tags to S
 - ``Row``
 - ``Script``
 - ``Section``
+- ``StructuredData``
 - ``Slide``
 - ``Spacer``
 - ``Span``
