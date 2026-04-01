@@ -66,10 +66,13 @@ public struct MarkdownToHTML: ArticleRenderer, MarkupVisitor {
     /// - Returns: A HTML <pre> element with <code> inside, marked with
     /// CSS to remember which language was used.
     public func visitCodeBlock(_ codeBlock: Markdown.CodeBlock) -> String {
+        // Replace newlines with <br> tags so SwiftSoup's prettifier
+        // doesn't strip them when normalizing whitespace inside <code> tags.
+        let preservedCode = codeBlock.code.replacingOccurrences(of: "\n", with: "<br>")
         if let language = codeBlock.language {
-            #"<pre><code class="language-\#(language.lowercased())">\#(codeBlock.code)</code></pre>"#
+            return #"<pre><code class="language-\#(language.lowercased())">\#(preservedCode)</code></pre>"#
         } else {
-            #"<pre><code>\#(codeBlock.code)</code></pre>"#
+            return #"<pre><code>\#(preservedCode)</code></pre>"#
         }
     }
 
