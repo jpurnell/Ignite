@@ -1,0 +1,26 @@
+# Quality Gate configuration for Ignite (fork of twostraws/Ignite)
+#
+# Sources/ is upstream code — exclude from safety auditing.
+# Only audit code added outside of the upstream source tree.
+
+excludePatterns:
+  - "Sources/**"
+  - "Tests/**"
+
+# Security rule tuning for web framework patterns
+security:
+  # Allowlist approach: only run rules relevant to a static site generator.
+  # Omits sql-injection (Process.execute triggers false positive) and
+  # ssrf (URL construction is core to a web framework).
+  enabledRules:
+    - "security.force-unwrap"
+    - "security.hardcoded-secret"
+    - "security.insecure-http"
+    - "security.path-traversal"
+    - "security.weak-crypto"
+    - "security.insecure-tls"
+  sqlFunctionNames: []
+  allowedHTTPHosts:
+    - "localhost"
+    - "127.0.0.1"
+    - "0.0.0.0"
