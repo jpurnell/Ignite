@@ -35,8 +35,7 @@ import Foundation
 ///     StructuredData(json: customJSONString)
 /// }
 /// ```
-@MainActor
-public struct StructuredData: HeadElement {
+public struct StructuredData: HeadElement, Sendable {
     /// The standard set of control attributes for HTML elements.
     public var attributes = CoreAttributes()
 
@@ -44,12 +43,12 @@ public struct StructuredData: HeadElement {
     public var isPrimitive: Bool { true }
 
     /// How the JSON-LD content is specified.
-    private enum Content {
+    private enum Content: Sendable {
         /// A pre-built JSON string, rendered as-is.
         case raw(String)
 
-        /// A schema type and properties, serialized at render time.
-        case schema(context: String, type: String, properties: [String: Any])
+        /// A schema type and properties, pre-serialized to JSON at init time.
+        case schema(String)
 
         /// Auto-generated Article schema from the current article context.
         case article(publisher: String?, publisherURL: String?)
@@ -74,7 +73,10 @@ public struct StructuredData: HeadElement {
         context: String = "https://schema.org",
         properties: [String: Any] = [:]
     ) {
-        self.content = .schema(context: context, type: type, properties: properties)
+        var json = properties
+        json["@context"] = context
+        json["@type"] = type
+        self.content = .schema(Self.toJSON(json) ?? "")
     }
 
     /// Creates structured data from a raw JSON-LD string.
@@ -99,8 +101,8 @@ public struct StructuredData: HeadElement {
         let json: String? = switch content {
         case .raw(let string):
             string
-        case .schema(let context, let type, let properties):
-            Self.renderSchema(context: context, type: type, properties: properties)
+        case .schema(let serialized):
+            serialized.isEmpty ? nil : serialized
         case .article(let publisher, let publisherURL):
             Self.renderArticle(publisher: publisher, publisherURL: publisherURL)
         case .breadcrumbs(let homeName):
@@ -109,22 +111,6 @@ public struct StructuredData: HeadElement {
 
         guard let json, !json.isEmpty else { return Markup() }
         return Markup("<script type=\"application/ld+json\">\n\(json)\n</script>")
-    }
-}
-
-// MARK: - Schema Rendering
-
-extension StructuredData {
-    /// Builds a JSON-LD string from context, type, and properties.
-    private static func renderSchema(
-        context: String,
-        type: String,
-        properties: [String: Any]
-    ) -> String? {
-        var json = properties
-        json["@context"] = context
-        json["@type"] = type
-        return toJSON(json)
     }
 }
 

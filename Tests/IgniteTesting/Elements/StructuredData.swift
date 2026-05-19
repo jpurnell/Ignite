@@ -13,7 +13,6 @@ import Testing
 /// Tests for the `StructuredData` element.
 @Suite("StructuredData Tests")
 @MainActor class StructuredDataTests: IgniteTestSuite {
-    static let sites: [any Site] = [TestSite(), TestSubsite()]
 
     // MARK: - Helpers
 
@@ -72,10 +71,8 @@ import Testing
 
     // MARK: - Generic Initializer Tests
 
-    @Test("Generic schema renders JSON-LD script tag", arguments: await Self.sites)
-    func genericSchema(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Generic schema renders JSON-LD script tag", .publishingContext())
+    func genericSchema() async throws {
         let element = StructuredData("LocalBusiness", properties: [
             "name": "Joe's Pizza",
             "telephone": "555-0123"
@@ -90,10 +87,8 @@ import Testing
         #expect(output.contains("\"telephone\" : \"555-0123\""))
     }
 
-    @Test("Raw JSON renders as-is", arguments: await Self.sites)
-    func rawJSON(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Raw JSON renders as-is", .publishingContext())
+    func rawJSON() async throws {
         let json = """
         {"@context":"https://schema.org","@type":"Thing","name":"Test"}
         """
@@ -105,10 +100,8 @@ import Testing
         #expect(output.contains("</script>"))
     }
 
-    @Test("Custom context overrides default", arguments: await Self.sites)
-    func customContext(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Custom context overrides default", .publishingContext())
+    func customContext() async throws {
         let element = StructuredData(
             "Dataset",
             context: "https://example.org/custom",
@@ -120,10 +113,8 @@ import Testing
         #expect(output.contains("\"@type\" : \"Dataset\""))
     }
 
-    @Test("Empty properties still renders valid JSON-LD", arguments: await Self.sites)
-    func emptyProperties(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Empty properties still renders valid JSON-LD", .publishingContext())
+    func emptyProperties() async throws {
         let element = StructuredData("Thing")
         let output = element.markupString()
 
@@ -131,10 +122,8 @@ import Testing
         #expect(output.contains("\"@type\" : \"Thing\""))
     }
 
-    @Test("Nested dictionary properties render correctly", arguments: await Self.sites)
-    func nestedProperties(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Nested dictionary properties render correctly", .publishingContext())
+    func nestedProperties() async throws {
         let element = StructuredData("Product", properties: [
             "name": "Widget",
             "offers": [
@@ -151,10 +140,8 @@ import Testing
         #expect(output.contains("\"priceCurrency\" : \"USD\""))
     }
 
-    @Test("Array properties render correctly", arguments: await Self.sites)
-    func arrayProperties(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Array properties render correctly", .publishingContext())
+    func arrayProperties() async throws {
         let element = StructuredData("Organization", properties: [
             "name": "Test Org",
             "sameAs": ["https://twitter.com/test", "https://facebook.com/test"]
@@ -167,10 +154,8 @@ import Testing
 
     // MARK: - Organization Tests
 
-    @Test("Organization with all fields", arguments: await Self.sites)
-    func organizationFull(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Organization with all fields", .publishingContext())
+    func organizationFull() async throws {
         let element = StructuredData.organization(
             name: "Acme Corp",
             url: "https://acme.com",
@@ -192,10 +177,8 @@ import Testing
         #expect(output.contains("\"url\" : \"https://parent.com\""))
     }
 
-    @Test("Organization without optional fields", arguments: await Self.sites)
-    func organizationMinimal(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Organization without optional fields", .publishingContext())
+    func organizationMinimal() async throws {
         let element = StructuredData.organization(
             name: "Simple Org",
             url: "https://simple.org"
@@ -210,10 +193,8 @@ import Testing
         #expect(!output.contains("\"parentOrganization\""))
     }
 
-    @Test("Organization with custom parent type", arguments: await Self.sites)
-    func organizationCustomParentType(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Organization with custom parent type", .publishingContext())
+    func organizationCustomParentType() async throws {
         let element = StructuredData.organization(
             name: "CS Department",
             url: "https://cs.example.edu",
@@ -228,10 +209,8 @@ import Testing
 
     // MARK: - WebSite Tests
 
-    @Test("WebSite with all fields", arguments: await Self.sites)
-    func webSiteFull(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("WebSite with all fields", .publishingContext())
+    func webSiteFull() async throws {
         let element = StructuredData.webSite(
             name: "My Site",
             url: "https://example.com",
@@ -245,10 +224,8 @@ import Testing
         #expect(output.contains("\"description\" : \"A test site\""))
     }
 
-    @Test("WebSite without description", arguments: await Self.sites)
-    func webSiteMinimal(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("WebSite without description", .publishingContext())
+    func webSiteMinimal() async throws {
         let element = StructuredData.webSite(
             name: "Minimal Site",
             url: "https://minimal.com"
@@ -262,10 +239,8 @@ import Testing
 
     // MARK: - Event Tests
 
-    @Test("Event with all fields", arguments: await Self.sites)
-    func eventFull(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Event with all fields", .publishingContext())
+    func eventFull() async throws {
         let element = StructuredData.event(
             name: "Annual Conference",
             startDate: "2026-06-01",
@@ -293,10 +268,8 @@ import Testing
         #expect(output.contains("\"url\" : \"https://org.com\""))
     }
 
-    @Test("Event without organizer", arguments: await Self.sites)
-    func eventWithoutOrganizer(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Event without organizer", .publishingContext())
+    func eventWithoutOrganizer() async throws {
         let element = StructuredData.event(
             name: "Simple Event",
             startDate: "2026-01-01",
@@ -312,10 +285,8 @@ import Testing
         #expect(!output.contains("\"organizer\""))
     }
 
-    @Test("Event with custom status and attendance mode", arguments: await Self.sites)
-    func eventCustomStatus(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Event with custom status and attendance mode", .publishingContext())
+    func eventCustomStatus() async throws {
         let element = StructuredData.event(
             name: "Virtual Meetup",
             startDate: "2026-03-01",
@@ -333,10 +304,8 @@ import Testing
         #expect(output.contains("\"https://schema.org/OnlineEventAttendanceMode\""))
     }
 
-    @Test("Event with non-US country", arguments: await Self.sites)
-    func eventNonUSCountry(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Event with non-US country", .publishingContext())
+    func eventNonUSCountry() async throws {
         let element = StructuredData.event(
             name: "London Summit",
             startDate: "2026-09-15",
@@ -355,10 +324,8 @@ import Testing
 
     // MARK: - BreadcrumbList Tests
 
-    @Test("Breadcrumbs renders BreadcrumbList schema", arguments: await Self.sites)
-    func breadcrumbs(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Breadcrumbs renders BreadcrumbList schema", .publishingContext())
+    func breadcrumbs() async throws {
         let element = StructuredData.breadcrumbs()
         let output = element.markupString()
 
@@ -369,20 +336,16 @@ import Testing
         #expect(output.contains("\"name\" : \"Home\""))
     }
 
-    @Test("Breadcrumbs uses custom home name", arguments: await Self.sites)
-    func breadcrumbsCustomName(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Breadcrumbs uses custom home name", .publishingContext())
+    func breadcrumbsCustomName() async throws {
         let element = StructuredData.breadcrumbs(homeName: "Start")
         let output = element.markupString()
 
         #expect(output.contains("\"name\" : \"Start\""))
     }
 
-    @Test("Breadcrumbs emits nothing on homepage", arguments: await Self.sites)
-    func breadcrumbsHomepage(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Breadcrumbs emits nothing on homepage", .publishingContext())
+    func breadcrumbsHomepage() async throws {
         let output = withPageContext(
             pageURL: URL(string: "https://www.example.com/")!
         ) {
@@ -392,10 +355,8 @@ import Testing
         #expect(output.isEmpty)
     }
 
-    @Test("Breadcrumbs includes page title and URL", arguments: await Self.sites)
-    func breadcrumbsPageInfo(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Breadcrumbs includes page title and URL", .publishingContext())
+    func breadcrumbsPageInfo() async throws {
         let output = withPageContext(
             pageURL: URL(string: "https://www.example.com/about/")!,
             pageTitle: "About Us"
@@ -409,10 +370,8 @@ import Testing
 
     // MARK: - Article Tests
 
-    @Test("Article emits nothing on non-article pages", arguments: await Self.sites)
-    func articleNonArticlePage(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Article emits nothing on non-article pages", .publishingContext())
+    func articleNonArticlePage() async throws {
         let element = StructuredData.article(
             publisher: "Test Publisher",
             publisherURL: "https://publisher.com"
@@ -422,10 +381,8 @@ import Testing
         #expect(output.isEmpty)
     }
 
-    @Test("Article renders headline and date", arguments: await Self.sites)
-    func articleBasic(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Article renders headline and date", .publishingContext())
+    func articleBasic() async throws {
         let testDate = Date(timeIntervalSince1970: 1_700_000_000) // 2023-11-14
         let article = makeArticle(
             title: "Test Article Title",
@@ -442,10 +399,8 @@ import Testing
         #expect(output.contains("\"url\" : \"https://www.example.com/test-article\""))
     }
 
-    @Test("Article includes description when present", arguments: await Self.sites)
-    func articleWithDescription(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Article includes description when present", .publishingContext())
+    func articleWithDescription() async throws {
         let article = makeArticle(
             title: "Described Article",
             description: "A thorough summary of this article."
@@ -458,10 +413,8 @@ import Testing
         #expect(output.contains("\"description\" : \"A thorough summary of this article.\""))
     }
 
-    @Test("Article omits description when empty", arguments: await Self.sites)
-    func articleWithoutDescription(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Article omits description when empty", .publishingContext())
+    func articleWithoutDescription() async throws {
         let article = makeArticle(title: "No Description")
 
         let output = withArticleContext(article: article) {
@@ -471,10 +424,8 @@ import Testing
         #expect(!output.contains("\"description\""))
     }
 
-    @Test("Article includes author from metadata", arguments: await Self.sites)
-    func articleWithAuthor(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Article includes author from metadata", .publishingContext())
+    func articleWithAuthor() async throws {
         let article = makeArticle(
             title: "Authored Article",
             metadata: ["author": "Jane Doe"]
@@ -488,10 +439,8 @@ import Testing
         #expect(output.contains("\"name\" : \"Jane Doe\""))
     }
 
-    @Test("Article includes image with relative path", arguments: await Self.sites)
-    func articleWithRelativeImage(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Article includes image with relative path", .publishingContext())
+    func articleWithRelativeImage() async throws {
         let article = makeArticle(
             title: "Image Article",
             metadata: ["image": "/images/hero.jpg"]
@@ -501,15 +450,12 @@ import Testing
             StructuredData.article().markupString()
         }
 
-        // Relative image paths should be prefixed with the site base URL
         #expect(output.contains("\"image\""))
         #expect(output.contains("/images/hero.jpg"))
     }
 
-    @Test("Article includes image with absolute URL", arguments: await Self.sites)
-    func articleWithAbsoluteImage(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Article includes image with absolute URL", .publishingContext())
+    func articleWithAbsoluteImage() async throws {
         let article = makeArticle(
             title: "External Image Article",
             metadata: ["image": "https://cdn.example.com/photo.jpg"]
@@ -522,10 +468,8 @@ import Testing
         #expect(output.contains("\"image\" : \"https://cdn.example.com/photo.jpg\""))
     }
 
-    @Test("Article includes publisher", arguments: await Self.sites)
-    func articleWithPublisher(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Article includes publisher", .publishingContext())
+    func articleWithPublisher() async throws {
         let article = makeArticle(title: "Published Article")
 
         let output = withArticleContext(article: article) {
@@ -540,10 +484,8 @@ import Testing
         #expect(output.contains("\"url\" : \"https://news.com\""))
     }
 
-    @Test("Article includes publisher name without URL", arguments: await Self.sites)
-    func articleWithPublisherNoURL(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Article includes publisher name without URL", .publishingContext())
+    func articleWithPublisherNoURL() async throws {
         let article = makeArticle(title: "Published Article")
 
         let output = withArticleContext(article: article) {
@@ -551,15 +493,12 @@ import Testing
         }
 
         #expect(output.contains("\"name\" : \"Simple Publisher\""))
-        // Publisher object should not contain a url key
         let publisherRange = output.range(of: "\"publisher\"")
         #expect(publisherRange != nil)
     }
 
-    @Test("Article omits publisher when not provided", arguments: await Self.sites)
-    func articleWithoutPublisher(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Article omits publisher when not provided", .publishingContext())
+    func articleWithoutPublisher() async throws {
         let article = makeArticle(title: "Unpublished Article")
 
         let output = withArticleContext(article: article) {
@@ -569,10 +508,8 @@ import Testing
         #expect(!output.contains("\"publisher\""))
     }
 
-    @Test("Article includes dateModified when different from date", arguments: await Self.sites)
-    func articleWithModifiedDate(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Article includes dateModified when different from date", .publishingContext())
+    func articleWithModifiedDate() async throws {
         let publishDate = Date(timeIntervalSince1970: 1_700_000_000)
         let modifiedDate = Date(timeIntervalSince1970: 1_710_000_000)
         let article = makeArticle(
@@ -591,10 +528,8 @@ import Testing
         #expect(output.contains("\"dateModified\""))
     }
 
-    @Test("Article omits dateModified when same as date", arguments: await Self.sites)
-    func articleWithoutModifiedDate(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Article omits dateModified when same as date", .publishingContext())
+    func articleWithoutModifiedDate() async throws {
         let publishDate = Date(timeIntervalSince1970: 1_700_000_000)
         let article = makeArticle(
             title: "Unmodified Article",
@@ -612,10 +547,8 @@ import Testing
         #expect(!output.contains("\"dateModified\""))
     }
 
-    @Test("Article with all fields populated", arguments: await Self.sites)
-    func articleFullyPopulated(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Article with all fields populated", .publishingContext())
+    func articleFullyPopulated() async throws {
         let publishDate = Date(timeIntervalSince1970: 1_700_000_000)
         let modifiedDate = Date(timeIntervalSince1970: 1_710_000_000)
         let article = makeArticle(
@@ -649,27 +582,22 @@ import Testing
 
     // MARK: - Edge Case Tests
 
-    @Test("Properties with special characters are JSON-escaped", arguments: await Self.sites)
-    func specialCharacters(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Properties with special characters are JSON-escaped", .publishingContext())
+    func specialCharacters() async throws {
         let element = StructuredData("Thing", properties: [
             "name": "Joe's \"Best\" Pizza & Subs",
             "description": "Line one\nLine two"
         ])
         let output = element.markupString()
 
-        // JSONSerialization handles escaping — output must still be valid script
         #expect(output.contains("<script type=\"application/ld+json\">"))
         #expect(output.contains("</script>"))
         #expect(output.contains("Joe's"))
         #expect(output.contains("Pizza & Subs"))
     }
 
-    @Test("Properties with unicode characters", arguments: await Self.sites)
-    func unicodeProperties(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Properties with unicode characters", .publishingContext())
+    func unicodeProperties() async throws {
         let element = StructuredData("Organization", properties: [
             "name": "Caf\u{00E9} M\u{00FC}nchen \u{1F37A}",
             "description": "\u{4E16}\u{754C}\u{4F60}\u{597D}"
@@ -681,20 +609,16 @@ import Testing
         #expect(output.contains("\u{4E16}\u{754C}\u{4F60}\u{597D}"))
     }
 
-    @Test("Empty raw JSON renders empty output", arguments: await Self.sites)
-    func emptyRawJSON(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Empty raw JSON renders empty output", .publishingContext())
+    func emptyRawJSON() async throws {
         let element = StructuredData(json: "")
         let output = element.markupString()
 
         #expect(output.isEmpty)
     }
 
-    @Test("Organization with empty sameAs array omits field", arguments: await Self.sites)
-    func organizationEmptySameAs(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Organization with empty sameAs array omits field", .publishingContext())
+    func organizationEmptySameAs() async throws {
         let element = StructuredData.organization(
             name: "Test Org",
             url: "https://test.org",
@@ -705,10 +629,8 @@ import Testing
         #expect(!output.contains("\"sameAs\""))
     }
 
-    @Test("Deeply nested schema properties render correctly", arguments: await Self.sites)
-    func deeplyNestedProperties(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Deeply nested schema properties render correctly", .publishingContext())
+    func deeplyNestedProperties() async throws {
         let element = StructuredData("Event", properties: [
             "name": "Nested Event",
             "location": [
@@ -734,10 +656,8 @@ import Testing
         #expect(output.contains("\"streetAddress\" : \"123 Main St\""))
     }
 
-    @Test("Article title with HTML entities", arguments: await Self.sites)
-    func articleTitleWithEntities(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Article title with HTML entities", .publishingContext())
+    func articleTitleWithEntities() async throws {
         let article = makeArticle(title: "Rock & Roll: A \"History\"")
 
         let output = withArticleContext(article: article) {
@@ -748,10 +668,8 @@ import Testing
         #expect(output.contains("\"@type\" : \"Article\""))
     }
 
-    @Test("Breadcrumbs with deeply nested page path", arguments: await Self.sites)
-    func breadcrumbsDeepPath(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Breadcrumbs with deeply nested page path", .publishingContext())
+    func breadcrumbsDeepPath() async throws {
         let output = withPageContext(
             pageURL: URL(string: "https://www.example.com/blog/2026/03/my-post/")!,
             pageTitle: "My Post"
@@ -766,40 +684,28 @@ import Testing
 
     // MARK: - Invalid Input Tests
 
-    @Test("Invalid JSON string produces empty output", arguments: await Self.sites)
-    func invalidRawJSON(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
-        // Raw JSON is passed through as-is (not validated), so even invalid
-        // JSON will be wrapped in a script tag. This tests that the element
-        // does not crash on malformed input.
+    @Test("Invalid JSON string produces empty output", .publishingContext())
+    func invalidRawJSON() async throws {
         let element = StructuredData(json: "{invalid json{{{")
         let output = element.markupString()
 
-        // Should still produce a script tag (raw content is not validated)
         #expect(output.contains("<script type=\"application/ld+json\">"))
         #expect(output.contains("{invalid json{{{"))
     }
 
-    @Test("Schema with empty type string still renders", arguments: await Self.sites)
-    func emptyTypeString(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Schema with empty type string still renders", .publishingContext())
+    func emptyTypeString() async throws {
         let element = StructuredData("", properties: ["name": "Test"])
         let output = element.markupString()
 
-        // Should render — the type is just empty, not invalid JSON
         #expect(output.contains("\"@type\" : \"\""))
         #expect(output.contains("\"name\" : \"Test\""))
     }
 
     // MARK: - Property-Based Tests
 
-    @Test("All non-empty outputs are wrapped in script tags",
-          arguments: await Self.sites)
-    func outputStructureInvariant(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("All non-empty outputs are wrapped in script tags", .publishingContext())
+    func outputStructureInvariant() async throws {
         let elements: [StructuredData] = [
             StructuredData("Thing"),
             StructuredData("Product", properties: ["name": "Widget"]),
@@ -821,11 +727,8 @@ import Testing
         }
     }
 
-    @Test("All schema outputs contain @context and @type",
-          arguments: await Self.sites)
-    func schemaContextAndTypeInvariant(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("All schema outputs contain @context and @type", .publishingContext())
+    func schemaContextAndTypeInvariant() async throws {
         let elements: [(String, StructuredData)] = [
             ("Thing", StructuredData("Thing")),
             ("Organization", .organization(name: "O", url: "https://o.com")),
@@ -846,10 +749,8 @@ import Testing
     }
 
     @Test("Article schema always includes headline, datePublished, and url",
-          arguments: await Self.sites)
-    func articleRequiredFieldsInvariant(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+          .publishingContext())
+    func articleRequiredFieldsInvariant() async throws {
         let testCases: [(String, [String: any Sendable])] = [
             ("Minimal Article", [:]),
             ("Article With Author", ["author": "Jane"]),
@@ -872,10 +773,8 @@ import Testing
         }
     }
 
-    @Test("Empty outputs are truly empty strings", arguments: await Self.sites)
-    func emptyOutputInvariant(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Empty outputs are truly empty strings", .publishingContext())
+    func emptyOutputInvariant() async throws {
         // Article with no title
         let emptyArticle = StructuredData.article()
         #expect(emptyArticle.markupString().isEmpty)
@@ -895,12 +794,9 @@ import Testing
 
     // MARK: - Stress Tests
 
-    @Test("Large property dictionary renders without error",
-          arguments: await Self.sites)
+    @Test("Large property dictionary renders without error", .publishingContext())
     @available(macOS 14.0, *)
-    func largePropertyDictionary(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    func largePropertyDictionary() async throws {
         var properties: [String: Any] = [:]
         for i in 0..<500 {
             properties["field_\(i)"] = "value_\(i)"
@@ -914,10 +810,8 @@ import Testing
         #expect(output.contains("\"field_499\" : \"value_499\""))
     }
 
-    @Test("Long string values render correctly", arguments: await Self.sites)
-    func longStringValues(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Long string values render correctly", .publishingContext())
+    func longStringValues() async throws {
         let longDescription = String(repeating: "word ", count: 2000).trimmingCharacters(in: .whitespaces)
         let element = StructuredData("Article", properties: [
             "name": "Test",
@@ -929,10 +823,8 @@ import Testing
         #expect(output.contains(longDescription))
     }
 
-    @Test("Multiple sameAs URLs render correctly", arguments: await Self.sites)
-    func manySameAsURLs(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
+    @Test("Multiple sameAs URLs render correctly", .publishingContext())
+    func manySameAsURLs() async throws {
         let urls = (0..<50).map { "https://platform\($0).example.com/profile" }
         let element = StructuredData.organization(
             name: "Well-Connected Org",
@@ -948,11 +840,8 @@ import Testing
 
     // MARK: - Documentation Example Verification
 
-    @Test("Documentation example: generic LocalBusiness", arguments: await Self.sites)
-    func docExampleGeneric(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
-        // From StructuredData.swift doc comment
+    @Test("Documentation example: generic LocalBusiness", .publishingContext())
+    func docExampleGeneric() async throws {
         let element = StructuredData("LocalBusiness", properties: [
             "name": "Joe's Pizza",
             "telephone": "555-0123"
@@ -963,28 +852,20 @@ import Testing
         #expect(output.contains("\"@type\" : \"LocalBusiness\""))
     }
 
-    @Test("Documentation example: convenience methods", arguments: await Self.sites)
-    func docExampleConvenience(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
-        // From StructuredData.swift doc comment
+    @Test("Documentation example: convenience methods", .publishingContext())
+    func docExampleConvenience() async throws {
         let org = StructuredData.organization(name: "Acme", url: "https://acme.com")
         #expect(!org.markupString().isEmpty)
 
         let crumbs = StructuredData.breadcrumbs()
-        // breadcrumbs output depends on page context, just verify no crash
         _ = crumbs.markupString()
 
         let article = StructuredData.article()
-        // article output depends on article context, just verify no crash
         _ = article.markupString()
     }
 
-    @Test("Documentation example: raw JSON", arguments: await Self.sites)
-    func docExampleRawJSON(for site: any Site) async throws {
-        try PublishingContext.initialize(for: site, from: #filePath)
-
-        // From StructuredData.swift doc comment
+    @Test("Documentation example: raw JSON", .publishingContext())
+    func docExampleRawJSON() async throws {
         let customJSONString = """
         {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[]}
         """
