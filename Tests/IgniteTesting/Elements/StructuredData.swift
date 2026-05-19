@@ -326,8 +326,12 @@ import Testing
 
     @Test("Breadcrumbs renders BreadcrumbList schema", .publishingContext())
     func breadcrumbs() async throws {
-        let element = StructuredData.breadcrumbs()
-        let output = element.markupString()
+        let output = withPageContext(
+            pageURL: URL(string: "https://www.example.com/about/")!,
+            pageTitle: "About"
+        ) {
+            StructuredData.breadcrumbs().markupString()
+        }
 
         #expect(output.contains("\"@type\" : \"BreadcrumbList\""))
         #expect(output.contains("\"@type\" : \"ListItem\""))
@@ -338,8 +342,12 @@ import Testing
 
     @Test("Breadcrumbs uses custom home name", .publishingContext())
     func breadcrumbsCustomName() async throws {
-        let element = StructuredData.breadcrumbs(homeName: "Start")
-        let output = element.markupString()
+        let output = withPageContext(
+            pageURL: URL(string: "https://www.example.com/about/")!,
+            pageTitle: "About"
+        ) {
+            StructuredData.breadcrumbs(homeName: "Start").markupString()
+        }
 
         #expect(output.contains("\"name\" : \"Start\""))
     }
