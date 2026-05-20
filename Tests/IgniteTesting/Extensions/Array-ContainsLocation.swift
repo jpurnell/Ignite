@@ -50,18 +50,15 @@ struct ArrayContainsLocationTests {
             ""
         ]
 
+        var rng = SeededRandomNumberGenerator(seed: 42)
+
         var randomLocations = [Location]()
-        let expectedNumberOfPaths = 5
+        let expectedNumberOfPaths = rng.nextInt(in: 1...testPaths.count)
 
-        let selectedPaths = [
-            testPaths[0], testPaths[2], testPaths[4],
-            testPaths[1], testPaths[6]
-        ]
-
-        for i in 0..<expectedNumberOfPaths {
+        for _ in 1...expectedNumberOfPaths {
             let location = Location(
-                path: selectedPaths[i],
-                priority: Double(i) * 0.2
+                path: rng.nextElement(from: testPaths),
+                priority: rng.nextDouble(in: 0...1)
             )
             randomLocations.append(location)
         }

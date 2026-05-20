@@ -185,16 +185,19 @@ struct ArraySortingTests {
     // Given
     struct MockHTML: HTML {
         var id: String
-        var isPrimitive: Bool = false
+        var isPrimitive: Bool
         var body: some HTML { self }
         func render() -> String { "<div id=\"\(id)\"></div>" }
     }
 
-    let mockHTMLElements = [
-        MockHTML(id: "a"),
-        MockHTML(id: "b"),
-        MockHTML(id: "c")
-    ]
+    let mockHTMLElements: [MockHTML] = {
+        var rng = SeededRandomNumberGenerator(seed: 99)
+        return [
+            MockHTML(id: "a", isPrimitive: rng.nextBool()),
+            MockHTML(id: "b", isPrimitive: rng.nextBool()),
+            MockHTML(id: "c", isPrimitive: rng.nextBool())
+        ]
+    }()
 
     @Test("Finding min element by id", .publishingContext())
     func minElementById() async throws {
