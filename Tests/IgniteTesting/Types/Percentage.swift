@@ -40,7 +40,7 @@ struct PercentageTests {
         (Percentage(16.335), Percentage(49), -32.665),
         (Percentage(77), Percentage(-23), 100.0)])
     func subtract(minuend: Percentage, subtrahend: Percentage, expected: Double) async throws {
-        #expect(minuend - subtrahend == expected)
+        #expect(abs((minuend - subtrahend) - expected) < 1e-6)
     }
 
     @Test("Adding percentages", .publishingContext(), arguments: [

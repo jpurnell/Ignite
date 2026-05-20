@@ -21,10 +21,10 @@ class HTMLDocumentTests: IgniteTestSuite {
     }
 
     @Test("Contains html tag", .publishingContext())
-    func containsHTMLTag() {
+    func containsHTMLTag() throws {
         let sut = PlainDocument(head: Head(), body: Body())
         let output = sut.markupString()
-        #expect(nil != output.htmlTagWithCloseTag("html"))
+        _ = try #require(output.htmlTagWithCloseTag("html"))
     }
 
     @Test("lang attribute defaults to en", .publishingContext())

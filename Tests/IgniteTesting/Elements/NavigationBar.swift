@@ -17,7 +17,7 @@ class NavigationBarTests: IgniteTestSuite {
         let element = NavigationBar()
         let output = element.markupString()
 
-        #expect(output.htmlTagWithCloseTag("header") != nil)
+        _ = try #require(output.htmlTagWithCloseTag("header"))
     }
 
     @Test("Has Nav Tag Inside Header", .publishingContext())
@@ -28,7 +28,7 @@ class NavigationBarTests: IgniteTestSuite {
         let header = try #require(output
             .htmlTagWithCloseTag("header"))
 
-        #expect(header.contents.htmlTagWithCloseTag("nav") != nil)
+        _ = try #require(header.contents.htmlTagWithCloseTag("nav"))
     }
 
     @Test("Nav Tag Class Is navbar and navbar-expand-md", .publishingContext())
@@ -104,7 +104,7 @@ class NavigationBarTests: IgniteTestSuite {
             .htmlTagWithCloseTag("nav")?.contents
         )
 
-        #expect(navContents.htmlTagWithCloseTag("div") != nil)
+        _ = try #require(navContents.htmlTagWithCloseTag("div"))
     }
 
     @Test("Div Tag Class contains column count if given column width", .publishingContext(), arguments: [0, 3, 7])
@@ -174,7 +174,7 @@ class NavigationBarTests: IgniteTestSuite {
         )
 
         let expected = try Regex(logoImage.markupString())
-        #expect(divContents.firstMatch(of: expected) != nil)
+        _ = try #require(divContents.firstMatch(of: expected))
     }
 
     @Test("Div contains render toggle button if items is not empty", .publishingContext())
@@ -210,7 +210,7 @@ class NavigationBarTests: IgniteTestSuite {
             .htmlTagWithCloseTag("header")?.contents
             .htmlTagWithCloseTag("nav")?.contents)
 
-        #expect(divContents.htmlTagWithCloseTag("ul") != nil)
+        _ = try #require(divContents.htmlTagWithCloseTag("ul"))
     }
 
     @Test("Unordered List contains trailing alignment if set", .publishingContext())

@@ -103,7 +103,8 @@ struct JSONFeedGeneratorTests {
 
         let items = try #require(json["items"] as? [[String: Any]])
         let item = items[0]
-        #expect(item["content_html"] as? String != nil)
+        let contentHtml = try #require(item["content_html"] as? String)
+        #expect(!contentHtml.isEmpty)
         #expect(item["summary"] as? String == "Example Description")
     }
 

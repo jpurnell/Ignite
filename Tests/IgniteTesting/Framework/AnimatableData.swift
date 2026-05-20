@@ -58,7 +58,7 @@ struct AnimatableDataTests {
     @Test("Default duration is 0.35", .publishingContext())
     func defaultDuration() async throws {
         let data = AnimatableData(.opacity, value: "0")
-        #expect(data.duration == 0.35)
+        #expect(abs(data.duration - 0.35) < 1e-6)
     }
 
     @Test("Default delay is 0", .publishingContext())

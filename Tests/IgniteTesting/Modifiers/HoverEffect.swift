@@ -59,14 +59,9 @@ class HoverEffectTests: IgniteTestSuite {
 
         let output = element.markupString()
 
-        let colorIndex = output.range(of: "this.style.color = 'white'")?.lowerBound
-        let backgroundIndex = output.range(of: "this.style.backgroundColor = 'black'")?.lowerBound
+        let colorRange = try #require(output.range(of: "this.style.color = 'white'"))
+        let backgroundRange = try #require(output.range(of: "this.style.backgroundColor = 'black'"))
 
-        #expect(colorIndex != nil)
-        #expect(backgroundIndex != nil)
-
-        if let colorIndex, let backgroundIndex {
-            #expect(colorIndex < backgroundIndex)
-        }
+        #expect(colorRange.lowerBound < backgroundRange.lowerBound)
     }
 }

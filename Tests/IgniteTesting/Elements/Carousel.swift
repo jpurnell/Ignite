@@ -20,9 +20,8 @@ class CarouselTests: IgniteTestSuite {
         }
 
         let output = element.markupString()
-        let carouselID = firstCarouselID(in: output)
+        let carouselID = try #require(firstCarouselID(in: output))
 
-        #expect(carouselID != nil)
         #expect(output.contains(#"class="carousel-indicators""#))
         #expect(output.contains(#"data-bs-slide-to="0""#))
         #expect(output.contains(#"data-bs-slide-to="1""#))
@@ -31,7 +30,7 @@ class CarouselTests: IgniteTestSuite {
         #expect(output.contains(#"data-bs-slide="prev""#))
         #expect(output.contains(#"data-bs-slide="next""#))
 
-        if let carouselID {
+        do {
             let target = "data-bs-target=\"#\(carouselID)\""
             #expect(countOccurrences(of: target, in: output) == 4)
         }

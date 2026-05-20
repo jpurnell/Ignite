@@ -22,9 +22,8 @@ struct URLUnwrappedTests {
     func createsURLFromValidStaticString(urlString: String) async throws {
         // We can't pass StaticString as a test argument, so we verify
         // the underlying URL(string:) behavior that the static init uses.
-        let url = URL(string: urlString)
-        #expect(url != nil)
-        #expect(url?.absoluteString == urlString)
+        let url = try #require(URL(string: urlString))
+        #expect(url.absoluteString == urlString)
     }
 
     @Test("Valid static strings produce correct URLs", .publishingContext())

@@ -50,14 +50,18 @@ struct ArrayContainsLocationTests {
             ""
         ]
 
-        // can use a set if Location: Hashable
         var randomLocations = [Location]()
-        let expectedNumberOfPaths = Int.random(in: 1...testPaths.count)
+        let expectedNumberOfPaths = 5
 
-        for _ in 1...expectedNumberOfPaths {
+        let selectedPaths = [
+            testPaths[0], testPaths[2], testPaths[4],
+            testPaths[1], testPaths[6]
+        ]
+
+        for i in 0..<expectedNumberOfPaths {
             let location = Location(
-                path: testPaths.randomElement()!,
-                priority: Double.random(in: 0...1)
+                path: selectedPaths[i],
+                priority: Double(i) * 0.2
             )
             randomLocations.append(location)
         }

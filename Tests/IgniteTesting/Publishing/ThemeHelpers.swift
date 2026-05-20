@@ -103,11 +103,9 @@ class ThemeHelpersTests: IgniteTestSuite {
         let lightStyles = publishingContext.themeStyles(for: DefaultLightTheme())
         let darkStyles = publishingContext.themeStyles(for: DefaultDarkTheme())
 
-        let lightBodyColor = lightStyles.first { $0.property == "--bs-body-color" }?.value
-        let darkBodyColor = darkStyles.first { $0.property == "--bs-body-color" }?.value
+        let lightBodyColor = try #require(lightStyles.first { $0.property == "--bs-body-color" }?.value)
+        let darkBodyColor = try #require(darkStyles.first { $0.property == "--bs-body-color" }?.value)
 
-        #expect(lightBodyColor != nil)
-        #expect(darkBodyColor != nil)
         #expect(lightBodyColor != darkBodyColor)
     }
 

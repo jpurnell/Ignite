@@ -27,7 +27,7 @@ struct AnimationTests {
     func withAppliesDuration() async throws {
         var animation = Animation()
         animation.with([.duration(2.0)])
-        #expect(animation.duration == 2.0)
+        #expect(abs(animation.duration - 2.0) < 1e-6)
     }
 
     @Test("with() uses last-wins for duplicate option types", .publishingContext())
@@ -41,20 +41,20 @@ struct AnimationTests {
     func speedHalvesDuration() async throws {
         var animation = Animation()
         animation.with([.speed(2)])
-        #expect(animation.duration == 0.5)
+        #expect(abs(animation.duration - 0.5) < 1e-6)
     }
 
     @Test("bounce preset has correct duration and frame count", .publishingContext())
     func bouncePreset() async throws {
         let animation = Animation.bounce
-        #expect(animation.duration == 0.5)
+        #expect(abs(animation.duration - 0.5) < 1e-6)
         #expect(animation.frames.count == 3)
     }
 
     @Test("wiggle preset has correct duration, repeatCount, and frame count", .publishingContext())
     func wigglePreset() async throws {
         let animation = Animation.wiggle
-        #expect(animation.duration == 0.5)
+        #expect(abs(animation.duration - 0.5) < 1e-6)
         #expect(animation.repeatCount == 3)
         #expect(animation.frames.count == 5)
     }

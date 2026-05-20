@@ -31,7 +31,7 @@ class AccordionTests: IgniteTestSuite {
         )
 
         let expected = /accordion[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]/
-        #expect(idattribute.firstMatch(of: expected) != nil)
+        _ = try #require(idattribute.firstMatch(of: expected))
     }
 
     @Test("Outputs Items Provided", .publishingContext(), arguments: [Accordion.OpenMode.all, .individual])
