@@ -308,3 +308,35 @@ extension Article {
         self.hasAutomaticDate = false
     }
 }
+
+// MARK: - Draft and Scheduled Content
+
+extension Article {
+    /// Whether this article is marked as a draft in its YAML front matter.
+    /// Recognized values: `draft: true`, `draft: yes`, `draft: 1`.
+    public var isDraft: Bool {
+        guard let value = metadata["draft"] as? String else { return false }
+        return ["true", "yes", "1"].contains(value.lowercased())
+    }
+
+    /// The scheduled publication date, if set via `scheduled:` in YAML front matter.
+    public var scheduledDate: Date? {
+        guard let dateString = metadata["scheduled"] as? String else { return nil }
+        return process(date: dateString)
+    }
+
+    /// The expiration date, if set via `expires:` in YAML front matter.
+    public var expiresDate: Date? {
+        guard let dateString = metadata["expires"] as? String else { return nil }
+        return process(date: dateString)
+    }
+
+    /// The computed publication status of this article, evaluated against
+    /// the given effective date.
+    public func contentStatus(at effectiveDate: Date = .now) -> ContentStatus {
+        if isDraft { return .draft }
+        if let scheduled = scheduledDate, scheduled > effectiveDate { return .scheduled }
+        if let expires = expiresDate, expires <= effectiveDate { return .expired }
+        return .published
+    }
+}
