@@ -356,6 +356,260 @@ extension StructuredData {
     }
 }
 
+// MARK: - @graph Support
+
+extension StructuredData {
+    /// Creates a single JSON-LD `@graph` block from an array of node dictionaries.
+    ///
+    /// Each node should be a Schema.org typed dictionary (with `@type` and optionally `@id`).
+    /// The result is one `<script type="application/ld+json">` containing
+    /// `{"@context": "https://schema.org", "@graph": [...]}`.
+    ///
+    /// - Parameter nodes: An array of node dictionaries to include in the graph.
+    /// - Returns: A `StructuredData` element. Emits nothing if nodes is empty.
+    public static func graph(nodes: [[String: Any]]) -> StructuredData {
+        guard !nodes.isEmpty else { return StructuredData(json: "") }
+        let wrapper: [String: Any] = [
+            "@context": "https://schema.org",
+            "@graph": nodes
+        ]
+        return StructuredData(json: toJSON(wrapper) ?? "")
+    }
+}
+
+// MARK: - Node Builders
+
+extension StructuredData {
+    /// Builds a `Person` node dictionary for use in a `@graph`.
+    ///
+    /// - Parameters:
+    ///   - name: The person's name.
+    ///   - url: The person's URL.
+    ///   - sameAs: URLs for social profiles or external pages.
+    ///   - id: An optional `@id` for cross-referencing within a graph.
+    /// - Returns: A `[String: Any]` dictionary representing the Person node.
+    public static func personNode(
+        name: String,
+        url: String,
+        sameAs: [String] = [],
+        id: String? = nil
+    ) -> [String: Any] {
+        var node: [String: Any] = [
+            "@type": "Person",
+            "name": name,
+            "url": url
+        ]
+        if let id { node["@id"] = id }
+        if !sameAs.isEmpty { node["sameAs"] = sameAs }
+        return node
+    }
+
+    /// Builds a `WebSite` node dictionary for use in a `@graph`.
+    ///
+    /// - Parameters:
+    ///   - name: The website name.
+    ///   - url: The website URL.
+    ///   - description: A brief description of the website.
+    ///   - inLanguage: The BCP-47 language code (e.g., "en-US").
+    ///   - publisherId: An `@id` reference to the publisher node.
+    ///   - id: An optional `@id` for cross-referencing within a graph.
+    /// - Returns: A `[String: Any]` dictionary representing the WebSite node.
+    public static func webSiteNode(
+        name: String,
+        url: String,
+        description: String? = nil,
+        inLanguage: String? = nil,
+        publisherId: String? = nil,
+        id: String? = nil
+    ) -> [String: Any] {
+        var node: [String: Any] = [
+            "@type": "WebSite",
+            "name": name,
+            "url": url
+        ]
+        if let id { node["@id"] = id }
+        if let description { node["description"] = description }
+        if let inLanguage { node["inLanguage"] = inLanguage }
+        if let publisherId { node["publisher"] = ["@id": publisherId] }
+        return node
+    }
+
+    /// Builds a `WebPage` node dictionary for use in a `@graph`.
+    ///
+    /// - Parameters:
+    ///   - url: The page URL.
+    ///   - title: The page title.
+    ///   - description: A brief description of the page.
+    ///   - isPartOfId: An `@id` reference to the parent WebSite node.
+    ///   - breadcrumbId: An `@id` reference to the BreadcrumbList node.
+    ///   - id: An optional `@id` for cross-referencing within a graph.
+    /// - Returns: A `[String: Any]` dictionary representing the WebPage node.
+    public static func webPageNode(
+        url: String,
+        title: String,
+        description: String? = nil,
+        isPartOfId: String? = nil,
+        breadcrumbId: String? = nil,
+        id: String? = nil
+    ) -> [String: Any] {
+        var node: [String: Any] = [
+            "@type": "WebPage",
+            "name": title,
+            "url": url
+        ]
+        if let id { node["@id"] = id }
+        if let description { node["description"] = description }
+        if let isPartOfId { node["isPartOf"] = ["@id": isPartOfId] }
+        if let breadcrumbId { node["breadcrumb"] = ["@id": breadcrumbId] }
+        return node
+    }
+
+    /// Builds a `ProfilePage` node dictionary for use in a `@graph`.
+    ///
+    /// - Parameters:
+    ///   - url: The page URL.
+    ///   - title: The page title.
+    ///   - description: A brief description of the page.
+    ///   - mainEntityId: An `@id` reference to the main entity (typically a Person).
+    ///   - isPartOfId: An `@id` reference to the parent WebSite node.
+    ///   - id: An optional `@id` for cross-referencing within a graph.
+    /// - Returns: A `[String: Any]` dictionary representing the ProfilePage node.
+    public static func profilePageNode(
+        url: String,
+        title: String,
+        description: String? = nil,
+        mainEntityId: String? = nil,
+        isPartOfId: String? = nil,
+        id: String? = nil
+    ) -> [String: Any] {
+        var node: [String: Any] = [
+            "@type": "ProfilePage",
+            "name": title,
+            "url": url
+        ]
+        if let id { node["@id"] = id }
+        if let description { node["description"] = description }
+        if let mainEntityId { node["mainEntity"] = ["@id": mainEntityId] }
+        if let isPartOfId { node["isPartOf"] = ["@id": isPartOfId] }
+        return node
+    }
+
+    /// Builds a `CollectionPage` node dictionary for use in a `@graph`.
+    ///
+    /// - Parameters:
+    ///   - url: The page URL.
+    ///   - title: The page title.
+    ///   - description: A brief description of the page.
+    ///   - isPartOfId: An `@id` reference to the parent WebSite node.
+    ///   - mainEntityId: An `@id` reference to the main entity.
+    ///   - id: An optional `@id` for cross-referencing within a graph.
+    /// - Returns: A `[String: Any]` dictionary representing the CollectionPage node.
+    public static func collectionPageNode(
+        url: String,
+        title: String,
+        description: String? = nil,
+        isPartOfId: String? = nil,
+        mainEntityId: String? = nil,
+        id: String? = nil
+    ) -> [String: Any] {
+        var node: [String: Any] = [
+            "@type": "CollectionPage",
+            "name": title,
+            "url": url
+        ]
+        if let id { node["@id"] = id }
+        if let description { node["description"] = description }
+        if let isPartOfId { node["isPartOf"] = ["@id": isPartOfId] }
+        if let mainEntityId { node["mainEntity"] = ["@id": mainEntityId] }
+        return node
+    }
+
+    /// Builds an `Article` node dictionary for use in a `@graph`.
+    ///
+    /// Unlike the `article()` convenience method, this does not read from the
+    /// publishing environment — all values are passed explicitly, making it
+    /// composable into a `@graph`.
+    ///
+    /// - Parameters:
+    ///   - headline: The article headline.
+    ///   - url: The article URL.
+    ///   - datePublished: The ISO 8601 publication date string.
+    ///   - dateModified: An optional ISO 8601 modification date string.
+    ///   - description: A brief article description.
+    ///   - image: An image URL for the article.
+    ///   - authorId: An `@id` reference to the author node.
+    ///   - publisherId: An `@id` reference to the publisher node.
+    ///   - isPartOfId: An `@id` reference to the parent WebSite node.
+    ///   - id: An optional `@id` for cross-referencing within a graph.
+    /// - Returns: A `[String: Any]` dictionary representing the Article node.
+    public static func articleNode(
+        headline: String,
+        url: String,
+        datePublished: String,
+        dateModified: String? = nil,
+        description: String? = nil,
+        image: String? = nil,
+        authorId: String? = nil,
+        publisherId: String? = nil,
+        isPartOfId: String? = nil,
+        id: String? = nil
+    ) -> [String: Any] {
+        var node: [String: Any] = [
+            "@type": "Article",
+            "headline": headline,
+            "url": url,
+            "datePublished": datePublished
+        ]
+        if let id { node["@id"] = id }
+        if let dateModified { node["dateModified"] = dateModified }
+        if let description { node["description"] = description }
+        if let image { node["image"] = image }
+        if let authorId { node["author"] = ["@id": authorId] }
+        if let publisherId { node["publisher"] = ["@id": publisherId] }
+        if let isPartOfId { node["isPartOf"] = ["@id": isPartOfId] }
+        return node
+    }
+
+    /// Builds a `BreadcrumbList` node dictionary for use in a `@graph`.
+    ///
+    /// Creates a two-level breadcrumb: Home → Current Page.
+    ///
+    /// - Parameters:
+    ///   - siteURL: The site's root URL.
+    ///   - pageURL: The current page URL.
+    ///   - pageTitle: The current page title.
+    ///   - homeName: The label for the home breadcrumb. Defaults to "Home".
+    ///   - id: An optional `@id` for cross-referencing within a graph.
+    /// - Returns: A `[String: Any]` dictionary representing the BreadcrumbList node.
+    public static func breadcrumbListNode(
+        siteURL: String,
+        pageURL: String,
+        pageTitle: String,
+        homeName: String = "Home",
+        id: String? = nil
+    ) -> [String: Any] {
+        var node: [String: Any] = [
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                [
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": homeName,
+                    "item": siteURL
+                ] as [String: Any],
+                [
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": pageTitle,
+                    "item": pageURL
+                ] as [String: Any]
+            ]
+        ]
+        if let id { node["@id"] = id }
+        return node
+    }
+}
+
 // MARK: - JSON Helpers
 
 extension StructuredData {

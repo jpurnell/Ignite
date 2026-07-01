@@ -883,4 +883,357 @@ import Testing
         #expect(!output.isEmpty)
         #expect(output.contains("FAQPage"))
     }
+
+    // MARK: - @graph Tests
+
+    @Test("Graph wraps nodes in single @graph array", .publishingContext())
+    func graphWrapsNodes() async throws {
+        let nodes: [[String: Any]] = [
+            ["@type": "Person", "@id": "https://example.com/#person", "name": "Jane"],
+            ["@type": "WebSite", "@id": "https://example.com/#website", "name": "Jane's Site"]
+        ]
+        let element = StructuredData.graph(nodes: nodes)
+        let output = element.markupString()
+
+        #expect(output.contains("<script type=\"application/ld+json\">"))
+        #expect(output.contains("</script>"))
+        #expect(output.contains("\"@context\" : \"https://schema.org\""))
+        #expect(output.contains("\"@graph\""))
+        #expect(output.contains("\"@type\" : \"Person\""))
+        #expect(output.contains("\"@type\" : \"WebSite\""))
+        #expect(output.contains("\"@id\" : \"https://example.com/#person\""))
+    }
+
+    @Test("Graph produces exactly one script tag", .publishingContext())
+    func graphSingleScriptTag() async throws {
+        let nodes: [[String: Any]] = [
+            ["@type": "Person", "name": "A"],
+            ["@type": "WebSite", "name": "B"],
+            ["@type": "WebPage", "name": "C"]
+        ]
+        let element = StructuredData.graph(nodes: nodes)
+        let output = element.markupString()
+
+        let scriptCount = output.components(separatedBy: "<script").count - 1
+        #expect(scriptCount == 1)
+    }
+
+    @Test("Graph with empty nodes produces no output", .publishingContext())
+    func graphEmptyNodes() async throws {
+        let element = StructuredData.graph(nodes: [])
+        let output = element.markupString()
+
+        #expect(output.isEmpty)
+    }
+
+    @Test("Graph does not add @context to individual nodes", .publishingContext())
+    func graphNoPerNodeContext() async throws {
+        let nodes: [[String: Any]] = [
+            ["@type": "Person", "name": "Jane"]
+        ]
+        let element = StructuredData.graph(nodes: nodes)
+        let output = element.markupString()
+
+        let contextCount = output.components(separatedBy: "@context").count - 1
+        #expect(contextCount == 1)
+    }
+
+    // MARK: - Node Builder Tests
+
+    @Test("personNode builds Person with required fields", .publishingContext())
+    func personNodeBasic() async throws {
+        let node = StructuredData.personNode(
+            name: "Jane Doe",
+            url: "https://jane.example.com"
+        )
+
+        #expect(node["@type"] as? String == "Person")
+        #expect(node["name"] as? String == "Jane Doe")
+        #expect(node["url"] as? String == "https://jane.example.com")
+    }
+
+    @Test("personNode includes @id when provided", .publishingContext())
+    func personNodeWithId() async throws {
+        let node = StructuredData.personNode(
+            name: "Jane",
+            url: "https://jane.example.com",
+            id: "https://jane.example.com/#person"
+        )
+
+        #expect(node["@id"] as? String == "https://jane.example.com/#person")
+    }
+
+    @Test("personNode includes sameAs links", .publishingContext())
+    func personNodeWithSameAs() async throws {
+        let links = ["https://twitter.com/jane", "https://github.com/jane"]
+        let node = StructuredData.personNode(
+            name: "Jane",
+            url: "https://jane.example.com",
+            sameAs: links
+        )
+
+        let sameAs = try #require(node["sameAs"] as? [String])
+        #expect(sameAs.count == 2)
+        #expect(sameAs.contains("https://twitter.com/jane"))
+    }
+
+    @Test("personNode omits sameAs when empty", .publishingContext())
+    func personNodeNoSameAs() async throws {
+        let node = StructuredData.personNode(
+            name: "Jane",
+            url: "https://jane.example.com"
+        )
+
+        #expect(node["sameAs"] == nil)
+    }
+
+    @Test("webSiteNode builds WebSite with required fields", .publishingContext())
+    func webSiteNodeBasic() async throws {
+        let node = StructuredData.webSiteNode(
+            name: "My Site",
+            url: "https://example.com"
+        )
+
+        #expect(node["@type"] as? String == "WebSite")
+        #expect(node["name"] as? String == "My Site")
+        #expect(node["url"] as? String == "https://example.com")
+    }
+
+    @Test("webSiteNode includes optional fields", .publishingContext())
+    func webSiteNodeFull() async throws {
+        let node = StructuredData.webSiteNode(
+            name: "My Site",
+            url: "https://example.com",
+            description: "A great site",
+            inLanguage: "en-US",
+            publisherId: "https://example.com/#person",
+            id: "https://example.com/#website"
+        )
+
+        #expect(node["@id"] as? String == "https://example.com/#website")
+        #expect(node["description"] as? String == "A great site")
+        #expect(node["inLanguage"] as? String == "en-US")
+        let publisher = try #require(node["publisher"] as? [String: String])
+        #expect(publisher["@id"] == "https://example.com/#person")
+    }
+
+    @Test("webSiteNode omits nil optional fields", .publishingContext())
+    func webSiteNodeMinimal() async throws {
+        let node = StructuredData.webSiteNode(
+            name: "Site",
+            url: "https://example.com"
+        )
+
+        #expect(node["description"] == nil)
+        #expect(node["inLanguage"] == nil)
+        #expect(node["publisher"] == nil)
+        #expect(node["@id"] == nil)
+    }
+
+    @Test("webPageNode builds WebPage with required fields", .publishingContext())
+    func webPageNodeBasic() async throws {
+        let node = StructuredData.webPageNode(
+            url: "https://example.com/about",
+            title: "About"
+        )
+
+        #expect(node["@type"] as? String == "WebPage")
+        #expect(node["url"] as? String == "https://example.com/about")
+        #expect(node["name"] as? String == "About")
+    }
+
+    @Test("webPageNode includes cross-references", .publishingContext())
+    func webPageNodeCrossRefs() async throws {
+        let node = StructuredData.webPageNode(
+            url: "https://example.com/about",
+            title: "About",
+            description: "About page",
+            isPartOfId: "https://example.com/#website",
+            breadcrumbId: "https://example.com/about#breadcrumb",
+            id: "https://example.com/about#webpage"
+        )
+
+        #expect(node["@id"] as? String == "https://example.com/about#webpage")
+        #expect(node["description"] as? String == "About page")
+        let isPartOf = try #require(node["isPartOf"] as? [String: String])
+        #expect(isPartOf["@id"] == "https://example.com/#website")
+        let breadcrumb = try #require(node["breadcrumb"] as? [String: String])
+        #expect(breadcrumb["@id"] == "https://example.com/about#breadcrumb")
+    }
+
+    @Test("profilePageNode builds ProfilePage type", .publishingContext())
+    func profilePageNodeType() async throws {
+        let node = StructuredData.profilePageNode(
+            url: "https://example.com",
+            title: "Home"
+        )
+
+        #expect(node["@type"] as? String == "ProfilePage")
+        #expect(node["url"] as? String == "https://example.com")
+        #expect(node["name"] as? String == "Home")
+    }
+
+    @Test("profilePageNode includes mainEntity reference", .publishingContext())
+    func profilePageNodeMainEntity() async throws {
+        let node = StructuredData.profilePageNode(
+            url: "https://example.com",
+            title: "Home",
+            mainEntityId: "https://example.com/#person",
+            id: "https://example.com/#profilepage"
+        )
+
+        let mainEntity = try #require(node["mainEntity"] as? [String: String])
+        #expect(mainEntity["@id"] == "https://example.com/#person")
+        #expect(node["@id"] as? String == "https://example.com/#profilepage")
+    }
+
+    @Test("collectionPageNode builds CollectionPage type", .publishingContext())
+    func collectionPageNodeType() async throws {
+        let node = StructuredData.collectionPageNode(
+            url: "https://example.com/projects",
+            title: "Projects"
+        )
+
+        #expect(node["@type"] as? String == "CollectionPage")
+        #expect(node["name"] as? String == "Projects")
+    }
+
+    @Test("collectionPageNode includes cross-references", .publishingContext())
+    func collectionPageNodeCrossRefs() async throws {
+        let node = StructuredData.collectionPageNode(
+            url: "https://example.com/projects",
+            title: "Projects",
+            isPartOfId: "https://example.com/#website",
+            mainEntityId: "https://example.com/#person",
+            id: "https://example.com/projects#collectionpage"
+        )
+
+        let isPartOf = try #require(node["isPartOf"] as? [String: String])
+        #expect(isPartOf["@id"] == "https://example.com/#website")
+        let mainEntity = try #require(node["mainEntity"] as? [String: String])
+        #expect(mainEntity["@id"] == "https://example.com/#person")
+    }
+
+    @Test("articleNode builds Article with required fields", .publishingContext())
+    func articleNodeBasic() async throws {
+        let node = StructuredData.articleNode(
+            headline: "Test Post",
+            url: "https://example.com/blog/test",
+            datePublished: "2026-01-15T00:00:00Z"
+        )
+
+        #expect(node["@type"] as? String == "Article")
+        #expect(node["headline"] as? String == "Test Post")
+        #expect(node["url"] as? String == "https://example.com/blog/test")
+        #expect(node["datePublished"] as? String == "2026-01-15T00:00:00Z")
+    }
+
+    @Test("articleNode includes optional fields", .publishingContext())
+    func articleNodeFull() async throws {
+        let node = StructuredData.articleNode(
+            headline: "Test Post",
+            url: "https://example.com/blog/test",
+            datePublished: "2026-01-15T00:00:00Z",
+            dateModified: "2026-02-01T00:00:00Z",
+            description: "A test post",
+            image: "https://example.com/images/hero.jpg",
+            authorId: "https://example.com/#person",
+            publisherId: "https://example.com/#person",
+            isPartOfId: "https://example.com/#website",
+            id: "https://example.com/blog/test#article"
+        )
+
+        #expect(node["@id"] as? String == "https://example.com/blog/test#article")
+        #expect(node["dateModified"] as? String == "2026-02-01T00:00:00Z")
+        #expect(node["description"] as? String == "A test post")
+        #expect(node["image"] as? String == "https://example.com/images/hero.jpg")
+        let author = try #require(node["author"] as? [String: String])
+        #expect(author["@id"] == "https://example.com/#person")
+        let publisher = try #require(node["publisher"] as? [String: String])
+        #expect(publisher["@id"] == "https://example.com/#person")
+        let isPartOf = try #require(node["isPartOf"] as? [String: String])
+        #expect(isPartOf["@id"] == "https://example.com/#website")
+    }
+
+    @Test("articleNode omits nil optional fields", .publishingContext())
+    func articleNodeMinimal() async throws {
+        let node = StructuredData.articleNode(
+            headline: "Test",
+            url: "https://example.com/test",
+            datePublished: "2026-01-01T00:00:00Z"
+        )
+
+        #expect(node["dateModified"] == nil)
+        #expect(node["description"] == nil)
+        #expect(node["image"] == nil)
+        #expect(node["author"] == nil)
+        #expect(node["publisher"] == nil)
+        #expect(node["@id"] == nil)
+    }
+
+    @Test("breadcrumbListNode builds BreadcrumbList", .publishingContext())
+    func breadcrumbListNodeBasic() async throws {
+        let node = StructuredData.breadcrumbListNode(
+            siteURL: "https://example.com",
+            pageURL: "https://example.com/about",
+            pageTitle: "About"
+        )
+
+        #expect(node["@type"] as? String == "BreadcrumbList")
+        let items = try #require(node["itemListElement"] as? [[String: Any]])
+        #expect(items.count == 2)
+        #expect(items[0]["position"] as? Int == 1)
+        #expect(items[0]["name"] as? String == "Home")
+        #expect(items[1]["position"] as? Int == 2)
+        #expect(items[1]["name"] as? String == "About")
+    }
+
+    @Test("breadcrumbListNode includes @id when provided", .publishingContext())
+    func breadcrumbListNodeWithId() async throws {
+        let node = StructuredData.breadcrumbListNode(
+            siteURL: "https://example.com",
+            pageURL: "https://example.com/about",
+            pageTitle: "About",
+            homeName: "Start",
+            id: "https://example.com/about#breadcrumb"
+        )
+
+        #expect(node["@id"] as? String == "https://example.com/about#breadcrumb")
+        let items = try #require(node["itemListElement"] as? [[String: Any]])
+        #expect(items[0]["name"] as? String == "Start")
+    }
+
+    @Test("Graph composed from node builders renders valid JSON-LD", .publishingContext())
+    func graphFromNodeBuilders() async throws {
+        let person = StructuredData.personNode(
+            name: "Jane",
+            url: "https://example.com",
+            id: "https://example.com/#person"
+        )
+        let website = StructuredData.webSiteNode(
+            name: "Jane's Site",
+            url: "https://example.com",
+            publisherId: "https://example.com/#person",
+            id: "https://example.com/#website"
+        )
+        let page = StructuredData.profilePageNode(
+            url: "https://example.com",
+            title: "Home",
+            mainEntityId: "https://example.com/#person",
+            isPartOfId: "https://example.com/#website",
+            id: "https://example.com/#profilepage"
+        )
+
+        let element = StructuredData.graph(nodes: [person, website, page])
+        let output = element.markupString()
+
+        #expect(output.contains("\"@graph\""))
+        #expect(output.contains("\"@type\" : \"Person\""))
+        #expect(output.contains("\"@type\" : \"WebSite\""))
+        #expect(output.contains("\"@type\" : \"ProfilePage\""))
+        #expect(output.contains("\"@id\" : \"https://example.com/#person\""))
+
+        let scriptCount = output.components(separatedBy: "<script").count - 1
+        #expect(scriptCount == 1)
+    }
 }
