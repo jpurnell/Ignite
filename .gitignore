@@ -10,3 +10,8 @@ DerivedData/
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .netrc
 .docc-build/
+
+# Vendored development-guidelines framework (managed, replaceable)
+/development-guidelines/
+/.claude/skills/
+/development-guidelines.pre-v2/
