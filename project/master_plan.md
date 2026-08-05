@@ -1,117 +1,101 @@
-# [PROJECT NAME] Master Plan
+# Ignite Master Plan
 
-> **ACTION REQUIRED:** Replace all `[PLACEHOLDER]` sections below with your
-> project's actual content. This file is the source of truth for project vision,
-> architecture, and goals. Do not start implementation until it is filled in.
+**Purpose:** Source of truth for this fork's direction and constraints.
 
-**Purpose:** Source of truth for project vision, architecture, and goals.
+> **Provenance:** Written 2026-08-05 from README, `Package.swift`, and the source tree.
+> **This is a fork.** `upstream` is `twostraws/Ignite` with push disabled. This plan states
+> what diverges; it does not restate upstream's mission.
 
 ---
 
 ## Project Overview
 
 ### Mission
-[1-2 sentences: what this project does and why it exists.]
 
-### Target Users
-- [Who uses this? Be specific about roles and contexts.]
+A Swift static site generator. Upstream is a well-made, deliberately paced project that
+doubles as teaching material. This fork carries work that is useful to run in production
+now and is not upstream's priority to take.
 
-### Key Differentiators
-- [What makes this different from alternatives?]
+### Fork position
+
+As of 2026-08-05: **8 commits ahead, 1 behind**, merge base 2026-05-11, on
+`feature/structured-data`.
+
+### What diverges
+
+- **Structured data** — JSON-LD with `@graph` support and node builders, so generated pages
+  carry machine-readable schema rather than prose alone
+- **Swift 6** — `Sendable` conformance throughout
+- **Test rigour** — edge case, invalid input, property, and stress coverage; 232 test files
+  against 337 sources
+
+### Why fork rather than contribute
+
+**[NEEDS INPUT]** — the honest answer belongs here. Pace, scope, or a direction upstream
+would not want are all legitimate; leaving it unstated invites the assumption that the
+divergence was accidental.
+
+---
+
+## The governing constraint
+
+**Keep the public API compatible with upstream.** 419 public declarations. Merging upstream
+must stay a routine operation rather than an archaeology project.
+
+This is an architectural rule, not a preference. It means:
+
+- New capability arrives as **additions** — new element types, new modifiers — not as
+  changes to existing signatures
+- A change that would force a caller to edit their site needs a reason strong enough to
+  accept permanent divergence, and should be recorded as a decision
+- Rendering output may differ; the API a site author writes against should not
+
+The moment that rule is broken, `upstream` becomes decorative and this fork owns a static
+site generator outright.
 
 ---
 
 ## Architecture
 
-### Technology Stack
-- **Language:** Swift 6.0+
-- **Build System:** Swift Package Manager
-- **Testing:** Swift Testing framework
-- **Concurrency:** Swift 6 strict concurrency throughout
-- [Add frameworks: SwiftUI, SwiftData, Vapor, etc.]
-- [Add dependencies: BusinessMath, etc.]
-
-### Module Structure
+- **Language:** Swift 6 · **Build:** SwiftPM · **Testing:** Swift Testing
+- **Dependencies:** `swift-markdown`, `swift-argument-parser`, `swift-collections`, `SwiftSoup`
+- **Products:** `Ignite` (library), `IgniteCLI` (executable)
 
 ```
-Sources/[ProjectName]/
-├── [Describe your source layout here]
-└── ...
+Sources/Ignite/
+├── Elements/  Components/  Modifiers/  Styles/  Themes/   # authoring surface
+├── Rendering/ Generation/  Publishing/                    # HTML out
+├── Framework/ Types/  Actions/  Extensions/               # core
+├── Resources/ QR/                                         # assets
+└── Ignite.docc/
 ```
-
-### Key Types
-
-| Type | Purpose |
-|------|---------|
-| `[TypeName]` | [What it does] |
-
-### Data Flow
-
-```
-[Describe the primary data pipeline from input to output]
-```
-
----
-
-## Core Architectural Decisions
-
-1. [Decision 1 — what you chose and why.]
-2. [Decision 2]
-3. [Add more as needed]
 
 ---
 
 ## Current Status
 
-### What's Working
-- [ ] [List completed milestones]
+- [x] Structured data with `@graph`, Swift 6 `Sendable`, expanded tests
+- [ ] One commit behind upstream
 
-### What's Next
-- [ ] [List upcoming work items]
+### Priorities
 
----
+1. **Stay mergeable.** Distance from upstream is the metric to watch; 8/1 is healthy, and
+   a year of drift would not be.
+2. **[NEEDS INPUT]** — the larger plan. Structured data points toward `GeoSEOMCP`'s
+   AI-visibility work, making this the generator half of a generate-then-audit pipeline,
+   but that is inference from commits rather than a stated goal.
 
 ## Quality Standards
 
-### Code Quality
-- All code follows `coding_rules.md`
-- TDD: failing tests before implementation
-- Documentation for all public APIs
-- No warnings in build output
-- Quality gate: 0 errors, 0 warnings before every commit
-
-### Documentation Quality
-- DocC comments for all public functions
-- Usage examples in documentation
-- Articles for complex topics
-
----
-
-## Collaboration Principles
-
-### AI as Sparring Partner, Not Oracle
-
-AI proposes; the human interrogates. High AI confidence triggers harder questions, not faster acceptance.
-
-- **Interrogate confident outputs.** When the AI states something with certainty, ask for the counterargument before accepting.
-- **Demand counterarguments.** Before locking in an approach, require an explicit case for the strongest alternative.
-- **Sit with discomfort.** Resist the pull to take the first plausible answer.
-
-This principle is operationalized in the **Adversarial Review** step of `design_proposal.md`.
-
----
+`coding_rules.md`, Swift 6 strict concurrency, zero warnings, DocC on public types.
+**Structured-data output is tested against fixed expected JSON-LD** — schema.org correctness
+is not eyeballable, and a malformed `@graph` fails silently at the consumer.
 
 ## Roadmap
 
-### Phase 1: [Name]
-- [ ] [Milestone]
-
-### Phase 2: [Name]
-- [ ] [Milestone]
-
-### Future
-- [Ideas not yet committed to]
+**[NEEDS INPUT]** — see Priorities. Any phase that would break the public API belongs here
+with its justification, because it ends the merge relationship.
 
 ---
 
-**Last Updated:** [DATE] ([brief note on what changed])
+**Last Updated:** 2026-08-05
