@@ -8,3 +8,22 @@ status:
 # old rules; without this pin nothing says so. Ratchet on each deploy that the
 # repo depends on. Warns on every run; fails only under --strict.
 minimumGateVersion: "2026-08-26"
+
+# doc-comment-code cannot evaluate this package, so it is declined rather than
+# reported on. Ignite depends on swift-markdown, whose C target
+# `cmark_gfm_extensions` the fence compile cannot reach: compilation stops at
+# that barrier before a single fence is read. 16 of the 17 findings it produces
+# are that barrier restated, and the checker says so itself — "this fence's
+# error count means nothing until the barrier is resolved."
+#
+# This records that the checker cannot evaluate this package. It does NOT record
+# that the documentation is fine — that is unknown, and stays unknown until the
+# fence compile learns to feed a package's C-target module maps to the compiler.
+# Remove this entry then. The 17th finding is real but of the same family: the
+# preamble is a plain `import`, so a fence on an internal symbol (`QRCode`) has
+# nothing to resolve against.
+#
+# `--check doc-comment-code` still runs it here on purpose, so the barrier stays
+# visible and this entry stays reviewable.
+excludedCheckers:
+  - doc-comment-code
