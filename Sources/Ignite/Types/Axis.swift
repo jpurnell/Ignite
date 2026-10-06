@@ -7,8 +7,11 @@
 
 /// Describes the axes of a coordinate system.
 public struct Axis: OptionSet, Sendable {
+    /// The bit mask that stores which axes are selected.
     public let rawValue: Int
 
+    /// Creates a set of axes from a bit mask.
+    /// - Parameter rawValue: The bit mask, with one bit for each axis.
     public init(rawValue: Int) {
         self.rawValue = rawValue
     }

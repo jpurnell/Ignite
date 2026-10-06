@@ -18,8 +18,8 @@ class ImageTests: IgniteTestSuite {
         let element = Image(file, description: description)
         let output = element.markupString()
 
-        let expectedPath = PublishingContext.shared.path(for: URL(string: file)!)
-        #expect(output == "<img src=\"\(expectedPath)\" alt=\"\(description)\" />")
+        // A root-relative path on a site with no subpath is emitted unchanged.
+        #expect(output == "<img src=\"\(file)\" alt=\"\(description)\" />")
     }
 
     @Test("Remote Image", .publishingContext(), arguments: ["https://example.com"], ["Example image"])
@@ -27,8 +27,8 @@ class ImageTests: IgniteTestSuite {
         let element = Image(url, description: description)
         let output = element.markupString()
 
-        let expectedPath = PublishingContext.shared.path(for: URL(string: url)!)
-        #expect(output == "<img src=\"\(expectedPath)\" alt=\"\(description)\" />")
+        // A remote address is never rewritten.
+        #expect(output == "<img src=\"\(url)\" alt=\"\(description)\" />")
     }
 
     @Test("Icon Image", .publishingContext(), arguments: ["browser-safari"], ["Safari logo"])

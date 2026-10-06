@@ -17,7 +17,13 @@ class NavigationBarTests: IgniteTestSuite {
         let element = NavigationBar()
         let output = element.markupString()
 
-        #expect(output.htmlTagWithCloseTag("header") != nil)
+        let header = try #require(output.htmlTagWithCloseTag("header"))
+        #expect(header.attributes == "")
+        #expect(header.contents == """
+        <nav class="navbar navbar-expand-md">\
+        <div class="container flex-wrap flex-lg-nowrap"></div>\
+        </nav>
+        """)
     }
 
     @Test("Has Nav Tag Inside Header", .publishingContext())
@@ -28,7 +34,9 @@ class NavigationBarTests: IgniteTestSuite {
         let header = try #require(output
             .htmlTagWithCloseTag("header"))
 
-        #expect(header.contents.htmlTagWithCloseTag("nav") != nil)
+        let nav = try #require(header.contents.htmlTagWithCloseTag("nav"))
+        #expect(nav.attributes == #" class="navbar navbar-expand-md""#)
+        #expect(nav.contents == #"<div class="container flex-wrap flex-lg-nowrap"></div>"#)
     }
 
     @Test("Nav Tag Class Is navbar and navbar-expand-md", .publishingContext())
@@ -104,7 +112,13 @@ class NavigationBarTests: IgniteTestSuite {
             .htmlTagWithCloseTag("nav")?.contents
         )
 
-        #expect(navContents.htmlTagWithCloseTag("div") != nil)
+        let div = try #require(navContents.htmlTagWithCloseTag("div"))
+        let expectedClasses = switch width {
+        case .viewport: "container-fluid col flex-wrap flex-lg-nowrap"
+        case .count(let columns): "container col-md-\(columns) flex-wrap flex-lg-nowrap"
+        }
+        #expect(div.attributes == " class=\"\(expectedClasses)\"")
+        #expect(div.contents == "")
     }
 
     @Test("Div Tag Class contains column count if given column width", .publishingContext(), arguments: [0, 3, 7])
@@ -163,7 +177,7 @@ class NavigationBarTests: IgniteTestSuite {
 
     @Test("Div Tag contains logo if given logo", .publishingContext())
     func divTagContainsLogo() async throws {
-        let logoImage = Image("")
+        let logoImage = Image("/images/logo.png")
         let element = NavigationBar(logo: logoImage)
         let output = element.markupString()
 
@@ -173,14 +187,20 @@ class NavigationBarTests: IgniteTestSuite {
             .htmlTagWithCloseTag("div")?.contents
         )
 
-        let expected = try Regex(logoImage.markupString())
-        #expect(divContents.firstMatch(of: expected) != nil)
+        #expect(logoImage.markupString() == #"<img src="/images/logo.png" alt="" />"#)
+        #expect(divContents == """
+        <div class="me-2 me-md-auto">\
+        <a href="/" class="d-inline-flex align-items-center navbar-brand">\
+        <img src="/images/logo.png" alt="" />\
+        </a>
+        """)
     }
 
     @Test("Div contains render toggle button if items is not empty", .publishingContext())
     func divTagContainsToggleButton() async throws {
+        let target = try #require(URL(string: "1"))
         let element = NavigationBar(logo: Image("somepath")) {
-            Link("Link 1", target: URL(string: "1")!)
+            Link("Link 1", target: target)
         }
         let output = element.markupString()
 
@@ -200,7 +220,7 @@ class NavigationBarTests: IgniteTestSuite {
 
     @Test("Div Tag contains unordered list if items is not nil", .publishingContext())
     func divTagContainsUL() async throws {
-        let item = Link("Link 1", target: URL(string: "1")!)
+        let item = try Link("Link 1", target: #require(URL(string: "1")))
         let element = NavigationBar(logo: Image("somepath")) {
             item
         }
@@ -210,12 +230,14 @@ class NavigationBarTests: IgniteTestSuite {
             .htmlTagWithCloseTag("header")?.contents
             .htmlTagWithCloseTag("nav")?.contents)
 
-        #expect(divContents.htmlTagWithCloseTag("ul") != nil)
+        let list = try #require(divContents.htmlTagWithCloseTag("ul"))
+        #expect(list.attributes == #" class="navbar-nav mb-2 mb-md-0 col justify-content-end""#)
+        #expect(list.contents == #"<li class="nav-item"><a href="1/" class="nav-link text-nowrap">Link 1</a></li>"#)
     }
 
     @Test("Unordered List contains trailing alignment if set", .publishingContext())
     func ulTagClassContainCenterAignmentIfGiven() async throws {
-        let item = Link("Link 1", target: URL(string: "1")!)
+        let item = try Link("Link 1", target: #require(URL(string: "1")))
         let element = NavigationBar(logo: Image("somepath")) {
             item
         }
@@ -234,7 +256,7 @@ class NavigationBarTests: IgniteTestSuite {
 
     @Test("Unordered List contains trailing alignment if set", .publishingContext())
     func ulTagClassContainTrailingAignmentIfGiven() async throws {
-        let item = Link("Link 1", target: URL(string: "1")!)
+        let item = try Link("Link 1", target: #require(URL(string: "1")))
         let element = NavigationBar(logo: Image("somepath")) {
             item
         }
@@ -253,7 +275,7 @@ class NavigationBarTests: IgniteTestSuite {
 
     @Test("UL Tag contains rendered output of navigation item", .publishingContext())
     func divTagContainsRenderedItem() async throws {
-        let item = Link("Link 1", target: URL(string: "1")!)
+        let item = try Link("Link 1", target: #require(URL(string: "1")))
         let element = NavigationBar(logo: Image("somepath")) {
             item
         }
@@ -275,8 +297,8 @@ class NavigationBarTests: IgniteTestSuite {
 
     @Test("UL Tag contains rendered output of navigation items", .publishingContext())
     func divTagContainsRenderedItems() async throws {
-        let item1 = Link("Link 1", target: URL(string: "1")!)
-        let item2 = Link("Link 2", target: URL(string: "2")!)
+        let item1 = try Link("Link 1", target: #require(URL(string: "1")))
+        let item2 = try Link("Link 2", target: #require(URL(string: "2")))
         let element = NavigationBar(logo: Image("somepath")) {
             item1
             item2

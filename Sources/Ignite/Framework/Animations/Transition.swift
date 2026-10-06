@@ -27,9 +27,10 @@ public extension Transition {
         return copy
     }
 
-    /// Adjusts the animation speed by dividing the duration
+    /// Adjusts the animation speed by dividing the duration.
+    /// A speed that isn't positive leaves the duration unchanged.
     func speed(_ speed: Double) -> Self {
-        guard let lastIndex = data.indices.last else { return self }
+        guard speed > 0, let lastIndex = data.indices.last else { return self }
         var copy = self
         copy.data[lastIndex].duration = (copy.data[lastIndex].duration) / speed
         return copy

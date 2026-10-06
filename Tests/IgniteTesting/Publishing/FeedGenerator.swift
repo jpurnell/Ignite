@@ -18,13 +18,15 @@ enum FeedSite: Sendable {
     static let all: [Self] = [.standard, .gmt, .est]
 
     var site: TestSite {
-        switch self {
-        case .standard:
-            TestSite()
-        case .gmt:
-            TestSite(timeZone: .init(abbreviation: "GMT")!)
-        case .est:
-            TestSite(timeZone: .init(abbreviation: "EST")!)
+        get throws {
+            switch self {
+            case .standard:
+                TestSite()
+            case .gmt:
+                TestSite(timeZone: try #require(TimeZone(abbreviation: "GMT")))
+            case .est:
+                TestSite(timeZone: try #require(TimeZone(abbreviation: "EST")))
+            }
         }
     }
 }
@@ -35,7 +37,7 @@ struct FeedGeneratorTests {
     @Test("XML-escapes special characters in titles", .publishingContext())
     func xmlEscapesSpecialCharacters() async throws {
         let site = TestSite()
-        let config = site.feedConfiguration!
+        let config = try #require(site.feedConfiguration)
         var article = Article()
         article.title = "Donations & Sponsorships"
         article.description = "Example Description"
@@ -49,12 +51,15 @@ struct FeedGeneratorTests {
 
     @Test("generateFeed()", .publishingContext(), arguments: FeedSite.all)
     func generateFeed(for siteCase: FeedSite) async throws {
-        let site = siteCase.site
-        let config = site.feedConfiguration!
+        let site = try siteCase.site
+        let config = try #require(site.feedConfiguration)
         let feedHref = site.url.appending(path: config.path).absoluteString
         var exampleContent = Article()
         exampleContent.title = "Example Title"
         exampleContent.description = "Example Description"
+        // Without a date in its metadata an article reports the current time on every read,
+        // so the feed and the expectation below would each take their own clock reading.
+        exampleContent.metadata["date"] = Date(timeIntervalSince1970: 1_700_000_000)
 
         let generator = FeedGenerator(config: config, site: site, content: [exampleContent])
 

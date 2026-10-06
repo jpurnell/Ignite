@@ -156,7 +156,7 @@ struct PublishingContextIsolationTests {
             pageMetadata: PageMetadata(
                 title: title,
                 description: "",
-                url: URL(string: "https://example.com/\(title.lowercased())")!
+                url: URL(static: "https://example.com").appending(path: title.lowercased())
             ),
             pageContent: context.site.homePage
         )

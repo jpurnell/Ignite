@@ -101,11 +101,12 @@ struct JSONFeedGenerator {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .prettyPrinted, .withoutEscapingSlashes]
 
-        guard let data = try? encoder.encode(feed),
-              let jsonString = String(data: data, encoding: .utf8) else {
+        do {
+            let data = try encoder.encode(feed)
+            return String(data: data, encoding: .utf8) ?? "{}"
+        } catch {
+            logger.error("Failed to encode the JSON feed: \(error.localizedDescription, privacy: .public)")
             return "{}"
         }
-
-        return jsonString
     }
 }

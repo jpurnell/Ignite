@@ -537,11 +537,13 @@ public struct Color: CustomStringConvertible, Equatable, Hashable, Sendable {
     ///   - blue: How much blue to use, in the range of 0 through 1.
     ///   - opacity: How opaque the color should be, in the range of 0
     ///   (transparent) through to 1 (opaque). Defaults to 1.
+    /// - Note: Values outside 0 through 1 are clamped to that range, and a
+    /// value that is not a number is treated as 0.
     public init(red: Double, green: Double, blue: Double, opacity: Double = 1) {
-        let intRed = Int(red * 255)
-        let intGreen = Int(green * 255)
-        let intBlue = Int(blue * 255)
-        let intOpacity = Int(opacity * 100)
+        let intRed = Self.component(red * 255, upperBound: 255)
+        let intGreen = Self.component(green * 255, upperBound: 255)
+        let intBlue = Self.component(blue * 255, upperBound: 255)
+        let intOpacity = Self.component(opacity * 100, upperBound: 100)
 
         self.init(red: intRed, green: intGreen, blue: intBlue, opacity: intOpacity%)
     }
@@ -552,9 +554,11 @@ public struct Color: CustomStringConvertible, Equatable, Hashable, Sendable {
     ///   - white: How much white to use, in the range of 0 through 1.
     ///   - opacity: How opaque the color should be, in the range of 0
     ///   (transparent) through to 1 (opaque).
+    /// - Note: Values outside 0 through 1 are clamped to that range, and a
+    /// value that is not a number is treated as 0.
     public init(white: Double, opacity: Double = 1) {
-        let intWhite = Int(white * 255)
-        let intOpacity = Int(opacity * 100)
+        let intWhite = Self.component(white * 255, upperBound: 255)
+        let intOpacity = Self.component(opacity * 100, upperBound: 100)
 
         self.init(red: intWhite, green: intWhite, blue: intWhite, opacity: intOpacity%)
     }
@@ -605,11 +609,31 @@ public struct Color: CustomStringConvertible, Equatable, Hashable, Sendable {
     /// - Parameter opacity: How much to adjust the opacity by.
     /// - Returns: A new color with the opacity value taken into account. Note:
     /// because this multiplies the existing opacity, this cannot produce a color that
-    /// is more opaque than the original.
+    /// is more opaque than the original. The result is clamped to 0% through 100%,
+    /// and an amount that is not a number produces 0%.
     public func opacity(_ opacity: Double) -> Self {
         var copy = self
-        copy.opacity = Int(Double(copy.opacity) * opacity)
+        copy.opacity = Self.component(Double(copy.opacity) * opacity, upperBound: 100)
         return copy
+    }
+
+    /// Converts an already-scaled floating-point component to an integer in
+    /// the range 0 through `upperBound`, truncating any fractional part.
+    ///
+    /// Converting a `Double` to `Int` stops the process for NaN, infinity and
+    /// values beyond `Int`'s range, so every such value is given a place in the
+    /// range instead: NaN and anything at or below zero become 0, and anything
+    /// at or above `upperBound` – including positive infinity – becomes `upperBound`.
+    /// - Parameters:
+    ///   - scaled: The component, already multiplied up to the integer scale.
+    ///   - upperBound: The largest value the component may take.
+    /// - Returns: The component as an integer in `0...upperBound`, or 0 if `scaled`
+    /// is not a number.
+    private static func component(_ scaled: Double, upperBound: Int) -> Int {
+        // NaN fails every comparison, so it leaves through the first guard.
+        guard scaled > 0 else { return 0 }
+        guard scaled < Double(upperBound) else { return upperBound }
+        return Int(scaled)
     }
 
     /// Creates a weighted variant of the color by mixing it with white or black.

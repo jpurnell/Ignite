@@ -38,12 +38,13 @@ struct SyntaxHighlightGenerator {
                 continue
             }
 
-            guard let contents = try? String(contentsOf: url) else {
+            do {
+                result += try String(contentsOf: url)
+            } catch {
+                let reason = error.localizedDescription
+                logger.error("Failed to load \(filename, privacy: .public): \(reason, privacy: .public)")
                 context.addError(.failedToLoadSyntaxHighlighter(filename))
-                continue
             }
-
-            result += contents
         }
 
         return result

@@ -18,7 +18,7 @@ struct JSONFeedGeneratorTests {
 
     private func parseJSON(_ output: String) throws -> [String: Any] {
         let data = try #require(output.data(using: .utf8))
-        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let json = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
         return json
     }
 
@@ -49,7 +49,7 @@ struct JSONFeedGeneratorTests {
     @Test("Golden path: single article produces correct JSON Feed structure", .publishingContext())
     func goldenPath() throws {
         let site = TestSite()
-        let config = site.feedConfiguration!
+        let config = try #require(site.feedConfiguration)
         let article = makeArticle()
 
         let generator = JSONFeedGenerator(config: config, site: site, content: [article])
@@ -76,7 +76,7 @@ struct JSONFeedGeneratorTests {
     @Test("Description-only mode: items have summary but no content_html", .publishingContext())
     func descriptionOnlyMode() throws {
         let site = TestSite()
-        let config = FeedConfiguration(mode: .descriptionOnly, contentCount: 20)!
+        let config = try #require(FeedConfiguration(mode: .descriptionOnly, contentCount: 20))
         let article = makeArticle()
 
         let generator = JSONFeedGenerator(config: config, site: site, content: [article])
@@ -94,7 +94,7 @@ struct JSONFeedGeneratorTests {
     @Test("Full-content mode: items include content_html", .publishingContext())
     func fullContentMode() throws {
         let site = TestSite()
-        let config = FeedConfiguration(mode: .full, contentCount: 20)!
+        let config = try #require(FeedConfiguration(mode: .full, contentCount: 20))
         let article = makeArticle(text: "<p>Full body content</p>")
 
         let generator = JSONFeedGenerator(config: config, site: site, content: [article])
@@ -103,14 +103,14 @@ struct JSONFeedGeneratorTests {
 
         let items = try #require(json["items"] as? [[String: Any]])
         let item = items[0]
-        #expect(item["content_html"] as? String != nil)
+        #expect(item["content_html"] as? String == "<p>Full body content</p>")
         #expect(item["summary"] as? String == "Example Description")
     }
 
     @Test("Output is valid JSON", .publishingContext())
     func jsonValidity() throws {
         let site = TestSite()
-        let config = site.feedConfiguration!
+        let config = try #require(site.feedConfiguration)
         let article = makeArticle()
 
         let generator = JSONFeedGenerator(config: config, site: site, content: [article])
@@ -124,7 +124,7 @@ struct JSONFeedGeneratorTests {
     @Test("Multiple articles: contentCount limits items", .publishingContext())
     func multipleArticlesContentCount() throws {
         let site = TestSite()
-        let config = FeedConfiguration(mode: .descriptionOnly, contentCount: 2)!
+        let config = try #require(FeedConfiguration(mode: .descriptionOnly, contentCount: 2))
 
         let articles = (1...5).map { i in
             makeArticle(title: "Article \(i)", path: "/articles/\(i)")
@@ -143,7 +143,7 @@ struct JSONFeedGeneratorTests {
     @Test("Author handling: article author overrides site author", .publishingContext())
     func authorOverride() throws {
         let site = TestSite()
-        let config = site.feedConfiguration!
+        let config = try #require(site.feedConfiguration)
         let article = makeArticle(author: "Article Author")
 
         let generator = JSONFeedGenerator(config: config, site: site, content: [article])
@@ -159,7 +159,7 @@ struct JSONFeedGeneratorTests {
     @Test("Author handling: omit authors when both site and article author are empty", .publishingContext())
     func authorOmittedWhenEmpty() throws {
         let site = TestSite() // site.author is ""
-        let config = site.feedConfiguration!
+        let config = try #require(site.feedConfiguration)
         let article = makeArticle() // no article author
 
         let generator = JSONFeedGenerator(config: config, site: site, content: [article])
@@ -178,7 +178,7 @@ struct JSONFeedGeneratorTests {
     @Test("Tags: present as array of strings in items", .publishingContext())
     func tagsPresent() throws {
         let site = TestSite()
-        let config = site.feedConfiguration!
+        let config = try #require(site.feedConfiguration)
         let article = makeArticle(tags: "swift, testing, ignite")
 
         let generator = JSONFeedGenerator(config: config, site: site, content: [article])
@@ -196,7 +196,7 @@ struct JSONFeedGeneratorTests {
     @Test("Feed image: icon and favicon present when image configured", .publishingContext())
     func feedImageIcon() throws {
         let site = TestSite() // has feedConfiguration with image
-        let config = site.feedConfiguration!
+        let config = try #require(site.feedConfiguration)
         let article = makeArticle()
 
         let generator = JSONFeedGenerator(config: config, site: site, content: [article])
@@ -210,7 +210,7 @@ struct JSONFeedGeneratorTests {
     @Test("Language: matches site language", .publishingContext())
     func languagePresent() throws {
         let site = TestSite()
-        let config = site.feedConfiguration!
+        let config = try #require(site.feedConfiguration)
         let article = makeArticle()
 
         let generator = JSONFeedGenerator(config: config, site: site, content: [article])

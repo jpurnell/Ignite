@@ -20,7 +20,7 @@ class TransitionModifierTests: IgniteTestSuite {
 
         let hoverID = firstHoverAnimationID(in: output)
 
-        #expect(hoverID != nil)
+        #expect(hoverID == transition.id)
         #expect(output.contains(#"style="transform-style: preserve-3d""#))
         #expect(output.contains("Hello"))
         #expect(!output.contains(#"onclick="igniteToggleClickAnimation(this)""#))
@@ -36,14 +36,10 @@ class TransitionModifierTests: IgniteTestSuite {
         let animationID = firstAnimationID(in: output)
         let clickID = firstClickID(in: output)
 
-        #expect(animationID != nil)
-        #expect(clickID != nil)
+        #expect(animationID == transition.id)
+        #expect(clickID == transition.id)
         #expect(output.contains(#"onclick="igniteToggleClickAnimation(this)""#))
         #expect(output.contains("Hello"))
-
-        if let animationID, let clickID {
-            #expect(animationID == clickID)
-        }
     }
 
     @Test("Appear transition adds animation class without click or hover scaffolding", .publishingContext())
@@ -54,7 +50,7 @@ class TransitionModifierTests: IgniteTestSuite {
 
         let appearID = firstAnimationID(in: output)
 
-        #expect(appearID != nil)
+        #expect(appearID == transition.id)
         #expect(output.contains("Hello"))
         #expect(!output.contains("-hover"))
         #expect(!output.contains(#"onclick="igniteToggleClickAnimation(this)""#))

@@ -47,23 +47,8 @@ struct AnimatedHTML: HTML {
 
         var outerAttributes = CoreAttributes()
 
-        assignClickClasses(outer: &outerAttributes, inner: &innerAttributes)
-        assignHoverClass(&innerAttributes)
-        assignAppearClasses(&innerAttributes)
-
-        var content: any BodyElement = content
-        content.attributes.remove(styles: .background, .backgroundColor, .color)
-
-        if innerAttributes.isEmpty == false {
-            content = Section(content).attributes(innerAttributes)
-        }
-
-        if outerAttributes.isEmpty == false {
-            content = Section(content).attributes(outerAttributes)
-        }
-
-        return content.attributes(attributes).markup()
-
+        // These helpers read `registeredAnimations` and `outerAttributes`, so they are
+        // declared here, after both exist and before the calls that use them.
         func assignAppearClasses(_ attributes: inout CoreAttributes) {
             guard let appearAnimations = registeredAnimations[.appear] else { return }
             let animationClasses = Set(appearAnimations.map { "animation-\($0.id)" })
@@ -93,6 +78,23 @@ struct AnimatedHTML: HTML {
 
             attributes.append(classes: classes)
         }
+
+        assignClickClasses(outer: &outerAttributes, inner: &innerAttributes)
+        assignHoverClass(&innerAttributes)
+        assignAppearClasses(&innerAttributes)
+
+        var content: any BodyElement = content
+        content.attributes.remove(styles: .background, .backgroundColor, .color)
+
+        if innerAttributes.isEmpty == false {
+            content = Section(content).attributes(innerAttributes)
+        }
+
+        if outerAttributes.isEmpty == false {
+            content = Section(content).attributes(outerAttributes)
+        }
+
+        return content.attributes(attributes).markup()
     }
 
     /// Registers each of the element's animations and returns their class names by trigger

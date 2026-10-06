@@ -42,8 +42,12 @@ public struct Modal: HTML {
         }
     }
 
+    /// The vertical position of a modal on the screen.
     public enum Position: CaseIterable, Sendable {
+        /// The modal appears near the top of the screen.
         case top
+
+        /// The modal is centered vertically, using Bootstrap's `modal-dialog-centered` class.
         case center
 
         var htmlName: String? {
@@ -75,6 +79,13 @@ public struct Modal: HTML {
     var size: Size = .medium
     var position: Position = .center
 
+    /// Creates a modal dialog with body content and, optionally, a header and a footer.
+    /// - Parameters:
+    ///   - modalId: The HTML `id` of the modal. Actions that show or dismiss a modal find
+    ///   it by this value, so it should be unique on the page.
+    ///   - body: The main content of the modal, placed in Bootstrap's `modal-body`.
+    ///   - header: Content for the `modal-header`. Defaults to no header.
+    ///   - footer: Content for the `modal-footer`. Defaults to no footer.
     public init(
         id modalId: String,
         @HTMLBuilder body: () -> some BodyElement,

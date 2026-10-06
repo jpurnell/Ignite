@@ -43,18 +43,6 @@ enum Breakpoint: Sendable, Hashable, CaseIterable, Comparable {
         }
     }
 
-    /// The default width associated with each breakpoint.
-    var defaultWidth: LengthUnit {
-        switch self {
-        case .xSmall: .px(576)
-        case .small: .px(576)
-        case .medium: .px(768)
-        case .large: .px(992)
-        case .xLarge: .px(1200)
-        case .xxLarge: .px(1400)
-        }
-    }
-
     /// Implements the `Comparable` protocol by comparing the raw pixel widths.
     static func < (lhs: Breakpoint, rhs: Breakpoint) -> Bool {
         // Use the ordinal position in the CaseIterable array for comparison

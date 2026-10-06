@@ -30,8 +30,9 @@ class AccordionTests: IgniteTestSuite {
             .htmlAttribute(named: "id")
         )
 
-        let expected = /accordion[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]/
-        #expect(idattribute.firstMatch(of: expected) != nil)
+        let expected = /accordion[a-zA-Z0-9]{5}/
+        let match = try #require(idattribute.wholeMatch(of: expected))
+        #expect(String(match.output) == idattribute)
     }
 
     @Test("Outputs Items Provided", .publishingContext(), arguments: [Accordion.OpenMode.all, .individual])

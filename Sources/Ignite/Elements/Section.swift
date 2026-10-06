@@ -63,6 +63,9 @@ public struct Section: HTML, FormItem {
         return copy
     }
 
+    /// Renders the children inside a `<section>` when this section has a header, or inside
+    /// a `<div>` when it does not.
+    /// - Returns: The HTML for this element.
     public func markup() -> Markup {
         let contentHTML = content.markupString()
         if let header = header {

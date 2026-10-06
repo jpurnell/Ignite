@@ -139,9 +139,8 @@ class MediaQueryTests: IgniteTestSuite {
 
     @Test("init from Breakpoint maps correctly", .publishingContext())
     func breakpointQueryInitFromBreakpoint() async throws {
-        let query = BreakpointQuery(.medium)
-        #expect(query != nil)
-        #expect(query?.condition == "min-width: 768px")
+        let query = try #require(BreakpointQuery(.medium))
+        #expect(query.condition == "min-width: 768px")
     }
 
     // MARK: - CSS MediaQuery render output

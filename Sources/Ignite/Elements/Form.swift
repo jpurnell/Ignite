@@ -78,6 +78,9 @@ public struct Form: HTML, NavigationItem {
         attributes.id = UUID().uuidString.truncatedHash
     }
 
+    /// Renders this form as a `<form>` element, using a compact single-row layout when it
+    /// is placed inside a `NavigationBar`.
+    /// - Returns: The HTML for this element.
     public func markup() -> Markup {
         if isNavigationItem {
             renderInNavigationBar()
@@ -212,10 +215,12 @@ public struct Form: HTML, NavigationItem {
     }
 
     private func renderText(_ text: Span) -> some HTML {
-        print("""
+        let advice = """
         For proper alignment within Form, prefer a read-only, \
         plain-text TextField over a Span.
-        """)
+        """
+        logger.notice("\(advice, privacy: .public)")
+        publishingContext.output.line(advice)
         return renderItem(text)
     }
 

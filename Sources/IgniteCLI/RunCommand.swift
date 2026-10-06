@@ -31,9 +31,18 @@ struct RunCommand: ParsableCommand {
 
     /// Runs this command. Automatically called by Argument Parser.
     func run() throws {
+        try run(output: .standard, errors: .standardError)
+    }
+
+    /// Serves the site, saying what happened on the outputs given.
+    /// - Parameters:
+    ///   - output: Receives the server's address and how to stop it.
+    ///   - errors: Receives the reasons the server could not be started.
+    func run(output: Output, errors: Output) throws {
         // Make sure we actually have a folder to serve up.
         guard FileManager.default.fileExists(atPath: "./\(directory)") else {
-            print("❌ Failed to find directory named '\(directory)'.")
+            logger.error("Nothing to serve: no directory named \(directory, privacy: .public).")
+            errors.line("❌ Failed to find directory named '\(directory)'.")
             return
         }
 
@@ -45,21 +54,22 @@ struct RunCommand: ParsableCommand {
         while try isServerRunning(on: currentPort) {
             currentPort += 1
             if currentPort >= 9000 {
-                print("❌ No available ports found in range 8000-8999.")
+                logger.error("No free port below 9000, starting from \(port, privacy: .public).")
+                errors.line("❌ No available ports found in range 8000-8999.")
                 return
             }
         }
 
-        let previewCommand =
+        let previewCommand: [String] =
             if preview {
                 // Automatically open a web browser pointing to their
                 // local server if requested.
-                "open http://localhost:\(currentPort)\(subsite)"
+                ["open", "http://localhost:\(currentPort)\(subsite)"]
             } else {
-                // Important: The empty space below is enough to
-                // make the Process.execute() wait for a key press
-                // before exiting.
-                " "
+                // Important: Passing an array at all, even this empty
+                // one, is what makes Process.execute() wait for a key
+                // press before exiting.
+                []
             }
 
         // Find the server script installed next to the tool itself
@@ -70,40 +80,52 @@ struct RunCommand: ParsableCommand {
 
         // Verify server script exists
         guard FileManager.default.fileExists(atPath: serverScriptURL.path) else {
-            print("❌ Critical server script missing: \(serverScriptURL.path)")
-            print("   This suggests a corrupted installation. Please reinstall with:")
-            print("   make clean && make install")
+            logger.error("Server script missing at \(serverScriptURL.path, privacy: .public).")
+            errors.line("❌ Critical server script missing: \(serverScriptURL.path)")
+            errors.line("   This suggests a corrupted installation. Please reinstall with:")
+            errors.line("   make clean && make install")
             return
         }
 
-        print("✅ Starting local web server on http://localhost:\(currentPort)\(subsite)")
+        logger.info("Serving \(directory, privacy: .public) on port \(currentPort, privacy: .public).")
+        output.line("✅ Starting local web server on http://localhost:\(currentPort)\(subsite)")
 
-        generateQRCode(port: currentPort, subsite: subsite)
+        writeQRCode(port: currentPort, subsite: subsite, to: output)
 
-        print("Press ↵ Return to exit.")
+        output.line("Press ↵ Return to exit.")
 
-        let subsiteArgument = subsite.isEmpty ? "" : "-s \(subsite)"
+        let subsiteArguments = subsite.isEmpty ? [] : ["-s", subsite]
         try Process.execute(
-            command: "python3 \(serverScriptURL.path) -d \(directory) \(subsiteArgument) \(currentPort)",
+            command: ["python3", serverScriptURL.path, "-d", directory] + subsiteArguments + [String(currentPort)],
             then: previewCommand
         )
     }
 
     /// Returns true if there is a server running on the specified port.
     private func isServerRunning(on port: Int) throws -> Bool {
-        let result = try Process.execute(command: "lsof -t -i tcp:\(port)")
+        let result = try Process.execute(command: ["lsof", "-t", "-i", "tcp:\(port)"], timeout: 30)
         return !result.output.isEmpty
     }
 
-    /// Generates a QR code for the given URL and prints it to the terminal.
-    private func generateQRCode(port: Int, subsite: String) {
+    /// Generates a QR code for the site's address on the local network and writes
+    /// it to `output`. Writes nothing when the address or the code is unavailable.
+    private func writeQRCode(port: Int, subsite: String, to output: Output) {
         #if canImport(CoreImage)
         guard let ipAddress = getLocalIPAddress() else { return }
         let localURL = "http://\(ipAddress):\(port)\(subsite)"
-        guard let qrCode = try? QRCode(utf8String: localURL) else { return }
-        print("\n📱 Scan this QR code to access the site on your mobile device:\n")
-        print(qrCode.smallAsciiRepresentation())
-        print("URL: \(localURL)\n")
+
+        let qrCode: QRCode
+        do {
+            qrCode = try QRCode(utf8String: localURL)
+        } catch {
+            // The server is still reachable by its address; only the shortcut is lost.
+            logger.warning("Could not make a QR code: \(error.localizedDescription, privacy: .public)")
+            return
+        }
+
+        output.line("\n📱 Scan this QR code to access the site on your mobile device:\n")
+        output.line(qrCode.smallAsciiRepresentation())
+        output.line("URL: \(localURL)\n")
         #endif
     }
 
@@ -156,12 +178,19 @@ struct RunCommand: ParsableCommand {
         let regex = #/<link href="([^"]+)" rel="canonical"/#
         guard let urlSubString = indexString.firstMatch(of: regex)?.1 else { return nil }
 
-        // Checks if it's an URL
-        guard let url = URL(string: String(urlSubString)) else { return nil }
+        // Only the path of the canonical URL is wanted, so take the address apart
+        // rather than building a URL from it; nothing here contacts that address.
+        guard let canonical = URLComponents(string: String(urlSubString)) else { return nil }
 
-        // If there is no subsite, we don't want to return anything        
-        guard url.path != "/" else { return nil }
+        // URL.path, which this used to read, leaves trailing slashes off; keep doing so.
+        var path = canonical.path
+        while path.count > 1, path.hasSuffix("/") {
+            path.removeLast()
+        }
 
-        return url.path
+        // If there is no subsite, we don't want to return anything
+        guard path != "/" else { return nil }
+
+        return path
     }
 }

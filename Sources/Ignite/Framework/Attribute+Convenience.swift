@@ -32,8 +32,6 @@ extension Attribute {
     enum HiddenState: String {
         /// Element is hidden.
         case `true`
-        /// Element is visible.
-        case `false`
         /// Element is hidden until found by search engine.
         case untilFound = "until-found"
     }

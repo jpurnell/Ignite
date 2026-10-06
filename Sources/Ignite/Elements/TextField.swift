@@ -22,9 +22,6 @@ public struct TextField: InlineElement, FormItem {
     /// The underlying HTML input element.
     private var input = Input()
 
-    /// The size configuration for the text field and its label.
-    private var size: ControlSize = .medium
-
     /// The positioning style for the field's label.
     private var style: ControlLabelStyle = .floating
 
@@ -152,6 +149,8 @@ public struct TextField: InlineElement, FormItem {
         return copy
     }
 
+    /// Renders the input together with its label, arranged according to the field's label style.
+    /// - Returns: The HTML for this element.
     public func markup() -> Markup {
         switch style {
         case .top:

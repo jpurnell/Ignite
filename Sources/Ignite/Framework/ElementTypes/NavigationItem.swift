@@ -60,18 +60,6 @@ extension NavigationItem where Self: InlineElement {
     }
 }
 
-extension NavigationItem where Self: HTML {
-    /// Adds a CSS class to the HTML element
-    /// - Parameter className: The CSS class name to add
-    /// - Returns: A modified copy of the element with the CSS class added
-    func `class`(_ className: String) -> Self {
-        guard !className.isEmpty else { return self }
-        var copy = self
-        copy.attributes.append(classes: className)
-        return copy
-    }
-}
-
 extension NavigationItem where Self: BodyElement {
     /// Adds a CSS class to the HTML element
     /// - Parameter className: The CSS class name to add

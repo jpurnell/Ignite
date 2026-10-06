@@ -168,6 +168,8 @@ Ignite doesn't try to convert SwiftUI code to HTML, or simply map HTML tags to S
 ### Publishing
 
 - ``BootstrapOptions``
+- ``PublishingLogOptions``
+- ``PublishingOutput``
 - ``bundle``
 - ``version``
 

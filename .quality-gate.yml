@@ -7,7 +7,7 @@ status:
 # Refuse to trust a gate binary older than this. A stale binary silently runs
 # old rules; without this pin nothing says so. Ratchet on each deploy that the
 # repo depends on. Warns on every run; fails only under --strict.
-minimumGateVersion: "2026-08-26"
+minimumGateVersion: "2026-10-06"
 
 # doc-comment-code cannot evaluate this package, so it is declined rather than
 # reported on. Ignite depends on swift-markdown, whose C target
@@ -25,5 +25,21 @@ minimumGateVersion: "2026-08-26"
 #
 # `--check doc-comment-code` still runs it here on purpose, so the barrier stays
 # visible and this entry stays reviewable.
+#
+# doc-code is declined for the same reason, by the owner's decision on 2026-10-05.
+# It compiles the DocC catalogue's fences as one program and stops at the same
+# `cmark_gfm_extensions` barrier before reading any of them: all 12 of its
+# findings are `doc-code.barrier`, none is about a fence. As above, this records
+# that the checker cannot evaluate the package, not that the articles compile.
+# Remove both entries together when the fence compile can reach a C target.
 excludedCheckers:
   - doc-comment-code
+  - doc-code
+
+# The one file allowed to construct a `Process`. It is the only place the CLI
+# spawns anything, and it is the bounded helper the rule asks for: every run
+# has a timeout (SIGTERM, then SIGKILL), and both pipes are drained while the
+# child runs. The checker's default kernel is quality-gate's own ProcessRunner,
+# which this package does not have.
+boundedIO:
+  kernelPath: Sources/IgniteCLI/Process-Execute.swift

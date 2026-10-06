@@ -15,7 +15,7 @@ import Testing
 class MetaTagTests: IgniteTestSuite {
     @Test("Meta tag with type enum and content a URL", .publishingContext())
     func withEnumAndContentURL() async throws {
-        let element = MetaTag(.twitterDomain, content: URL(string: "https://example.com?s=searching#target")!)
+        let element = try MetaTag(.twitterDomain, content: #require(URL(string: "https://example.com?s=searching#target")))
         let output = element.markup()
 
         #expect(output.string == "<meta name=\"twitter:domain\" content=\"https://example.com?s=searching#target\" />")
@@ -64,7 +64,7 @@ class MetaTagTests: IgniteTestSuite {
         let page = PageMetadata(
             title: "My Page Title",
             description: "",
-            url: URL(string: "https://example.com")!
+            url: try #require(URL(string: "https://example.com"))
         )
 
         publishingContext.environment.page = page
@@ -90,11 +90,15 @@ class MetaTagTests: IgniteTestSuite {
 
     @Test("Social sharing tags with image, description, and www", .publishingContext())
     func socialSharingTagsWithImageDescriptionAndWWW() async throws {
+        // Unwrapped on its own line: the `image` parameter is optional, so an
+        // inline `#require` there has nothing left to require.
+        let image: URL = try #require(URL(string: "https://example.com/image.png"))
+
         let page = PageMetadata(
             title: "My Page Title",
             description: "describing the page",
-            url: URL(string: "https://www.example.com")!,
-            image: URL(string: "https://example.com/image.png")!
+            url: try #require(URL(string: "https://www.example.com")),
+            image: image
         )
 
         publishingContext.environment.page = page

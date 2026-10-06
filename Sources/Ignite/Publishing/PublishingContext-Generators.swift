@@ -9,7 +9,7 @@ import Foundation
 
 extension PublishingContext {
     /// Renders static pages and content pages, including the homepage.
-    func generateContent() async {
+    func generateContent() async throws {
         render(homePage: site.homePage)
 
         for page in site.staticPages {
@@ -17,7 +17,7 @@ extension PublishingContext {
         }
 
         for content in allContent {
-            render(content)
+            try render(content)
         }
 
         currentRenderingPath = nil
@@ -27,7 +27,7 @@ extension PublishingContext {
     }
 
     /// Generates a sitemap.xml file for this site.
-    func generateSiteMap() {
+    func generateSiteMap() throws {
         let generator = SiteMapGenerator(context: self)
         let siteMap = generator.generateSiteMap()
 
@@ -36,7 +36,7 @@ extension PublishingContext {
         do {
             try siteMap.write(to: outputURL, atomically: true, encoding: .utf8)
         } catch {
-            fatalError(.failedToCreateBuildFile(outputURL))
+            throw PublishingError.failedToCreateBuildFile(outputURL)
         }
     }
 
@@ -76,6 +76,8 @@ extension PublishingContext {
                 let destinationURL = buildDirectory.appending(path: path)
                 try output.write(to: destinationURL, atomically: true, encoding: .utf8)
             } catch {
+                let reason = error.localizedDescription
+                logger.error("Failed to write feed at \(path, privacy: .public): \(reason, privacy: .public)")
                 addError(.failedToWriteFeed)
             }
         }
@@ -90,14 +92,16 @@ extension PublishingContext {
             let destinationURL = buildDirectory.appending(path: "robots.txt")
             try result.write(to: destinationURL, atomically: true, encoding: .utf8)
         } catch {
+            logger.error("Failed to write robots.txt: \(error.localizedDescription, privacy: .public)")
             addError(.failedToWriteFile("robots.txt"))
         }
     }
 
     /// Generates the CSS file containing all media query rules, including styles.
     func generateMediaQueryCSS() {
+        logger.info("Generating CSS for custom styles.")
         if shouldLog(.notices) {
-            print("Generating CSS for custom styles. This may take a moment...")
+            output.line("Generating CSS for custom styles. This may take a moment...")
         }
 
         let mediaQueryCSS = cssManager.generateAllRules(themes: site.allThemes)
@@ -112,6 +116,8 @@ extension PublishingContext {
             let newContent = existingContent + "\n\n" + combinedCSS
             try newContent.write(to: igniteCoreDirectory, atomically: true, encoding: .utf8)
         } catch {
+            let reason = error.localizedDescription
+            logger.error("Failed to append custom styles to ignite-core.min.css: \(reason, privacy: .public)")
             addError(.failedToWriteFile("css/ignite-core.min.css"))
         }
     }

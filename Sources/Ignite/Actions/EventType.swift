@@ -5,6 +5,10 @@
 // See LICENSE for license information.
 //
 
+/// The DOM events an element can respond to, such as a click or a key press.
+///
+/// Each case's raw value is the HTML event-handler attribute its actions are written to,
+/// for example `onclick` for `.click`.
 public enum EventType: String, Sendable, CaseIterable {
     // Window Events
     case afterPrint = "onafterprint"

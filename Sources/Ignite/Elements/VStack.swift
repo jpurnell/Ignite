@@ -110,6 +110,9 @@ public struct VStack: HTML {
         self.spacingAmount = .semantic(spacing)
     }
 
+    /// Renders the children inside a `<div>` with Bootstrap's `vstack` class. Spacing becomes
+    /// a `gap` style in pixels or a `gap-<amount>` class.
+    /// - Returns: The HTML for this element.
     public func markup() -> Markup {
         let items = items.elements.map {
             var elementAttributes = CoreAttributes()

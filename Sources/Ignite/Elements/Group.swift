@@ -26,6 +26,7 @@ public struct Group: HTML, PassthroughElement {
     /// The child elements contained within this group.
     var items: HTMLCollection
 
+    /// The content and behavior of this HTML.
     public var body: some HTML { self }
 
     /// Creates a new group containing the given HTML content.
@@ -40,6 +41,9 @@ public struct Group: HTML, PassthroughElement {
         self.items = HTMLCollection([content])
     }
 
+    /// Renders each child in turn with this group's attributes merged into it. The group
+    /// adds no wrapping element of its own.
+    /// - Returns: The HTML for this element.
     public func markup() -> Markup {
         items.map {
             var item: any BodyElement = $0

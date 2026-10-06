@@ -36,6 +36,8 @@ public struct Include: HTML {
             let string = try String(contentsOf: fileURL)
             return Markup(verbatim: string)
         } catch {
+            let reason = error.localizedDescription
+            logger.warning("Failed to read include \(filename, privacy: .public): \(reason, privacy: .public)")
             publishingContext.addWarning("""
             Failed to find \(filename) in Includes folder; \
             it has been replaced with an empty string.

@@ -5,6 +5,7 @@
 //  See LICENSE for license information.
 //
 
+import Foundation
 import Testing
 
 @testable import Ignite
@@ -136,6 +137,53 @@ struct ContentTests {
         article.text = "Just a few words"
 
         #expect(article.estimatedReadingMinutes == 1)
+    }
+
+    @Test("date of an article with no date is the same on every read", .publishingContext())
+    func undatedArticleDateIsStable() async throws {
+        let article = Article()
+
+        let first = article.date
+        try await Task.sleep(for: .milliseconds(50))
+        let second = article.date
+
+        #expect(second == first)
+    }
+
+    @Test("lastModified of an article with no dates is the same on every read", .publishingContext())
+    func undatedArticleLastModifiedIsStable() async throws {
+        let article = Article()
+
+        let first = article.lastModified
+        try await Task.sleep(for: .milliseconds(50))
+        let second = article.lastModified
+
+        #expect(second == first)
+        #expect(second == article.date)
+    }
+
+    @Test("a copy of an undated article reports the date of the original", .publishingContext())
+    func undatedArticleCopyKeepsDate() async throws {
+        let article = Article()
+        try await Task.sleep(for: .milliseconds(50))
+        let copy = article
+
+        #expect(copy.date == article.date)
+    }
+
+    @Test("date returns the declared date unchanged", .publishingContext())
+    func declaredDateIsReturned() async throws {
+        let declared = Date(timeIntervalSince1970: 1_700_000_000)
+        let modified = Date(timeIntervalSince1970: 1_700_086_400)
+
+        var article = Article()
+        article.metadata["date"] = declared
+        #expect(article.date == declared)
+        #expect(article.lastModified == declared)
+
+        article.metadata["lastModified"] = modified
+        #expect(article.date == declared)
+        #expect(article.lastModified == modified)
     }
 
     @Test("Article.empty static property creates empty instance", .publishingContext())

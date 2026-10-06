@@ -12,10 +12,12 @@ public enum TransparencyQuery: String, Query, CaseIterable {
     /// Standard transparency preference
     case normal = "prefers-reduced-transparency: no-preference"
 
+    /// The raw CSS media feature string.
     public var condition: String { rawValue }
 }
 
 extension TransparencyQuery: MediaFeature {
+    /// The media feature as it is written in CSS.
     public var description: String {
         rawValue
     }

@@ -23,6 +23,7 @@ public enum LengthUnit: Hashable, Equatable, Sendable, CustomStringConvertible, 
     /// A custom unit like min(60vw, 300px)
     case custom(String)
 
+    /// The length as it is written in CSS, such as `10px`, `1.5rem` or `50%`.
     public var description: String {
         switch self {
         case .px(let value): "\(value)px"

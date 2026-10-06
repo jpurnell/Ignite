@@ -31,9 +31,9 @@ class ScriptTests: IgniteTestSuite {
         try withPublishingContext(for: site) { context in
             let element = Script(file: scriptFile)
             let output = element.markupString()
-            let expectedPath = context.path(for: URL(string: scriptFile)!)
 
-            #expect(output == "<script src=\"\(expectedPath)\"></script>")
+            // Script sources are emitted exactly as given, on a root site and a subsite alike.
+            #expect(output == "<script src=\"\(scriptFile)\"></script>")
         }
     }
     
@@ -44,9 +44,8 @@ class ScriptTests: IgniteTestSuite {
         try withPublishingContext(for: site) { context in
             let element = Script(file: remoteScript)
             let output = element.markupString()
-            let expectedPath = context.path(for: URL(string: remoteScript)!)
 
-            #expect(output == "<script src=\"\(expectedPath)\"></script>")
+            #expect(output == "<script src=\"\(remoteScript)\"></script>")
         }
     }
     
@@ -59,9 +58,8 @@ class ScriptTests: IgniteTestSuite {
                 .data("key", "value")
                 .customAttribute(name: "custom", value: "part")
             let output = element.markupString()
-            let expectedPath = context.path(for: URL(string: scriptFile)!)
 
-            #expect(output == "<script custom=\"part\" src=\"\(expectedPath)\" data-key=\"value\"></script>")
+            #expect(output == "<script custom=\"part\" src=\"\(scriptFile)\" data-key=\"value\"></script>")
         }
     }
     

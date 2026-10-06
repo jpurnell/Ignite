@@ -263,7 +263,7 @@ struct ContentFinderTests {
         }
 
         var description: String {
-            let root = directoryRoots.count == 1 ? directoryRoots.first! : "\(directoryRoots)"
+            let root = if directoryRoots.count == 1, let onlyRoot = directoryRoots.first { onlyRoot } else { "\(directoryRoots)" }
             let prefix = "[\(id)] \(root)"
             let eol = " " // single-line (test label); use "\n" when debugging
             if let inErr = inputError {
@@ -288,7 +288,7 @@ struct ContentFinderTests {
             roots: [String],
             suffixes: [String]
         ) -> String? {
-            let prefix = roots.first(where: { path.hasPrefix($0) })
+            let prefix = roots.first(where: { path.hasPrefix($0 + "/") })
             guard let prefix else { return nil }
             let start = path.index(path.startIndex, offsetBy: prefix.count)
             let end = ContentFinder.suffixStart(name: path, suffixes: suffixes)

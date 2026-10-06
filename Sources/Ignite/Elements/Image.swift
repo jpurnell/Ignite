@@ -39,7 +39,7 @@ public struct Image: InlineElement, LazyLoadable {
     ///   e.g. /images/welcome.jpg.
     ///   - description: An description of your image suitable for screen readers.
     public init(_ path: String, description: String? = nil) {
-        self.path = URL(string: path)
+        self.path = URL(markupReference: path)
         self.description = description
     }
 
@@ -59,7 +59,7 @@ public struct Image: InlineElement, LazyLoadable {
     /// - Parameter name: The filename of your image relative to the root
     /// of your site, e.g. /images/dog.jpg.
     public init(decorative name: String) {
-        self.path = URL(string: name)
+        self.path = URL(markupReference: name)
         self.description = ""
     }
 
@@ -189,9 +189,13 @@ private extension Image {
             .split(separator: "~").first?
             .split(separator: "@").first ?? ""
 
-        guard let files = try? FileManager.default.contentsOfDirectory(at: assetPath, includingPropertiesForKeys: nil)
-            .filter({ $0.pathExtension == pathExtension })
-        else {
+        let files: [URL]
+        do {
+            files = try FileManager.default.contentsOfDirectory(at: assetPath, includingPropertiesForKeys: nil)
+                .filter { $0.pathExtension == pathExtension }
+        } catch {
+            let reason = error.localizedDescription
+            logger.warning("Could not list \(assetPath.path, privacy: .public): \(reason, privacy: .public)")
             publishingContext.addWarning("Could not read the assets directory. Please file a bug report.")
             return ([], [])
         }

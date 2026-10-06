@@ -58,8 +58,28 @@ public struct Text: HTML, DropdownItem {
     }
 
     /// Creates a new `Text` instance using "lorem ipsum" placeholder text.
+    ///
+    /// The words are chosen the same way on every build, so a site that uses
+    /// placeholder text is generated identically each time. Two placeholders
+    /// of the same length read the same; to vary them, pass your own generator
+    /// to ``init(placeholderLength:using:)``.
     /// - Parameter placeholderLength: How many placeholder words to generate.
+    /// - Precondition: `placeholderLength` must be at least 1.
     public init(placeholderLength: Int) {
+        var generator = PlaceholderWordGenerator(seed: UInt64(truncatingIfNeeded: placeholderLength))
+        self.init(placeholderLength: placeholderLength, using: &generator)
+    }
+
+    /// Creates a new `Text` instance using "lorem ipsum" placeholder text,
+    /// drawing its words from a random number generator you supply.
+    ///
+    /// The same generator in the same state always produces the same text.
+    /// - Parameters:
+    ///   - placeholderLength: How many placeholder words to generate.
+    ///   - generator: The source of randomness used to pick the words and
+    ///   punctuation that follow the opening "Lorem ipsum" phrase.
+    /// - Precondition: `placeholderLength` must be at least 1.
+    public init(placeholderLength: Int, using generator: inout some RandomNumberGenerator) {
         precondition(placeholderLength > 0, "placeholderLength must be at least 1.")
 
         let baseWords = ["Lorem", "ipsum", "dolor", "sit", "amet,", "consectetur", "adipiscing", "elit."]
@@ -82,13 +102,13 @@ public struct Text: HTML, DropdownItem {
             finalWords = baseWords
 
             for _ in baseWords.count ..< placeholderLength {
-                let randomWord = otherWords.randomElement() ?? "ad"
+                let randomWord = otherWords.randomElement(using: &generator) ?? "ad"
                 var formattedWord = isStartOfSentence ? randomWord.capitalized : randomWord
                 isStartOfSentence = false
 
                 // Randomly add punctuation – 10% chance of adding
                 // a comma, and 10% of adding a full stop instead.
-                let punctuationProbability = Int.random(in: 1 ... 10)
+                let punctuationProbability = Int.random(in: 1 ... 10, using: &generator)
                 if punctuationProbability == 1 {
                     formattedWord.append(",")
                 } else if punctuationProbability == 2 {
@@ -143,6 +163,7 @@ public struct Text: HTML, DropdownItem {
             let cleanedHTML = parser.body.replacing(#/<\/?p>/#, with: "")
             self.content = cleanedHTML
         } catch {
+            logger.error("Failed to parse markup: \(error.localizedDescription, privacy: .public)")
             self.content = markup
             publishingContext.addError(.failedToParseMarkup)
         }
@@ -187,5 +208,27 @@ extension InlineElement {
         var copy: any InlineElement = self
         copy.attributes.append(classes: font.sizeClass)
         return copy
+    }
+}
+
+/// The source of randomness for placeholder text that is not given one: a
+/// SplitMix64 generator, which yields the same sequence for the same seed on
+/// every run and every machine.
+private struct PlaceholderWordGenerator: RandomNumberGenerator {
+    /// The generator's position in its sequence.
+    private var state: UInt64
+
+    /// Creates a generator that starts its sequence from `seed`.
+    init(seed: UInt64) {
+        state = seed
+    }
+
+    /// Advances the sequence and returns its next value.
+    mutating func next() -> UInt64 {
+        state &+= 0x9E37_79B9_7F4A_7C15
+        var mixed = state
+        mixed = (mixed ^ (mixed >> 30)) &* 0xBF58_476D_1CE4_E5B9
+        mixed = (mixed ^ (mixed >> 27)) &* 0x94D0_49BB_1331_11EB
+        return mixed ^ (mixed >> 31)
     }
 }

@@ -17,6 +17,12 @@ import Foundation
 ///     @Environment(\.themes) var themes
 /// }
 /// ```
+///
+/// - Note: This is a value type whose members are all `Sendable` except the
+/// page content and category being rendered, which are `any BodyElement` and
+/// `any Category` – protocols that do not require `Sendable`. It is marked
+/// `Sendable` so it can be carried in a task-local while one page renders.
+// Justification: only pageContent and category are non-Sendable; a copy is bound task-locally for one render.
 public struct EnvironmentValues: @unchecked Sendable {
     /// Provides access to the Markdown articles on this site.
     public var articles: ArticleLoader
@@ -62,9 +68,6 @@ public struct EnvironmentValues: @unchecked Sendable {
 
     /// The current HTTP error of the page being rendered.
     var httpError: HTTPError = EmptyHTTPError()
-
-    /// Content that has the current tag.
-    var taggedContent: [Article] = []
 
     init() {
         self.articles = ArticleLoader(content: [])

@@ -90,6 +90,8 @@ public struct BreakpointQuery: Query, Sendable {
         }
     }
 
+    /// Two breakpoint queries are equal when they describe the same breakpoint and either
+    /// neither has a theme, or the ID of the left-hand theme starts with the ID of the right-hand one.
     public static func == (lhs: BreakpointQuery, rhs: BreakpointQuery) -> Bool {
         if lhs.value != rhs.value {
             return false
@@ -105,6 +107,7 @@ public struct BreakpointQuery: Query, Sendable {
         }
     }
 
+    /// Hashes the breakpoint and, when there is one, the theme's ID.
     public func hash(into hasher: inout Hasher) {
         hasher.combine(value)
         if let theme = theme {
@@ -114,12 +117,14 @@ public struct BreakpointQuery: Query, Sendable {
 }
 
 extension BreakpointQuery: CaseIterable {
+    /// The five standard breakpoints, from small through extra extra large. Custom breakpoints are not included.
     public static var allCases: [BreakpointQuery] {
         [.small, .medium, .large, .xLarge, .xxLarge]
     }
 }
 
 extension BreakpointQuery: MediaFeature {
+    /// The media feature as it is written in CSS, such as `min-width: 768px`.
     public var description: String {
         condition
     }

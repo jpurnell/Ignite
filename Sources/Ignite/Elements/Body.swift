@@ -5,6 +5,11 @@
 // See LICENSE for license information.
 //
 
+/// The `<body>` element of a page, holding everything a visitor sees.
+///
+/// As well as its content, the rendered body loads the scripts the page needs: Bootstrap's
+/// JavaScript when the site uses Bootstrap, the syntax highlighting script when the site
+/// has highlighters, and Ignite's own `ignite-core.js`.
 public struct Body: HTML {
     /// The body of this HTML element, which is itself.
     public var body: some HTML { self }
@@ -20,10 +25,15 @@ public struct Body: HTML {
 
     var content: any BodyElement
 
+    /// Creates a body from a page element builder.
+    /// - Parameter content: The elements to place inside the `<body>` tag.
     public init(@HTMLBuilder _ content: () -> some HTML) {
         self.content = content()
     }
 
+    /// Creates a body that holds the content of the page currently being rendered.
+    ///
+    /// Use this inside a layout to mark where each page's own content belongs.
     public init() {
         let pageContent = PublishingContext.shared.environment.pageContent
         self.content = pageContent
@@ -41,6 +51,11 @@ public struct Body: HTML {
         return copy
     }
 
+    /// Renders the `<body>` tag, its content, and the scripts the page needs.
+    ///
+    /// The body is given Bootstrap's `container` class unless `ignorePageGutters()` was used,
+    /// and the `line-numbers` class when the site shows line numbers in its code blocks.
+    /// - Returns: The HTML for this element.
     public func markup() -> Markup {
         var attributes = attributes
         var output = content.markup()

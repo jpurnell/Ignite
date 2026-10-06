@@ -36,10 +36,11 @@ import Testing
     /// Runs a closure with a custom article and page injected into the environment.
     private func withArticleContext(
         article: Article,
-        pageURL: URL = URL(string: "https://www.example.com/test-article")!,
+        pageURL: URL? = nil,
         pageTitle: String = "Test Article",
         operation: () -> String
-    ) -> String {
+    ) throws -> String {
+        let pageURL = try pageURL ?? #require(URL(string: "https://www.example.com/test-article"))
         var env = EnvironmentValues()
         env.article = article
         env.page = PageMetadata(
@@ -327,7 +328,7 @@ import Testing
     @Test("Breadcrumbs renders BreadcrumbList schema", .publishingContext())
     func breadcrumbs() async throws {
         let output = withPageContext(
-            pageURL: URL(string: "https://www.example.com/about/")!,
+            pageURL: try #require(URL(string: "https://www.example.com/about/")),
             pageTitle: "About"
         ) {
             StructuredData.breadcrumbs().markupString()
@@ -343,7 +344,7 @@ import Testing
     @Test("Breadcrumbs uses custom home name", .publishingContext())
     func breadcrumbsCustomName() async throws {
         let output = withPageContext(
-            pageURL: URL(string: "https://www.example.com/about/")!,
+            pageURL: try #require(URL(string: "https://www.example.com/about/")),
             pageTitle: "About"
         ) {
             StructuredData.breadcrumbs(homeName: "Start").markupString()
@@ -355,7 +356,7 @@ import Testing
     @Test("Breadcrumbs emits nothing on homepage", .publishingContext())
     func breadcrumbsHomepage() async throws {
         let output = withPageContext(
-            pageURL: URL(string: "https://www.example.com/")!
+            pageURL: try #require(URL(string: "https://www.example.com/"))
         ) {
             StructuredData.breadcrumbs().markupString()
         }
@@ -366,7 +367,7 @@ import Testing
     @Test("Breadcrumbs includes page title and URL", .publishingContext())
     func breadcrumbsPageInfo() async throws {
         let output = withPageContext(
-            pageURL: URL(string: "https://www.example.com/about/")!,
+            pageURL: try #require(URL(string: "https://www.example.com/about/")),
             pageTitle: "About Us"
         ) {
             StructuredData.breadcrumbs().markupString()
@@ -397,7 +398,7 @@ import Testing
             metadata: ["date": testDate]
         )
 
-        let output = withArticleContext(article: article) {
+        let output = try withArticleContext(article: article) {
             StructuredData.article().markupString()
         }
 
@@ -414,7 +415,7 @@ import Testing
             description: "A thorough summary of this article."
         )
 
-        let output = withArticleContext(article: article) {
+        let output = try withArticleContext(article: article) {
             StructuredData.article().markupString()
         }
 
@@ -425,7 +426,7 @@ import Testing
     func articleWithoutDescription() async throws {
         let article = makeArticle(title: "No Description")
 
-        let output = withArticleContext(article: article) {
+        let output = try withArticleContext(article: article) {
             StructuredData.article().markupString()
         }
 
@@ -439,7 +440,7 @@ import Testing
             metadata: ["author": "Jane Doe"]
         )
 
-        let output = withArticleContext(article: article) {
+        let output = try withArticleContext(article: article) {
             StructuredData.article().markupString()
         }
 
@@ -454,7 +455,7 @@ import Testing
             metadata: ["image": "/images/hero.jpg"]
         )
 
-        let output = withArticleContext(article: article) {
+        let output = try withArticleContext(article: article) {
             StructuredData.article().markupString()
         }
 
@@ -469,7 +470,7 @@ import Testing
             metadata: ["image": "https://cdn.example.com/photo.jpg"]
         )
 
-        let output = withArticleContext(article: article) {
+        let output = try withArticleContext(article: article) {
             StructuredData.article().markupString()
         }
 
@@ -480,7 +481,7 @@ import Testing
     func articleWithPublisher() async throws {
         let article = makeArticle(title: "Published Article")
 
-        let output = withArticleContext(article: article) {
+        let output = try withArticleContext(article: article) {
             StructuredData.article(
                 publisher: "News Corp",
                 publisherURL: "https://news.com"
@@ -496,20 +497,19 @@ import Testing
     func articleWithPublisherNoURL() async throws {
         let article = makeArticle(title: "Published Article")
 
-        let output = withArticleContext(article: article) {
+        let output = try withArticleContext(article: article) {
             StructuredData.article(publisher: "Simple Publisher").markupString()
         }
 
         #expect(output.contains("\"name\" : \"Simple Publisher\""))
-        let publisherRange = output.range(of: "\"publisher\"")
-        #expect(publisherRange != nil)
+        #expect(output.contains("\"publisher\" : {"))
     }
 
     @Test("Article omits publisher when not provided", .publishingContext())
     func articleWithoutPublisher() async throws {
         let article = makeArticle(title: "Unpublished Article")
 
-        let output = withArticleContext(article: article) {
+        let output = try withArticleContext(article: article) {
             StructuredData.article().markupString()
         }
 
@@ -528,7 +528,7 @@ import Testing
             ]
         )
 
-        let output = withArticleContext(article: article) {
+        let output = try withArticleContext(article: article) {
             StructuredData.article().markupString()
         }
 
@@ -547,7 +547,7 @@ import Testing
             ]
         )
 
-        let output = withArticleContext(article: article) {
+        let output = try withArticleContext(article: article) {
             StructuredData.article().markupString()
         }
 
@@ -570,7 +570,7 @@ import Testing
             ]
         )
 
-        let output = withArticleContext(article: article) {
+        let output = try withArticleContext(article: article) {
             StructuredData.article(
                 publisher: "Test Publisher",
                 publisherURL: "https://publisher.com"
@@ -668,7 +668,7 @@ import Testing
     func articleTitleWithEntities() async throws {
         let article = makeArticle(title: "Rock & Roll: A \"History\"")
 
-        let output = withArticleContext(article: article) {
+        let output = try withArticleContext(article: article) {
             StructuredData.article().markupString()
         }
 
@@ -679,7 +679,7 @@ import Testing
     @Test("Breadcrumbs with deeply nested page path", .publishingContext())
     func breadcrumbsDeepPath() async throws {
         let output = withPageContext(
-            pageURL: URL(string: "https://www.example.com/blog/2026/03/my-post/")!,
+            pageURL: try #require(URL(string: "https://www.example.com/blog/2026/03/my-post/")),
             pageTitle: "My Post"
         ) {
             StructuredData.breadcrumbs().markupString()
@@ -768,7 +768,7 @@ import Testing
 
         for (title, metadata) in testCases {
             let article = makeArticle(title: title, metadata: metadata)
-            let output = withArticleContext(article: article) {
+            let output = try withArticleContext(article: article) {
                 StructuredData.article().markupString()
             }
 
@@ -793,7 +793,7 @@ import Testing
 
         // Breadcrumbs on homepage
         let homepageOutput = withPageContext(
-            pageURL: URL(string: "https://www.example.com/")!
+            pageURL: try #require(URL(string: "https://www.example.com/"))
         ) {
             StructuredData.breadcrumbs().markupString()
         }

@@ -37,6 +37,8 @@ public struct EmptyHTMLHoverEffect: HTML {
     /// The content and behavior of this HTML.
     public var body: some HTML { self }
 
+    /// Renders nothing, because this element exists only to collect the styles of a hover effect.
+    /// - Returns: Empty markup.
     public func markup() -> Markup { Markup() }
 }
 
@@ -72,6 +74,8 @@ public struct EmptyInlineElementHoverEffect: InlineElement {
     /// The content and behavior of this element.
     public var body: some InlineElement { self }
 
+    /// Renders nothing, because this element exists only to collect the styles of a hover effect.
+    /// - Returns: Empty markup.
     public func markup() -> Markup { Markup() }
 }
 

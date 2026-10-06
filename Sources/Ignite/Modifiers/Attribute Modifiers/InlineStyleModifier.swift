@@ -85,15 +85,6 @@ extension HTML {
 }
 
 extension InlineElement {
-    /// Adds an inline style to the element.
-    /// - Parameters:
-    ///   - property: The CSS property.
-    ///   - value: The value.
-    /// - Returns: The modified `InlineElement` element
-    func style(_ property: String, _ value: String) -> some InlineElement {
-        AnyInlineElement(inlineStyleModifier([.init(property, value: value)], content: self))
-    }
-
     /// Adds inline styles to the element.
     /// - Parameter values: Variable number of `InlineStyle` objects
     /// - Returns: The modified `InlineElement` element

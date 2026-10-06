@@ -35,9 +35,6 @@ public struct SubscribeForm: HTML, NavigationItem {
     /// How a `NavigationBar` displays this item at different breakpoints.
     public var navigationBarVisibility: NavigationBarVisibility = .automatic
 
-    /// How many columns this should be divided into
-    private var columnCount: Int = 12
-
     /// The amount of vertical spacing between form elements.
     private var spacing: SpacingAmount
 
@@ -160,19 +157,23 @@ public struct SubscribeForm: HTML, NavigationItem {
         return copy
     }
 
+    /// Renders the email field and subscribe button as a form that submits to the chosen
+    /// email platform, followed by the platform's script when it needs one. Platforms that
+    /// use a honeypot field are given one, positioned off screen and hidden from screen readers.
+    /// - Returns: The HTML for this element.
     public func markup() -> Markup {
         var formOutput = Form {
             TextField(emailFieldLabel, prompt: emailFieldLabel)
                 .type(.text)
                 .id(service.emailFieldID)
                 .class(controlSize.controlClass)
-                .customAttribute(name: "name", value: service.emailFieldName!)
+                .customAttribute(name: "name", value: service.emailFieldName)
                 .class(formStyle == .inline ? "col" : "col-md-12")
 
             Button(subscribeButtonLabel)
                 .type(.submit)
                 .role(subscribeButtonRole)
-                .style(.color, subscribeButtonForegroundStyle != nil ? subscribeButtonForegroundStyle!.description : "")
+                .style(.color, subscribeButtonForegroundStyle?.description ?? "")
                 .class(controlSize.buttonClass)
                 .class(formStyle == .inline ? nil : "w-100")
                 .class(formStyle == .inline ? "col-auto" : "col")

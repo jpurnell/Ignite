@@ -7,16 +7,9 @@
 
 import Foundation
 
-/// Unconditionally prints a given publishing error and stops execution.
-/// - Parameter error: The error to print. The default is an empty string.
-@inline(never)
-func fatalError(_ error: PublishingError) -> Never {
-    fatalError(error.errorDescription ?? "")
-}
-
-/// All the primary errors that can occur when publishing a site. There are other
-/// errors that can be triggered, but they are handled through fatalError() because
-/// something is seriously wrong.
+/// All the primary errors that can occur when publishing a site. Those that stop
+/// a build are thrown from `Site.publish()`; those a build can survive are collected
+/// and reported when it finishes.
 enum PublishingError: LocalizedError {
     /// Could not find the site's package directory.
     case missingPackageDirectory

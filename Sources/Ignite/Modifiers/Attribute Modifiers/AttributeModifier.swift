@@ -90,13 +90,4 @@ extension InlineElement {
     func customAttribute(name: String, value: String) -> some InlineElement {
         AnyInlineElement(attributeModifier(.init(name: name, value: value), content: self))
     }
-
-    /// Adds a custom attribute to the element.
-    /// - Parameters:
-    ///   - name: The name of the custom attribute
-    ///   - value: The value of the custom attribute
-    /// - Returns: The modified `HTML` element
-    func customAttribute(_ attribute: Attribute?) -> some InlineElement {
-        AnyInlineElement(attributeModifier(attribute, content: self))
-    }
 }

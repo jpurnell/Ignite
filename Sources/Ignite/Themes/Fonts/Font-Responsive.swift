@@ -11,7 +11,10 @@ extension Font {
         let font: Font
 
         // swiftlint:disable nesting
+        /// A font size that can be different at each breakpoint.
         public enum Size {
+            /// The size to use from each breakpoint upwards. A breakpoint left as `nil`
+            /// is not given a size of its own.
             case responsive(
                 _ xSmall: LengthUnit? = nil,
                 small: LengthUnit? = nil,

@@ -185,7 +185,7 @@ struct ArraySortingTests {
     // Given
     struct MockHTML: HTML {
         var id: String
-        var isPrimitive: Bool = Bool.random()
+        var isPrimitive: Bool = false
         var body: some HTML { self }
         func render() -> String { "<div id=\"\(id)\"></div>" }
     }

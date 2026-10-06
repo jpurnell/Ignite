@@ -63,12 +63,8 @@ public struct Embed: HTML, LazyLoadable {
     ///   - vimeoID: The Vimeo ID to use.
     ///   - title: A title suitable for screen readers.
     public init(vimeoID: Int, title: String) {
-        if let test = URL(string: "https://player.vimeo.com/video/\(vimeoID)") {
-            self.url = test.absoluteString
-            self.title = String(title)
-        } else {
-            fatalError("Failed to create Vimeo URL from video ID: \(vimeoID).")
-        }
+        self.url = Self.providerURL(host: "player.vimeo.com", path: ["video", String(vimeoID)])
+        self.title = title
     }
 
     /// Creates a new `Embed` instance from the title and YouTube ID provided.
@@ -76,12 +72,8 @@ public struct Embed: HTML, LazyLoadable {
     ///   - youTubeID: The YouTube ID to use.
     ///   - title: A title suitable for screen readers.
     public init(youTubeID: String, title: String) {
-        if let test = URL(string: "https://www.youtube-nocookie.com/embed/\(youTubeID)") {
-            self.url = test.absoluteString
-            self.title = title
-        } else {
-            fatalError("Failed to create YouTube URL from video ID: \(youTubeID).")
-        }
+        self.url = Self.providerURL(host: "www.youtube-nocookie.com", path: ["embed", youTubeID])
+        self.title = title
     }
 
     /// Creates a new `Embed` instance from the title and Spotify ID provided.
@@ -92,14 +84,40 @@ public struct Embed: HTML, LazyLoadable {
     ///   - theme: Either 0 or 1, each representing one of the two theme
     ///   options offered by Spotify, which can be found in the code they provide.
     public init(spotifyID: String, title: String, type: SpotifyContentType = .track, theme: Int = 0) {
-        if let test = URL(
-            string: "https://open.spotify.com/embed/\(type.rawValue)/\(spotifyID)?utm_source=generator&theme=\(theme)"
-        ) {
-            self.url = test.absoluteString
-            self.title = title
-        } else {
-            fatalError("Failed to create Spotify URL from ID: \(spotifyID).")
+        self.url = Self.providerURL(
+            host: "open.spotify.com",
+            path: ["embed", type.rawValue, spotifyID],
+            queryItems: [
+                URLQueryItem(name: "utm_source", value: "generator"),
+                URLQueryItem(name: "theme", value: String(theme))
+            ])
+        self.title = title
+    }
+
+    /// Builds the HTTPS address of a provider's embed page.
+    ///
+    /// The host is fixed by the caller inside Ignite and the caller's ID only ever
+    /// lands in the path, where anything that would otherwise start a query or a
+    /// fragment is percent-encoded. An ID therefore cannot change which site is
+    /// embedded, nor the query Ignite adds.
+    /// - Parameters:
+    ///   - host: The provider's host name.
+    ///   - path: The path, one component per element.
+    ///   - queryItems: Query items to add. Defaults to none.
+    /// - Returns: The address as a string, ready for an `iframe`'s `src`.
+    private static func providerURL(host: String, path: [String], queryItems: [URLQueryItem] = []) -> String {
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = host
+        components.path = "/" + path.joined(separator: "/")
+
+        if queryItems.isEmpty == false {
+            components.queryItems = queryItems
         }
+
+        // A scheme, a host and an absolute path always form a URL; should Foundation
+        // ever disagree, the provider's own root is the closest honest answer.
+        return components.string ?? "https://\(host)"
     }
 
     /// Renders this element using publishing context passed in.

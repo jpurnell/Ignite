@@ -18,49 +18,62 @@ struct BuildCommand: ParsableCommand {
 
     /// Runs this command. Automatically called by Argument Parser.
     func run() throws {
+        try run(output: .standard, errors: .standardError)
+    }
+
+    /// Builds the site, saying what happened on the outputs given.
+    /// - Parameters:
+    ///   - output: Receives progress, the site's own output, and the final result.
+    ///   - errors: Receives the reasons a build could not finish, along with
+    ///   whatever the compiler and the site wrote to standard error.
+    func run(output: Output, errors: Output) throws {
         // Ensure we're in a valid directory.
         guard FileManager.default.fileExists(atPath: "./Package.swift") else {
-            print("❌ Can't find Package.swift in the current directory.")
+            logger.error("No Package.swift in the current directory; nothing to build.")
+            errors.line("❌ Can't find Package.swift in the current directory.")
             return
-       }
+        }
 
-        print("⚙️  Building your site...")
+        output.line("⚙️  Building your site...")
 
         // Build executable and report errors & earnings
-        let (_, error) = try Process.execute(command: "swift build")
+        let (_, error) = try Process.execute(command: ["swift", "build"])
 
         // If something went wrong, print a message then
         // bail out.
         if error.contains("error:") {
-            print(error)
+            logger.error("swift build reported errors.")
+            errors.line(error)
 
-            print("")
-            print("❌ Failed to build.")
+            errors.line("")
+            errors.line("❌ Failed to build.")
             return
         } else if error.contains("warning:") {
             // Warnings can just be printed; they won't hold
             // up a successful build.
-            print(error)
+            errors.line(error)
         }
 
         // Execute site generation with output, and report errors & earnings
-        let (output, runError) = try Process.execute(command: "swift run")
-        print(output)
+        let (siteOutput, runError) = try Process.execute(command: ["swift", "run"])
+        output.line(siteOutput)
 
         // If something went wrong, print a message then
         // bail out.
         if runError.contains("error:") {
-            print(runError)
+            logger.error("swift run reported errors while generating the site.")
+            errors.line(runError)
 
-            print("")
-            print("❌ Failed to generate HTML.")
+            errors.line("")
+            errors.line("❌ Failed to generate HTML.")
             return
         } else if runError.contains("warning:") {
             // Warnings can just be printed; they won't hold
             // up a successful build.
-            print(runError)
+            errors.line(runError)
         }
 
-        print("✅ Successfully built!")
+        logger.info("Site built.")
+        output.line("✅ Successfully built!")
     }
 }

@@ -17,14 +17,34 @@ enum AtomFeedSite: Sendable {
 
     static let all: [Self] = [.standard, .gmt, .est]
 
-    var site: TestSite {
+    /// A fixed publication instant: 2023-11-14 22:13:20 UTC.
+    ///
+    /// An `Article` with no date in its metadata reports the current time on *every* read,
+    /// so a test that renders a feed and then reads `article.date` again to build its
+    /// expectation compares two different clock readings, and fails whenever the second
+    /// ticks over in between. Pinning the date removes the clock from the test.
+    static let publicationDate = Date(timeIntervalSince1970: 1_700_000_000)
+
+    /// ``publicationDate`` as this site's time zone should render it in a feed.
+    var expectedPublicationDate: String {
         switch self {
-        case .standard:
-            TestSite()
-        case .gmt:
-            TestSite(timeZone: .init(abbreviation: "GMT")!)
+        case .standard, .gmt:
+            "2023-11-14T22:13:20Z"
         case .est:
-            TestSite(timeZone: .init(abbreviation: "EST")!)
+            "2023-11-14T17:13:20-05:00"
+        }
+    }
+
+    var site: TestSite {
+        get throws {
+            switch self {
+            case .standard:
+                TestSite()
+            case .gmt:
+                TestSite(timeZone: try #require(TimeZone(abbreviation: "GMT")))
+            case .est:
+                TestSite(timeZone: try #require(TimeZone(abbreviation: "EST")))
+            }
         }
     }
 }
@@ -36,14 +56,15 @@ struct AtomFeedGeneratorTests {
 
     @Test("Golden path: single article with all basic fields", .publishingContext(), arguments: AtomFeedSite.all)
     func goldenPath(for siteCase: AtomFeedSite) async throws {
-        let site = siteCase.site
-        let config = site.feedConfiguration!
+        let site = try siteCase.site
+        let config = try #require(site.feedConfiguration)
         let atomPath = config.paths[.atom] ?? "/feed.atom"
         let selfHref = site.url.appending(path: atomPath).absoluteString
 
         var article = Article()
         article.title = "Example Title"
         article.description = "Example Description"
+        article.metadata["date"] = AtomFeedSite.publicationDate
 
         let generator = AtomFeedGenerator(config: config, site: site, content: [article])
 
@@ -75,7 +96,7 @@ struct AtomFeedGeneratorTests {
 
     @Test("Description-only mode has summary but no content element", .publishingContext())
     func descriptionOnlyMode() async throws {
-        let config = FeedConfiguration(mode: .descriptionOnly, contentCount: 20)!
+        let config = try #require(FeedConfiguration(mode: .descriptionOnly, contentCount: 20))
         let site = TestSite()
 
         var article = Article()
@@ -94,7 +115,7 @@ struct AtomFeedGeneratorTests {
 
     @Test("Full-content mode includes content element with absolute links", .publishingContext())
     func fullContentMode() async throws {
-        let config = FeedConfiguration(mode: .full, contentCount: 20)!
+        let config = try #require(FeedConfiguration(mode: .full, contentCount: 20))
         let site = TestSite()
 
         var article = Article()
@@ -113,7 +134,7 @@ struct AtomFeedGeneratorTests {
 
     @Test("XML special characters in titles are escaped", .publishingContext())
     func xmlEscapingInTitles() async throws {
-        let config = FeedConfiguration(mode: .descriptionOnly, contentCount: 20)!
+        let config = try #require(FeedConfiguration(mode: .descriptionOnly, contentCount: 20))
         let site = TestSite()
 
         var article = Article()
@@ -130,7 +151,7 @@ struct AtomFeedGeneratorTests {
 
     @Test("Multiple articles preserve ordering", .publishingContext())
     func multipleArticles() async throws {
-        let config = FeedConfiguration(mode: .descriptionOnly, contentCount: 20)!
+        let config = try #require(FeedConfiguration(mode: .descriptionOnly, contentCount: 20))
         let site = TestSite()
 
         var first = Article()
@@ -167,7 +188,7 @@ struct AtomFeedGeneratorTests {
 
     @Test("Nil author and nil tags are handled gracefully", .publishingContext())
     func emptyOptionalFields() async throws {
-        let config = FeedConfiguration(mode: .descriptionOnly, contentCount: 20)!
+        let config = try #require(FeedConfiguration(mode: .descriptionOnly, contentCount: 20))
 
         // TestSite has author = "" so site-level author is empty
         let site = TestSite()
@@ -189,11 +210,11 @@ struct AtomFeedGeneratorTests {
 
     @Test("Icon element present when image is configured", .publishingContext())
     func feedImagePresent() async throws {
-        let config = FeedConfiguration(
+        let config = try #require(FeedConfiguration(
             mode: .descriptionOnly,
             contentCount: 20,
             image: .init(url: "https://example.com/icon.png", width: 100, height: 100)
-        )!
+        ))
         let site = TestSite()
 
         let generator = AtomFeedGenerator(config: config, site: site, content: [])
@@ -205,7 +226,7 @@ struct AtomFeedGeneratorTests {
 
     @Test("Icon and logo elements absent when no image configured", .publishingContext())
     func feedImageAbsent() async throws {
-        let config = FeedConfiguration(mode: .descriptionOnly, contentCount: 20)!
+        let config = try #require(FeedConfiguration(mode: .descriptionOnly, contentCount: 20))
         let site = TestSite()
 
         let generator = AtomFeedGenerator(config: config, site: site, content: [])
@@ -219,17 +240,18 @@ struct AtomFeedGeneratorTests {
 
     @Test("Timezone affects date formatting", .publishingContext(), arguments: AtomFeedSite.all)
     func timezoneHandling(for siteCase: AtomFeedSite) async throws {
-        let site = siteCase.site
-        let config = FeedConfiguration(mode: .descriptionOnly, contentCount: 20)!
+        let site = try siteCase.site
+        let config = try #require(FeedConfiguration(mode: .descriptionOnly, contentCount: 20))
 
         var article = Article()
         article.title = "Timezone Test"
         article.description = "Testing timezones"
+        article.metadata["date"] = AtomFeedSite.publicationDate
 
         let generator = AtomFeedGenerator(config: config, site: site, content: [article])
         let feed = generator.generateFeed()
 
-        let expectedDate = article.date.asISO8601(timeZone: site.timeZone)
+        let expectedDate = siteCase.expectedPublicationDate
         #expect(feed.contains("<updated>\(expectedDate)</updated>"))
         #expect(feed.contains("<published>\(expectedDate)</published>"))
     }
@@ -238,7 +260,7 @@ struct AtomFeedGeneratorTests {
 
     @Test("Content count limits number of entries", .publishingContext())
     func contentCountLimiting() async throws {
-        let config = FeedConfiguration(mode: .descriptionOnly, contentCount: 2)!
+        let config = try #require(FeedConfiguration(mode: .descriptionOnly, contentCount: 2))
         let site = TestSite()
 
         var articles: [Article] = []

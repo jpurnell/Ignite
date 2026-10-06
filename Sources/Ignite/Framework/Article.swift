@@ -35,9 +35,19 @@ public struct Article: Sendable {
     /// so one was provided by examining the filesystem date.
     public var hasAutomaticDate = false
 
+    /// The moment this article was created in memory, used as its date when
+    /// the metadata holds none. It is stamped once, so every read of `date`
+    /// on this article – and on any copy of it – gives the same answer.
+    let undatedFallback = Date.now
+
     /// The publication date of this content.
+    ///
+    /// Content loaded from a file always has a date: the one in its front
+    /// matter, or failing that the file's creation date. An article with no
+    /// date in its metadata reports the moment it was created instead, and
+    /// reports that same moment every time it is asked.
     public var date: Date {
-        metadata["date"] as? Date ?? .now
+        metadata["date"] as? Date ?? undatedFallback
     }
 
     /// The last modified date of this content. This might be the same as
@@ -179,24 +189,34 @@ public struct Article: Sendable {
     /// Looks for and parses any YAML front matter from this Markdown.
     /// - Parameter markdown: The Markdown string to process.
     /// - Returns: The remaining Markdown, once front matter has been removed.
+    /// Front matter needs both its opening and its closing `---`; a file that
+    /// opens with `---` and never closes it has no front matter, and is
+    /// returned unchanged.
     private mutating func processMetadata(for markdown: String) -> String {
-        if markdown.starts(with: "---") {
-            let parts = markdown.split(separator: "---", maxSplits: 1, omittingEmptySubsequences: true)
+        let delimiter = "---"
+        guard markdown.starts(with: delimiter) else { return markdown }
 
-            let header = parts[0].split(separator: "\n", omittingEmptySubsequences: true)
-
-            for entry in header {
-                let entryParts = entry.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: true)
-                guard entryParts.count == 2 else { continue }
-
-                let trimmedValue = entryParts[1].trimmingCharacters(in: .whitespaces)
-                metadata[entryParts[0].trimmingCharacters(in: .whitespaces)] = trimmedValue
-            }
-
-            return String(parts[1].trimmingCharacters(in: .whitespacesAndNewlines))
-        } else {
-            return markdown
+        // Any further dashes directly after the opening delimiter belong to it,
+        // which is how splitting on the delimiter has always read them.
+        var remainder = markdown.dropFirst(delimiter.count)
+        while remainder.starts(with: delimiter) {
+            remainder = remainder.dropFirst(delimiter.count)
         }
+
+        guard let closing = remainder.range(of: delimiter) else { return markdown }
+
+        let header = remainder[..<closing.lowerBound]
+            .split(omittingEmptySubsequences: true, whereSeparator: \.isNewline)
+
+        for entry in header {
+            let entryParts = entry.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: true)
+            guard entryParts.count == 2 else { continue }
+
+            let trimmedValue = entryParts[1].trimmingCharacters(in: .whitespaces)
+            metadata[entryParts[0].trimmingCharacters(in: .whitespaces)] = trimmedValue
+        }
+
+        return remainder[closing.upperBound...].trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     /// Populates the article's metadata with publication and modification dates.

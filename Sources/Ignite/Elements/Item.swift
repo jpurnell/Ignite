@@ -118,7 +118,7 @@ public struct Item: HTML {
             .id(itemID)
             .class("accordion-collapse", "collapse", startsOpen ? "show" : nil)
             .data("bs-parent", parentOpenMode == .individual ? "#\(parentID)" : "")
-            .style(contentBackground == nil ? nil : .init(.background, value: contentBackground!.description))
+            .style(contentBackground.map { InlineStyle(.background, value: $0.description) })
         }
         .class("accordion-item")
         .markup()

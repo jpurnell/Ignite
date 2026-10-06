@@ -5,7 +5,7 @@
 // See LICENSE for license information.
 //
 
-// All tags applied to the articles of this site.
+/// All tags applied to the articles of this site.
 public struct AllTagsCategory: Category {
     /// The name of the category, which defaults to "All Tags".
     public var name = "All Tags"

@@ -28,8 +28,13 @@ struct BoolMatrix {
     /// - Parameters:
     ///   - dimension: The width and height of the square matrix.
     ///   - flattened: The data as a flattened array.
-    init(dimension: Int, flattened: [Bool]) {
-        self.content = Array2D(rows: dimension, columns: dimension, flattened: flattened)
+    /// - Returns: `nil` if `flattened` does not contain exactly
+    /// `dimension * dimension` values.
+    init?(dimension: Int, flattened: [Bool]) {
+        guard let content = Array2D(rows: dimension, columns: dimension, flattened: flattened) else {
+            return nil
+        }
+        self.content = content
     }
 
     /// The width and height of the matrix.
@@ -39,11 +44,14 @@ struct BoolMatrix {
     var flattened: [Bool] { content.flattened }
 
     /// Access individual cells in the matrix.
+    ///
+    /// Cells outside the matrix read as `false` – an unset module, like the quiet
+    /// zone around a QR code – and writes to them are ignored.
     /// - Parameters:
     ///   - row: The row index.
     ///   - column: The column index.
     subscript(row: Int, column: Int) -> Bool {
-        get { content[row, column] }
-        set { content[row, column] = newValue }
+        get { content[row, column] ?? false }
+        set { content.set(newValue, row: row, column: column) }
     }
 }

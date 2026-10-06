@@ -19,6 +19,7 @@ public struct InlineForEach<Data: Sequence>: InlineElement, PassthroughElement {
     /// The child elements contained within this HTML element.
     var items: InlineElementCollection
 
+    /// The content and behavior of this element.
     public var body: some InlineElement { self }
 
     /// Creates a new InlineForEach instance that generates inline content from a sequence.

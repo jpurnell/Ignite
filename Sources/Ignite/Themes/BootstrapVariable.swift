@@ -85,9 +85,6 @@ struct Bootstrap {
 
         // MARK: - Font Families
 
-        /// Sans-serif font family
-        case sansSerifFont = "--bs-font-sans-serif"
-
         /// Monospace font family
         case monospaceFont = "--bs-font-monospace"
 
@@ -104,12 +101,6 @@ struct Bootstrap {
 
         /// Base body font size
         case bodyFontSize = "--bs-body-font-size"
-
-        /// Small body font size
-        case smallBodyFontSize = "--bs-body-font-size-sm"
-
-        /// Large body font size
-        case largeBodyFontSize = "--bs-body-font-size-lg"
 
         /// Inline code font size
         case inlineCodeFontSize = "--bs-code-font-size"
@@ -137,33 +128,10 @@ struct Bootstrap {
         /// Font size for h6 elements
         case h6FontSize = "--bs-h6-font-size"
 
-        // MARK: - Font Weights
-
-        /// Extra light font weight
-        case lighterFontWeight = "--bs-font-weight-lighter"
-
-        /// Light font weight
-        case lightFontWeight = "--bs-font-weight-light"
-
-        /// Normal font weight
-        case normalFontWeight = "--bs-font-weight-normal"
-
-        /// Bold font weight
-        case boldFontWeight = "--bs-font-weight-bold"
-
-        /// Extra bold font weight
-        case bolderFontWeight = "--bs-font-weight-bolder"
-
         // MARK: - Line Heights
 
         /// Default body line height
         case bodyLineHeight = "--bs-body-line-height"
-
-        /// Condensed line height
-        case condensedLineHeight = "--bs-line-height-sm"
-
-        /// Expanded line height
-        case expandedLineHeight = "--bs-line-height-lg"
 
         // MARK: - Heading Properties
 
@@ -184,9 +152,6 @@ struct Bootstrap {
         // MARK: - Container Sizes
 
         /// Maximum width for small containers
-        case xSmallContainer = "--theme-container-xs"
-
-        /// Maximum width for small containers
         case smallContainer = "--theme-container-sm"
 
         /// Maximum width for medium containers
@@ -202,9 +167,6 @@ struct Bootstrap {
         case xxLargeContainer = "--theme-container-xxl"
 
         // MARK: - Breakpoints
-
-        /// Small breakpoint value
-        case xSmallBreakpoint = "--bs-breakpoint-xs"
 
         /// Small breakpoint value
         case smallBreakpoint = "--bs-breakpoint-sm"
@@ -236,20 +198,5 @@ struct Bootstrap {
 extension BootstrapVariable: CustomStringConvertible {
     var description: String {
         rawValue
-    }
-}
-
-extension BootstrapVariable {
-    var selector: String {
-        switch self {
-        case .h1FontSize: return "h1"
-        case .h2FontSize: return "h2"
-        case .h3FontSize: return "h3"
-        case .h4FontSize: return "h4"
-        case .h5FontSize: return "h5"
-        case .h6FontSize: return "h6"
-        case .bodyFontSize: return "body"
-        default: return ""
-        }
     }
 }

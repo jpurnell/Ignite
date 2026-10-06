@@ -9,8 +9,11 @@ import Foundation
 
 /// Controls which publishing diagnostics Ignite writes to the console.
 public struct PublishingLogOptions: OptionSet, Sendable {
+    /// The bit mask that stores which options are selected.
     public let rawValue: Int
 
+    /// Creates a set of log options from a bit mask.
+    /// - Parameter rawValue: The bit mask, with one bit for each option.
     public init(rawValue: Int) {
         self.rawValue = rawValue
     }

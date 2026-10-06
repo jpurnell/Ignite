@@ -12,6 +12,9 @@ public struct FeedLink: HTML {
     @Environment(\.builtInIconsEnabled) private var builtInIconsEnabled
     @Environment(\.feedConfiguration) private var feedConfig
 
+    /// One centered line of text per feed format, each linking to that feed and preceded by
+    /// an RSS icon when the site's built-in icons are enabled. This is empty when the site
+    /// has no feed configuration.
     public var body: some HTML {
         if let feedConfig {
             let sortedFormats = feedConfig.formats.sorted { $0.rawValue < $1.rawValue }

@@ -45,19 +45,20 @@ struct ArrayContainsLocationTests {
             "https://www.example.com/about-us",
             "https://www.example.com/the-truth",
             "https://www.example.com/the-Truth",
-            "http://www.example.com/the-truth",
+            "https://example.com/the-truth",
             "random string",
             ""
         ]
 
         // can use a set if Location: Hashable
+        var generator = SeededGenerator(seed: 0x1697)
         var randomLocations = [Location]()
-        let expectedNumberOfPaths = Int.random(in: 1...testPaths.count)
+        let expectedNumberOfPaths = Int.random(in: 1...testPaths.count, using: &generator)
 
         for _ in 1...expectedNumberOfPaths {
             let location = Location(
-                path: testPaths.randomElement()!,
-                priority: Double.random(in: 0...1)
+                path: try #require(testPaths.randomElement(using: &generator)),
+                priority: Double.random(in: 0...1, using: &generator)
             )
             randomLocations.append(location)
         }
@@ -67,7 +68,7 @@ struct ArrayContainsLocationTests {
         // while loop to catch duplicates
         while randomLocations.count > 0 {
             for path in testPaths where randomLocations.contains(path) {
-                let index = randomLocations.firstIndex(where: { $0.path == path })!
+                let index = try #require(randomLocations.firstIndex(where: { $0.path == path }))
                 randomLocations.remove(at: index)
                 actualNumberOfPaths += 1
             }

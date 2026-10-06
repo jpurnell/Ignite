@@ -52,6 +52,7 @@ struct MediaQuery: CustomStringConvertible {
         """
     }
 
+    /// The media query and the rulesets nested in it, as they are written in CSS.
     public var description: String {
         render()
     }

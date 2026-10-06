@@ -73,6 +73,45 @@ class TextTests: IgniteTestSuite {
         """)
     }
 
+    @Test("Placeholder text is the same every time it is built", .publishingContext())
+    func placeholderIsReproducible() async throws {
+        let first = Text(placeholderLength: 60).markupString()
+        let second = Text(placeholderLength: 60).markupString()
+
+        #expect(first == second)
+    }
+
+    @Test("Placeholder text follows the generator it is given", .publishingContext())
+    func placeholderFollowsGenerator() async throws {
+        var first = SeededGenerator(seed: 7)
+        var second = SeededGenerator(seed: 7)
+        var other = SeededGenerator(seed: 8)
+
+        let firstOutput = Text(placeholderLength: 60, using: &first).markupString()
+        let secondOutput = Text(placeholderLength: 60, using: &second).markupString()
+        let otherOutput = Text(placeholderLength: 60, using: &other).markupString()
+
+        #expect(firstOutput == secondOutput)
+        #expect(firstOutput != otherOutput)
+        #expect(firstOutput.hasPrefix("<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. "))
+    }
+
+    @Test("Placeholder text has the number of words asked for", .publishingContext(), arguments: [1, 8, 9, 60])
+    func placeholderWordCount(length: Int) async throws {
+        let output = Text(placeholderLength: length).markupString()
+        let words = output.split(separator: " ")
+
+        #expect(words.count == length)
+        #expect(output.hasSuffix(".</p>"))
+    }
+
+    @Test("Short placeholder text is the opening of lorem ipsum", .publishingContext())
+    func shortPlaceholder() async throws {
+        let output = Text(placeholderLength: 3).markupString()
+
+        #expect(output == "<p>Lorem ipsum dolor.</p>")
+    }
+
     @Test("Strikethrough", .publishingContext())
     func strikethrough() async throws {
         // Given

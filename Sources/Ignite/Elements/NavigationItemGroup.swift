@@ -35,6 +35,8 @@ public struct NavigationItemGroup: NavigationItem {
         self.content = items()
     }
 
+    /// Renders each item of the group in turn, with no wrapping element.
+    /// - Returns: The HTML for this element.
     public func markup() -> Markup {
         items.map { $0.markup() }.joined()
     }

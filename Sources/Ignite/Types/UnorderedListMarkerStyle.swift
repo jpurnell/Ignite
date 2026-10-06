@@ -5,6 +5,7 @@
 // See LICENSE for license information.
 //
 
+/// The bullet style used for the items of an unordered list.
 public enum UnorderedListMarkerStyle: String, Sendable {
     /// Lists are shown with filled circle bullet points.
     case automatic = "disc"

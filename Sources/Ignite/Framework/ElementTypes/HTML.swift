@@ -62,17 +62,6 @@ extension HTML {
 }
 
 extension HTML {
-    /// Adds an event handler to the element.
-    /// - Parameters:
-    ///   - name: The name of the event (e.g., "click", "mouseover")
-    ///   - actions: Array of actions to execute when the event occurs
-    /// - Returns: The modified `HTML` element
-    mutating func addEvent(name: String, actions: [Action]) {
-        guard !actions.isEmpty else { return }
-        let event = Event(name: name, actions: actions)
-        attributes.events.append(event)
-    }
-
     /// Sets the tabindex behavior for this element.
     /// - Parameter tabFocus: The TabFocus enum value defining keyboard navigation behavior
     /// - Returns: The modified HTML element

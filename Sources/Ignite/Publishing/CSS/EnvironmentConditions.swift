@@ -104,6 +104,7 @@ public struct EnvironmentConditions: Equatable, Hashable, Sendable {
         return count
     }
 
+    /// Two sets of conditions are equal when every one of their conditions matches.
     public static func == (lhs: EnvironmentConditions, rhs: EnvironmentConditions) -> Bool {
         lhs.colorScheme == rhs.colorScheme &&
         lhs.motion == rhs.motion &&
@@ -115,6 +116,7 @@ public struct EnvironmentConditions: Equatable, Hashable, Sendable {
         lhs.theme == rhs.theme
     }
 
+    /// Hashes every condition, using the ID prefix of the theme when there is one.
     public func hash(into hasher: inout Hasher) {
         hasher.combine(colorScheme)
         hasher.combine(motion)

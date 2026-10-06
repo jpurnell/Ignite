@@ -23,6 +23,7 @@ struct Attribute: Hashable, Equatable, Sendable, Comparable, CustomStringConvert
         self.value = nil
     }
 
+    /// The attribute as it is written in HTML: `name="value"`, or just the name when there is no value.
     public var description: String {
         if let value {
             "\(name)=\"\(value)\""
@@ -31,6 +32,7 @@ struct Attribute: Hashable, Equatable, Sendable, Comparable, CustomStringConvert
         }
     }
 
+    /// Orders attributes alphabetically by the way they are written in HTML.
     public static func < (lhs: Attribute, rhs: Attribute) -> Bool {
         lhs.description < rhs.description
     }

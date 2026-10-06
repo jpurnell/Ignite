@@ -69,6 +69,7 @@ struct Ruleset: CustomStringConvertible {
         }
     }
 
+    /// The ruleset as it is written in CSS, or an empty string when it has selectors but no styles.
     public var description: String {
         render()
     }

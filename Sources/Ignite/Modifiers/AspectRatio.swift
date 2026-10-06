@@ -42,10 +42,11 @@ public extension HTML {
     }
 
     /// Applies a custom ratio to the current element.
-    /// - Parameter aspectRatio: The ratio to use, relative to 1.
+    /// - Parameter aspectRatio: The ratio to use, relative to 1. A ratio that
+    /// isn't positive falls back to square, which is Bootstrap's default.
     /// - Returns: A modified element with the aspect ratio applied.
     func aspectRatio(_ aspectRatio: Double) -> some HTML {
-        let percentage = 100 / aspectRatio
+        let percentage = aspectRatio > 0 ? 100 / aspectRatio : 100
         return self
             .class("ratio")
             .style("--bs-aspect-ratio", "\(percentage)%")
@@ -67,7 +68,8 @@ public extension Image {
 
     /// Applies a fixed aspect ratio to the image element.
     /// - Parameters:
-    ///   - ratio: The ratio to use, relative to 1.
+    ///   - ratio: The ratio to use, relative to 1. A ratio that isn't positive
+    ///   falls back to square, which is Bootstrap's default.
     ///   - contentMode: The content mode to apply.
     /// - Returns: A new instance of this element with the ratio and content mode applied.
     func aspectRatio(_ ratio: Double, contentMode: ContentMode) -> some HTML {

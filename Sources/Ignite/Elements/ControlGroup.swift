@@ -81,6 +81,9 @@ public struct ControlGroup: HTML, FormItem {
         return copy
     }
 
+    /// Renders the controls inside a `<div>` with Bootstrap's `input-group` class, wrapped
+    /// together with the group's label and help text when either was provided.
+    /// - Returns: The HTML for this element.
     public func markup() -> Markup {
         var items = items
         let lastItem = items.last

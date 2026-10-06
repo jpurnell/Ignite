@@ -18,6 +18,9 @@ public struct ToggleElementVisibility: Action {
         self.id = id
     }
 
+    /// Compiles this action into JavaScript that toggles Bootstrap's `d-none` class on the
+    /// element, hiding it if it is visible and showing it if it is hidden.
+    /// - Returns: The JavaScript code for this action.
     public func compile() -> String {
         "document.getElementById('\(id)').classList.toggle('d-none')"
     }

@@ -11,6 +11,13 @@ import SwiftSoup
 /// Publishing contexts manage the entire flow of publishing, through all
 /// elements. This allows any part of the site to reference content, add
 /// build warnings, and more.
+///
+/// A context is mutable and takes no lock. It is `Sendable` only because
+/// `@TaskLocal` requires that of the value it carries: each publish creates its
+/// own context, binds it for the task doing that publish, and runs every step
+/// of the publish one after another on that task. Code that starts its own
+/// concurrent tasks inside a page must not touch the context from them.
+// Justification: bound task-locally per publish; Ignite runs every publishing step in sequence on that one task.
 final class PublishingContext: @unchecked Sendable {
     /// The current publishing context for this task.
     @TaskLocal private static var currentContext: PublishingContext?
@@ -96,6 +103,10 @@ final class PublishingContext: @unchecked Sendable {
     /// Which publishing diagnostics should be emitted to the console.
     let logOptions: PublishingLogOptions
 
+    /// Where this publish writes its results: the notices, warnings and errors
+    /// the person running the build has to see. Diagnostics go to `logger` instead.
+    let output: PublishingOutput
+
     /// Path at which content renders. Defaults to nil.
     public var currentRenderingPath: String?
 
@@ -157,10 +168,12 @@ final class PublishingContext: @unchecked Sendable {
         for site: any Site,
         from file: StaticString,
         buildDirectoryPath: String = "Build",
-        logOptions: PublishingLogOptions = .standard
+        logOptions: PublishingLogOptions = .standard,
+        output: PublishingOutput = .standard
     ) throws {
         self.site = site
         self.logOptions = logOptions
+        self.output = output
 
         let sourceBuildDirectories = try URL.selectDirectories(from: file)
         sourceDirectory = sourceBuildDirectories.source
@@ -182,10 +195,12 @@ final class PublishingContext: @unchecked Sendable {
         for site: any Site,
         sourceDirectory: URL,
         buildDirectory: URL,
-        logOptions: PublishingLogOptions = .standard
+        logOptions: PublishingLogOptions = .standard,
+        output: PublishingOutput = .standard
     ) throws {
         self.site = site
         self.logOptions = logOptions
+        self.output = output
 
         let sourceBuildDirectories = try URL.makeDirectories(source: sourceDirectory, build: buildDirectory)
         self.sourceDirectory = sourceBuildDirectories.source
@@ -210,13 +225,15 @@ final class PublishingContext: @unchecked Sendable {
         for site: any Site,
         from file: StaticString,
         buildDirectoryPath: String = "Build",
-        logOptions: PublishingLogOptions = .standard
+        logOptions: PublishingLogOptions = .standard,
+        output: PublishingOutput = .standard
     ) throws -> PublishingContext {
         try PublishingContext(
             for: site,
             from: file,
             buildDirectoryPath: buildDirectoryPath,
-            logOptions: logOptions
+            logOptions: logOptions,
+            output: output
         )
     }
 
@@ -233,13 +250,15 @@ final class PublishingContext: @unchecked Sendable {
         for site: any Site,
         sourceDirectory: URL,
         buildDirectory: URL,
-        logOptions: PublishingLogOptions = .standard
+        logOptions: PublishingLogOptions = .standard,
+        output: PublishingOutput = .standard
     ) throws -> PublishingContext {
         try PublishingContext(
             for: site,
             sourceDirectory: sourceDirectory,
             buildDirectory: buildDirectory,
-            logOptions: logOptions
+            logOptions: logOptions,
+            output: output
         )
     }
 
@@ -249,13 +268,15 @@ final class PublishingContext: @unchecked Sendable {
         from file: StaticString,
         buildDirectoryPath: String = "Build",
         logOptions: PublishingLogOptions = .standard,
+        output: PublishingOutput = .standard,
         operation: (PublishingContext) throws -> T
     ) throws -> T {
         let context = try initialize(
             for: site,
             from: file,
             buildDirectoryPath: buildDirectoryPath,
-            logOptions: logOptions
+            logOptions: logOptions,
+            output: output
         )
 
         return try withCurrent(context) {
@@ -269,13 +290,15 @@ final class PublishingContext: @unchecked Sendable {
         from file: StaticString,
         buildDirectoryPath: String = "Build",
         logOptions: PublishingLogOptions = .standard,
+        output: PublishingOutput = .standard,
         operation: (PublishingContext) async throws -> T
     ) async throws -> T {
         let context = try initialize(
             for: site,
             from: file,
             buildDirectoryPath: buildDirectoryPath,
-            logOptions: logOptions
+            logOptions: logOptions,
+            output: output
         )
 
         return try await withCurrent(context) {
@@ -289,13 +312,15 @@ final class PublishingContext: @unchecked Sendable {
         sourceDirectory: URL,
         buildDirectory: URL,
         logOptions: PublishingLogOptions = .standard,
+        output: PublishingOutput = .standard,
         operation: (PublishingContext) throws -> T
     ) throws -> T {
         let context = try initialize(
             for: site,
             sourceDirectory: sourceDirectory,
             buildDirectory: buildDirectory,
-            logOptions: logOptions
+            logOptions: logOptions,
+            output: output
         )
 
         return try withCurrent(context) {
@@ -309,13 +334,15 @@ final class PublishingContext: @unchecked Sendable {
         sourceDirectory: URL,
         buildDirectory: URL,
         logOptions: PublishingLogOptions = .standard,
+        output: PublishingOutput = .standard,
         operation: (PublishingContext) async throws -> T
     ) async throws -> T {
         let context = try initialize(
             for: site,
             sourceDirectory: sourceDirectory,
             buildDirectory: buildDirectory,
-            logOptions: logOptions
+            logOptions: logOptions,
+            output: output
         )
 
         return try await withCurrent(context) {
@@ -439,19 +466,19 @@ final class PublishingContext: @unchecked Sendable {
 
     /// Performs all steps required to publish a site.
     func publish() async throws {
-        clearBuildFolder()
-        await generateContent()
-        copyResources()
-        generateThemes(site.allThemes)
+        try clearBuildFolder()
+        try await generateContent()
+        try copyResources()
+        try generateThemes(site.allThemes)
         generateMediaQueryCSS()
         generateAnimations()
-        generateSiteMap()
+        try generateSiteMap()
         generateFeed()
         generateRobots()
     }
 
     /// Removes all content from the Build folder, so we're okay to recreate it.
-    func clearBuildFolder() {
+    func clearBuildFolder() throws {
         // Apple's docs for fileExists() recommend _not_ to check
         // existence and then make change to the file system, so we
         // just try our best and silently fail.
@@ -460,40 +487,40 @@ final class PublishingContext: @unchecked Sendable {
         do {
             try FileManager.default.createDirectory(at: buildDirectory, withIntermediateDirectories: true)
         } catch {
-            fatalError(.failedToCreateBuildDirectory(buildDirectory))
+            throw PublishingError.failedToCreateBuildDirectory(buildDirectory)
         }
     }
 
     /// Copies the key resources for building: user assets, Bootstrap JavaScript
     /// and CSS, icons CSS and fonts if enabled, and syntax highlighters
     /// if enabled.
-    func copyResources() {
-        copyAssets()
-        copyFonts()
+    func copyResources() throws {
+        try copyAssets()
+        try copyFonts()
 
         let igniteCorePath = buildDirectory.appending(path: "css/ignite-core.min.css").decodedPath
 
         if !FileManager.default.fileExists(atPath: igniteCorePath) {
-            copy(resource: "css/ignite-core.min.css")
+            try copy(resource: "css/ignite-core.min.css")
         }
 
-        copy(resource: "js/ignite-core.js")
+        try copy(resource: "js/ignite-core.js")
 
         if site.useDefaultBootstrapURLs == .localBootstrap {
-            copy(resource: "css/bootstrap.min.css")
-            copy(resource: "js/bootstrap.bundle.min.js")
+            try copy(resource: "css/bootstrap.min.css")
+            try copy(resource: "js/bootstrap.bundle.min.js")
         }
 
         if site.builtInIconsEnabled == .localBootstrap {
-            copy(resource: "css/bootstrap-icons.min.css")
-            copy(resource: "fonts/bootstrap-icons.woff")
-            copy(resource: "fonts/bootstrap-icons.woff2")
+            try copy(resource: "css/bootstrap-icons.min.css")
+            try copy(resource: "fonts/bootstrap-icons.woff")
+            try copy(resource: "fonts/bootstrap-icons.woff2")
         }
 
         if hasSyntaxHighlighters {
-            copy(resource: "js/prism-core.js")
-            copy(resource: "css/prism-plugins.css")
-            copySyntaxHighlighters()
+            try copy(resource: "js/prism-core.js")
+            try copy(resource: "css/prism-plugins.css")
+            try copySyntaxHighlighters()
         }
     }
 
@@ -506,6 +533,7 @@ final class PublishingContext: @unchecked Sendable {
                 .indentAmount(indentAmount: 2)
             return try doc.outerHtml()
         } catch {
+            logger.warning("HTML could not be prettified: \(error.localizedDescription, privacy: .public)")
             addWarning("HTML could not be prettified: \(error.localizedDescription).")
             return html
         }
@@ -529,6 +557,8 @@ final class PublishingContext: @unchecked Sendable {
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         } catch {
+            let reason = error.localizedDescription
+            logger.error("Failed to create \(directory.path, privacy: .public): \(reason, privacy: .public)")
             errors.append(PublishingError.failedToCreateBuildDirectory(directory))
         }
 
@@ -545,6 +575,8 @@ final class PublishingContext: @unchecked Sendable {
                 addToSiteMap(relativePath, priority: priority)
             }
         } catch {
+            let reason = error.localizedDescription
+            logger.error("Failed to write \(outputURL.path, privacy: .public): \(reason, privacy: .public)")
             errors.append(PublishingError.failedToCreateBuildFile(outputURL))
         }
     }

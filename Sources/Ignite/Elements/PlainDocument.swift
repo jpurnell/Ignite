@@ -11,7 +11,9 @@ public struct PlainDocument: Document, HTML {
     public var attributes = CoreAttributes()
 
     private var language: Language
+    /// The metadata of the document, rendered as its `<head>` element.
     public var head: Head
+    /// The visible content of the document, rendered as its `<body>` element.
     public var body: Body
 
     init(head: Head, body: Body) {
@@ -20,12 +22,20 @@ public struct PlainDocument: Document, HTML {
         self.body = body
     }
 
+    /// Creates a document from a head and a body.
+    /// - Parameter content: A builder that returns the document's head and body.
     public init(@DocumentElementBuilder content: () -> (head: Head, body: Body)) {
         self.language = PublishingContext.shared.environment.language
         self.head = content().head
         self.body = content().body
     }
 
+    /// Renders the complete page: the doctype followed by an `<html>` element that carries
+    /// the site's language and the IDs of its light and dark themes.
+    ///
+    /// The body is rendered before the head, so that anything the body registers while it
+    /// renders can still be included in the head.
+    /// - Returns: The HTML for this document.
     public func markup() -> Markup {
         var attributes = attributes
         attributes.append(customAttributes: .init(name: "lang", value: language.rawValue))

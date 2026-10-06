@@ -128,7 +128,7 @@ class ElementTypeTests: IgniteTestSuite {
     func markupElementAsMatchingType() async throws {
         let element = AnyHTML(Text("Hello"))
         let text = element.as(Text.self)
-        #expect(text != nil)
+        #expect(text?.markupString() == "<p>Hello</p>")
     }
 
     @Test("MarkupElement as() returns nil for non-matching type", .publishingContext())

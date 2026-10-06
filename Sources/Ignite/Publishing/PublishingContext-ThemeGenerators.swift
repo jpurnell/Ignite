@@ -9,39 +9,39 @@ import Foundation
 
 extension PublishingContext {
     /// Creates CSS rules for all themes and writes to themes.min.css
-    func generateThemes(_ themes: [any Theme]) {
+    func generateThemes(_ themes: [any Theme]) throws {
         guard !themes.isEmpty else { return }
 
-        let rules = generateThemeRules(themes)
+        let rules = try generateThemeRules(themes)
             .map(\.description)
             .joined(separator: "\n\n")
 
-        writeThemeRules(rules, to: "css/ignite-core.min.css")
+        try writeThemeRules(rules, to: "css/ignite-core.min.css")
     }
 
     /// Writes CSS rules to a file
-    private func writeThemeRules(_ rules: String, to path: String) {
+    private func writeThemeRules(_ rules: String, to path: String) throws {
         let cssPath = buildDirectory.appending(path: path)
         do {
             let existingContent = try String(contentsOf: cssPath, encoding: .utf8)
             let newContent = existingContent + "\n\n" + rules
             try newContent.write(to: cssPath, atomically: true, encoding: .utf8)
         } catch {
-            fatalError(.failedToWriteFile(path))
+            throw PublishingError.failedToWriteFile(path)
         }
     }
 
     /// Generates CSS for all themes including font faces, colors, and typography settings, writing to themes.min.css.
-    private func globalRulesets() -> String {
+    private func globalRulesets() throws -> String {
         guard let sourceURL = Bundle.module.url(forResource: "Resources/css/global-rules", withExtension: "css") else {
-            fatalError(.missingSiteResource("css/global-rules.css"))
+            throw PublishingError.missingSiteResource("css/global-rules.css")
         }
 
         do {
             let contents = try String(contentsOf: sourceURL)
             return contents
         } catch {
-            fatalError(.failedToCopySiteResource("css/global-rules.css"))
+            throw PublishingError.failedToCopySiteResource("css/global-rules.css")
         }
     }
 
@@ -75,22 +75,23 @@ extension PublishingContext {
     }
 
     /// Creates CSS rules for light theme
-    private func lightThemeRules(_ theme: any Theme, darkThemeID: String?) -> [String] {
+    private func lightThemeRules(_ theme: any Theme, darkThemeID: String?) throws -> [String] {
         var rules: [CustomStringConvertible] = []
         rules.append(rootStyles(for: theme))
-        rules.append(contentsOf: baseThemeRules(theme))
+        rules.append(contentsOf: try baseThemeRules(theme))
         rules.append(contentsOf: themeOverrides(for: theme))
         return rules.map(\.description)
     }
 
     /// Creates CSS rules for dark theme
-    private func darkThemeRules(_ theme: any Theme, lightThemeID: String?) -> [String] {
+    private func darkThemeRules(_ theme: any Theme, lightThemeID: String?) throws -> [String] {
         var rules: [CustomStringConvertible] = []
 
         // If this is the only theme, use it as root theme
         if !site.supportsLightTheme, site.alternateThemes.isEmpty {
             rules.append(rootStyles(for: theme))
-            return baseThemeRules(theme)
+            rules.append(contentsOf: try baseThemeRules(theme))
+            return rules.map(\.description)
         }
 
         // Add explicit dark theme override
@@ -104,9 +105,9 @@ extension PublishingContext {
     }
 
     /// Collects all CSS rules for the themes
-    private func generateThemeRules(_ themes: [any Theme]) -> [String] {
+    private func generateThemeRules(_ themes: [any Theme]) throws -> [String] {
         guard site.supportsLightTheme || site.supportsDarkTheme else {
-            fatalError(.missingDefaultTheme)
+            throw PublishingError.missingDefaultTheme
         }
 
         var rules: OrderedSet<String> = []
@@ -124,11 +125,11 @@ extension PublishingContext {
         let (lightTheme, darkTheme) = configureDefaultThemes(site.lightTheme, site.darkTheme)
 
         if let lightTheme {
-            rules.append(contentsOf: lightThemeRules(lightTheme, darkThemeID: darkTheme?.cssID))
+            rules.append(contentsOf: try lightThemeRules(lightTheme, darkThemeID: darkTheme?.cssID))
         }
 
         if let darkTheme {
-            rules.append(contentsOf: darkThemeRules(darkTheme, lightThemeID: lightTheme?.cssID))
+            rules.append(contentsOf: try darkThemeRules(darkTheme, lightThemeID: lightTheme?.cssID))
         }
 
         for theme in site.alternateThemes {
@@ -161,11 +162,11 @@ extension PublishingContext {
     }
 
     /// Creates base theme rules (for root theme)
-    private func baseThemeRules(_ theme: any Theme) -> [String] {
+    private func baseThemeRules(_ theme: any Theme) throws -> [String] {
         var rules: [CustomStringConvertible] = []
         rules.append(contentsOf: responsiveVariables(for: theme))
         rules.append(contentsOf: containerMediaQueries(for: theme))
-        rules.append(globalRulesets())
+        rules.append(try globalRulesets())
         return rules.map(\.description)
     }
 

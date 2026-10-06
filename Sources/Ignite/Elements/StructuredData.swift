@@ -615,14 +615,18 @@ extension StructuredData {
 extension StructuredData {
     /// Serializes a dictionary to a pretty-printed JSON string.
     private static func toJSON(_ dict: [String: Any]) -> String? {
-        guard JSONSerialization.isValidJSONObject(dict),
-              let data = try? JSONSerialization.data(
-                  withJSONObject: dict,
-                  options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
-              ),
-              let string = String(data: data, encoding: .utf8)
-        else { return nil }
-        return string
+        guard JSONSerialization.isValidJSONObject(dict) else { return nil }
+
+        do {
+            let data = try JSONSerialization.data(
+                withJSONObject: dict,
+                options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+            )
+            return String(data: data, encoding: .utf8)
+        } catch {
+            logger.error("Failed to serialize structured data: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
     }
 
     /// Formats a date as an ISO 8601 date-time string.

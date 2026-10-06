@@ -5,6 +5,7 @@
 // See LICENSE for license information.
 //
 
+/// The mouse cursor shown while the pointer is over an element, set through the CSS `cursor` property.
 public enum Cursor: String, CaseIterable, Sendable {
     /// The cursor to display based on the current context. E.g., equivalent to text when hovering text.
     case auto
@@ -12,7 +13,7 @@ public enum Cursor: String, CaseIterable, Sendable {
     /// Default cursor. Typically an arrow.
     case `default`
 
-    /// No cursor is rendered.
+    /// A pointing hand, typically used to show that something is a link.
     case pointer
 
     /// Something can be zoomed (magnified) in.

@@ -36,10 +36,16 @@ public struct Alert: HTML {
         return outputClasses
     }
 
+    /// Creates an alert from a page element builder.
+    /// - Parameter content: The elements to show inside the alert box.
     public init(@HTMLBuilder content: () -> some HTML) {
         self.content = content()
     }
 
+    /// Sets the role for this alert, which controls its color.
+    /// - Parameter role: The new role to apply. Any role other than `.default` adds
+    /// Bootstrap's `alert-<role>` class, such as `alert-danger`.
+    /// - Returns: A new `Alert` instance with the updated role.
     public func role(_ role: Role) -> Alert {
         var copy = self
         copy.role = role

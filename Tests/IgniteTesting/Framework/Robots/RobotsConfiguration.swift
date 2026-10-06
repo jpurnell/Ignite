@@ -22,6 +22,6 @@ struct RobotsConfigurationTests {
 
 // MARK: - RobotsConfigurationMock
 
-final class RobotsConfigurationMock: RobotsConfiguration, @unchecked Sendable {
+struct RobotsConfigurationMock: RobotsConfiguration {
     var disallowRules: [DisallowRule] = []
 }

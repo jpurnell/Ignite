@@ -36,6 +36,14 @@ public struct AnimatableData: Hashable, Sendable {
         self.final = to
     }
 
+    /// Creates a new value animation that ends at the given value and starts from a
+    /// default chosen for the property.
+    ///
+    /// The starting value is `transparent` for a background color, `inherit` for a text
+    /// color, `none` for a transform, `1` for opacity, and `initial` for anything else.
+    /// - Parameters:
+    ///   - property: The CSS property to animate.
+    ///   - value: The ending value for the property.
     public init(_ property: AnimatableProperty, value: String) {
         self.property = property
         self.final = value

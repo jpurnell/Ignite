@@ -165,11 +165,18 @@ public extension HorizontalAlignment {
             let alignmentValue = firstValue.rawValue.dropFirst(5)
             let baseClass = "\(prefix)-\(alignmentValue)"
 
+            // Bootstrap classes for the base breakpoint have no infix, so a
+            // breakpoint without one produces the same class as the base.
+            func breakpointClass(_ breakpoint: Breakpoint, _ alignmentValue: Substring) -> String {
+                guard let infix = breakpoint.infix else {
+                    return "\(prefix)-\(alignmentValue)"
+                }
+                return "\(prefix)-\(infix)-\(alignmentValue)"
+            }
+
             // If there's only one value and it's not the base value, include the infix
             guard specifiedValues.count > 1 else {
-                return firstBreakpoint == .xSmall ?
-                    baseClass :
-                    "\(prefix)-\(firstBreakpoint.infix!)-\(alignmentValue)"
+                return breakpointClass(firstBreakpoint, alignmentValue)
             }
 
             // First breakpoint gets base class (no prefix)
@@ -179,7 +186,7 @@ public extension HorizontalAlignment {
             // Process remaining breakpoints
             for element in specifiedValues.elements.dropFirst() where element.value != lastValue {
                 let alignmentValue = element.value.rawValue.dropFirst(5)
-                classes.append("\(prefix)-\(element.key.infix!)-\(alignmentValue)")
+                classes.append(breakpointClass(element.key, alignmentValue))
                 lastValue = element.value
             }
 

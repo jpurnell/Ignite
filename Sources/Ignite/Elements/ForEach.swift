@@ -19,6 +19,7 @@ public struct ForEach<Data: Sequence>: HTML, ListableElement, PassthroughElement
     /// The child elements contained within this HTML element.
     var items: HTMLCollection
 
+    /// The content and behavior of this HTML.
     public var body: some HTML { self }
 
     /// Creates a new ForEach instance that generates HTML content from a sequence.

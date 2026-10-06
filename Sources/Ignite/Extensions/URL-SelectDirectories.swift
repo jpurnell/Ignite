@@ -51,6 +51,9 @@ extension URL {
 
 /// Provides URL to where to find Assets/Content/Includes input directories and Build output directory
 public struct SourceBuildDirectories: Sendable {
+    /// The root directory of the site's source, containing its Assets, Content and Includes folders.
     public let source: URL
+    /// The directory the site is generated into. When the directories were found by searching
+    /// for a Package.swift file this is the package root, and the build folder is created inside it.
     public let build: URL
 }

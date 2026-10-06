@@ -28,15 +28,6 @@ final class StyleManager {
         let uniqueConditions: [EnvironmentConditions: [InlineStyle]]
     }
 
-    /// Context for processing style variations
-    private struct StyleVariationContext {
-        let environment: EnvironmentConditions
-        let styles: [InlineStyle]
-        let collector: StyledHTML
-        let style: any Style
-        let defaultStyles: [InlineStyle]
-    }
-
     /// Registers a style for CSS generation
     /// - Parameter style: The style to register
     func registerStyle(_ style: any Style) {

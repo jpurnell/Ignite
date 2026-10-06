@@ -59,6 +59,9 @@ public struct HStack: HTML {
         self.spacingAmount = .semantic(spacing)
     }
 
+    /// Renders the children inside a `<div>` with Bootstrap's `hstack` class, removing each
+    /// child's bottom margin. Spacing becomes a `gap` style in pixels or a `gap-<amount>` class.
+    /// - Returns: The HTML for this element.
     public func markup() -> Markup {
         let items: [any BodyElement] = items.elements.map {
             var elementAttributes = CoreAttributes()

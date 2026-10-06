@@ -126,12 +126,17 @@ public struct Head: MarkupElement {
 
     /// An inline script that handles theme changes immediately.
     private static var themeSwitchingScript: Script? {
-        guard let sourceURL = Bundle.module.url(forResource: "Resources/js/theme-switching", withExtension: "js"),
-              let contents = try? String(contentsOf: sourceURL)
-        else {
+        guard let sourceURL = Bundle.module.url(forResource: "Resources/js/theme-switching", withExtension: "js") else {
             PublishingContext.shared.addError(.missingSiteResource("js/theme-switching.js"))
             return nil
         }
-        return Script(code: contents)
+
+        do {
+            return Script(code: try String(contentsOf: sourceURL))
+        } catch {
+            logger.error("Failed to read js/theme-switching.js: \(error.localizedDescription, privacy: .public)")
+            PublishingContext.shared.addError(.missingSiteResource("js/theme-switching.js"))
+            return nil
+        }
     }
 }

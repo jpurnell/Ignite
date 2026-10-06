@@ -20,10 +20,12 @@ public enum DisplayModeQuery: String, Query, CaseIterable {
     /// Window controls overlay mode
     case windowControlsOverlay = "display-mode: window-controls-overlay"
 
+    /// The raw CSS media feature string.
     public var condition: String { rawValue }
 }
 
 extension DisplayModeQuery: MediaFeature {
+    /// The media feature as it is written in CSS.
     public var description: String {
         rawValue
     }

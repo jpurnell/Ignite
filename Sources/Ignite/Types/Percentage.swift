@@ -85,6 +85,7 @@ public postfix func % (value: Int) -> Percentage {
 }
 
 extension Percentage: Comparable {
+    /// Orders percentages by their numeric value.
     public static func < (lhs: Percentage, rhs: Percentage) -> Bool {
         lhs.value < rhs.value
     }

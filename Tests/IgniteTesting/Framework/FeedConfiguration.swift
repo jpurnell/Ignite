@@ -28,10 +28,9 @@ struct FeedConfigurationTests {
 
     @Test("Returns non-nil for positive content count", .publishingContext())
     func nonNilForPositiveContentCount() async throws {
-        let config = FeedConfiguration(mode: .descriptionOnly, contentCount: 10)
-        #expect(config != nil)
-        #expect(config?.contentCount == 10)
-        #expect(config?.mode == .descriptionOnly)
+        let config = try #require(FeedConfiguration(mode: .descriptionOnly, contentCount: 10))
+        #expect(config.contentCount == 10)
+        #expect(config.mode == .descriptionOnly)
     }
 
     // MARK: - Path defaults

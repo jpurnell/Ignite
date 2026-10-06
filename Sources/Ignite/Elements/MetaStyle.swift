@@ -37,6 +37,8 @@ public struct MetaStyle: HeadElement {
         self.style = style
     }
 
+    /// Renders the style's CSS, for every theme of the site, inside a `<style>` tag.
+    /// - Returns: The HTML for this element.
     public func markup() -> Markup {
         let allThemes = publishingContext.site.allThemes
         let css = StyleManager.shared.generateCSS(

@@ -5,6 +5,7 @@
 // See LICENSE for license information.
 //
 
+/// The semantic text styles a font can take, such as a title or body text.
 public typealias FontStyle = Font.Style
 
 /// Represents different text styles available in the system
@@ -46,6 +47,7 @@ public extension Font {
         /// A tiny variant of body text suitable for components like footers (0.65rem)
         case xxxSmall
 
+        /// The raw value of this style, such as `h1` for `.title1`.
         public var description: String { rawValue }
 
         /// The Bootstrap CSS variable that defines this style's font size

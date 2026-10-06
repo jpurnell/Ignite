@@ -79,8 +79,10 @@ final class CSSManager {
         }
 
         for (breakpoint, value) in breakpointValues {
+            // Only the base breakpoint has no media query, and that was handled above.
+            guard let query = BreakpointQuery(breakpoint) else { continue }
             appendPendingRegistration(.init(
-                queries: [.breakpoint(.init(breakpoint)!)],
+                queries: [.breakpoint(query)],
                 styles: [.init(.display, value: value ? "none" : "unset")],
                 className: className))
         }
@@ -114,8 +116,10 @@ final class CSSManager {
         }
 
         for (breakpoint, size) in breakpointSizes {
+            // Only the base breakpoint has no media query, and that was handled above.
+            guard let query = BreakpointQuery(breakpoint) else { continue }
             appendPendingRegistration(.init(
-                queries: [.breakpoint(.init(breakpoint)!)],
+                queries: [.breakpoint(query)],
                 styles: [.init(.fontSize, value: size.stringValue)],
                 className: className))
         }

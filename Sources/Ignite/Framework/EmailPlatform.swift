@@ -73,7 +73,7 @@ public enum EmailPlatform: Sendable {
         }
     }
 
-    var emailFieldName: String? {
+    var emailFieldName: String {
         switch self {
         case .sendFox, .buttondown:
             "email"

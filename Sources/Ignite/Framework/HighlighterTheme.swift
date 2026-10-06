@@ -20,6 +20,7 @@ public enum HighlighterTheme: CustomStringConvertible, Hashable, Comparable, Sen
     case none
     case custom(name: String, filePath: String)
 
+    /// The default highlighter theme, which is Xcode Light.
     public static var automatic: HighlighterTheme { .xcodeLight }
 
     var url: String {
@@ -69,6 +70,7 @@ public enum HighlighterTheme: CustomStringConvertible, Hashable, Comparable, Sen
         }
     }
 
+    /// Orders themes alphabetically by their string representation.
     public static func < (lhs: HighlighterTheme, rhs: HighlighterTheme) -> Bool {
         lhs.description < rhs.description
     }

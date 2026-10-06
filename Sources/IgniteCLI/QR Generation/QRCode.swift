@@ -15,7 +15,7 @@ import CoreImage
 ///
 /// ```swift
 /// let qrCode = try QRCode(utf8String: "https://example.com")
-/// print(qrCode.smallAsciiRepresentation())
+/// Output.standard.line(qrCode.smallAsciiRepresentation())
 /// ```
 struct QRCode {
     /// Creates a QR code with the specified UTF-8 string.
@@ -46,19 +46,6 @@ struct QRCode {
     ) throws {
         self.current = try self.generate(text: text, errorCorrection: errorCorrection)
         self.currentErrorCorrection = errorCorrection
-    }
-
-    /// Returns a string representation of the QR code using block characters.
-    /// - Returns: A multiline string where filled blocks represent QR code dots.
-    func asciiRepresentation() -> String {
-        var result = ""
-        for row in 0 ..< self.current.dimension {
-            for col in 0 ..< self.current.dimension {
-                result += self.current[row, col] ? "██" : "  "
-            }
-            result += "\n"
-        }
-        return result
     }
 
     /// Returns a compact string representation using half-block characters.
@@ -103,7 +90,9 @@ struct QRCode {
     /// - Returns: A boolean matrix representing the QR code.
     /// - Throws: `QRCodeError` if generation fails.
     private func generate(data: Data, errorCorrection: ErrorCorrection) throws -> BoolMatrix {
-        let filter = CIFilter(name: "CIQRCodeGenerator")!
+        guard let filter = CIFilter(name: "CIQRCodeGenerator") else {
+            throw QRCodeError.cannotGenerateImage
+        }
         filter.setValue(data, forKey: "inputMessage")
         filter.setValue(errorCorrection.level, forKey: "inputCorrectionLevel")
 
@@ -120,7 +109,10 @@ struct QRCode {
 
         var rawData = [UInt8](repeating: 0, count: width * height)
         try rawData.withUnsafeMutableBytes { rawBufferPointer in
-            let rawPtr = rawBufferPointer.baseAddress!
+            // The base address is nil only for an empty buffer, i.e. a zero-sized image.
+            guard let rawPtr = rawBufferPointer.baseAddress else {
+                throw QRCodeError.cannotGenerateImage
+            }
             guard let context = CGContext(
                 data: rawPtr,
                 width: width,
@@ -135,7 +127,11 @@ struct QRCode {
             context.draw(qrImage, in: CGRect(x: 0, y: 0, width: width, height: height))
         }
 
-        return BoolMatrix(dimension: width, flattened: rawData.map { $0 == 0 ? true : false })
+        // A QR code is square; anything else means the image was not generated correctly.
+        guard let matrix = BoolMatrix(dimension: width, flattened: rawData.map { $0 == 0 ? true : false }) else {
+            throw QRCodeError.cannotGenerateImage
+        }
+        return matrix
     }
 }
 #endif

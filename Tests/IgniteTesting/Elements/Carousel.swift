@@ -20,9 +20,9 @@ class CarouselTests: IgniteTestSuite {
         }
 
         let output = element.markupString()
-        let carouselID = firstCarouselID(in: output)
+        let carouselID = try #require(firstCarouselID(in: output))
 
-        #expect(carouselID != nil)
+        #expect(carouselID.wholeMatch(of: /carousel[A-Za-z0-9]{5}/)?.output == carouselID[...])
         #expect(output.contains(#"class="carousel-indicators""#))
         #expect(output.contains(#"data-bs-slide-to="0""#))
         #expect(output.contains(#"data-bs-slide-to="1""#))
@@ -31,10 +31,8 @@ class CarouselTests: IgniteTestSuite {
         #expect(output.contains(#"data-bs-slide="prev""#))
         #expect(output.contains(#"data-bs-slide="next""#))
 
-        if let carouselID {
-            let target = "data-bs-target=\"#\(carouselID)\""
-            #expect(countOccurrences(of: target, in: output) == 4)
-        }
+        let target = "data-bs-target=\"#\(carouselID)\""
+        #expect(countOccurrences(of: target, in: output) == 4)
     }
 
     @Test("Custom move style and interval generate transform transition without fade class", .publishingContext())

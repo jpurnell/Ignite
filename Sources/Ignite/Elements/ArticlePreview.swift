@@ -35,6 +35,9 @@ public struct ArticlePreview: HTML {
         self.article = article
     }
 
+    /// Replaces the default card layout of this preview with a custom one.
+    /// - Parameter style: The style that builds the HTML for the article.
+    /// - Returns: A new `ArticlePreview` instance that renders using the given style.
     public func articlePreviewStyle<S: ArticlePreviewStyle>(_ style: S) -> ArticlePreview {
         var copy = self
         copy.style = style

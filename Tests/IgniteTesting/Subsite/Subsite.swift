@@ -31,7 +31,7 @@ class SubsiteTests: IgniteSubsiteTestSuite {
 
         let element = Body()
         let output = element.markupString()
-        let path = publishingContext.path(for: URL(string: "/js")!)
+        let path = try publishingContext.path(for: #require(URL(string: "/js")))
 
         #expect(output == """
         <body class="container"><p>TEXT</p>\
@@ -47,8 +47,7 @@ class SubsiteTests: IgniteSubsiteTestSuite {
     func file(scriptFile: String) async throws {
         let element = Script(file: scriptFile)
         let output = element.markupString()
-        let expectedPath = publishingContext.path(for: URL(string: scriptFile)!)
-        #expect(output == "<script src=\"\(expectedPath)\"></script>")
+        #expect(output == "<script src=\"\(scriptFile)\"></script>")
     }
 
     @Test("Attributes Test", .publishingContext(.subsite), arguments: ["/code.js"])
@@ -58,8 +57,7 @@ class SubsiteTests: IgniteSubsiteTestSuite {
             .customAttribute(name: "custom", value: "part")
         let output = element.markupString()
 
-        let expectedPath = publishingContext.path(for: URL(string: scriptFile)!)
-        #expect(output == "<script custom=\"part\" src=\"\(expectedPath)\" data-key=\"value\"></script>")
+        #expect(output == "<script custom=\"part\" src=\"\(scriptFile)\" data-key=\"value\"></script>")
     }
 
     // MARK: - Link
@@ -68,8 +66,7 @@ class SubsiteTests: IgniteSubsiteTestSuite {
     func target(for target: String, description: String) async throws {
         let element = Link(description, target: target)
         let output = element.markupString()
-        let expectedPath = publishingContext.path(for: URL(string: target)!)
-        #expect(output == "<a href=\"\(expectedPath)\">\(description)</a>")
+        #expect(output == "<a href=\"\(target)\">\(description)</a>")
     }
 
     @Test("Page Target Test", .publishingContext(.subsite))

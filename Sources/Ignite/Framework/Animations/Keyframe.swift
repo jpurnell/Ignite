@@ -5,6 +5,7 @@
 // See LICENSE for license information.
 //
 
+/// A single keyframe in an animation sequence.
 public typealias Keyframe = Animation.Frame
 
 public extension Animation {

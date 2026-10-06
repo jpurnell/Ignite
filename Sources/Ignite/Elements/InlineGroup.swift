@@ -24,6 +24,7 @@ public struct InlineGroup: InlineElement, PassthroughElement {
     /// The child elements contained within this group.
     var items: InlineElementCollection
 
+    /// The content and behavior of this element.
     public var body: some InlineElement { self }
 
     /// Creates a new group containing the given inline content.
@@ -38,6 +39,9 @@ public struct InlineGroup: InlineElement, PassthroughElement {
         self.items = InlineElementCollection([content])
     }
 
+    /// Renders each child in turn with this group's attributes merged into it. The group
+    /// adds no wrapping element of its own.
+    /// - Returns: The HTML for this element.
     public func markup() -> Markup {
         items.map {
             var item: any InlineElement = $0

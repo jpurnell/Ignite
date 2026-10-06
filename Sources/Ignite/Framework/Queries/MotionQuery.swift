@@ -12,10 +12,12 @@ public enum MotionQuery: String, Query, CaseIterable {
     /// Standard motion preference
     case allowed = "prefers-reduced-motion: no-preference"
 
+    /// The raw CSS media feature string.
     public var condition: String { rawValue }
 }
 
 extension MotionQuery: MediaFeature {
+    /// The media feature as it is written in CSS.
     public var description: String {
         rawValue
     }

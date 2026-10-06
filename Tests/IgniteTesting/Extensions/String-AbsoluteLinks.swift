@@ -13,7 +13,12 @@ import Testing
 /// Tests for the `String-AbsoluteLinks` extension.
 @Suite("String-AbsoluteLinks Tests")
 struct StringAbsoluteLinksTests {
-    let baseURL = URL(string: "https://example.com")!
+    let baseURL: URL
+
+    init() throws {
+        baseURL = try #require(URL(string: "https://example.com"))
+    }
+
     @Test("Absolute links for simple paths", .publishingContext())
     func makingAbsoluteLinks_forSimplePaths() async throws {
         // Given
@@ -92,14 +97,14 @@ struct StringAbsoluteLinksTests {
     @Test("Absolute links for an invalid base URL", .publishingContext())
     func makingAbsoluteLinks_forAnInvalidBaseURL() async throws {
         // Given
-        let invalidBaseURL = URL(string: "not a url")
+        let invalidBaseURL = try #require(URL(string: "not a url"))
         let html = """
         <img src="/images/pic1.jpg">
         <a href="/about">About Us</a>
         """
         let expectedAbsoluteLink = "not%20a%20url/images/pic1.jpg"
         // When
-        let result = html.makingAbsoluteLinks(relativeTo: invalidBaseURL!)
+        let result = html.makingAbsoluteLinks(relativeTo: invalidBaseURL)
         // Then
         #expect(result.contains("src=\"\(expectedAbsoluteLink)"))
     }

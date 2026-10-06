@@ -61,6 +61,8 @@ final class AnimationManager {
             let newContent = existingContent + "\n\n" + cssBlocks.joined(separator: "\n\n")
             try newContent.write(to: file, atomically: true, encoding: .utf8)
         } catch {
+            let reason = error.localizedDescription
+            logger.error("Failed to append animations to \(file.path, privacy: .public): \(reason, privacy: .public)")
             PublishingContext.shared.addError(.failedToWriteFile("css/ignite-core.min.css"))
         }
     }

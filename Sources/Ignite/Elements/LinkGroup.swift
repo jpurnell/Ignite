@@ -118,7 +118,7 @@ public struct LinkGroup: HTML {
     private func renderStandardLink() -> Markup {
         var linkAttributes = attributes.appending(classes: "link-plain", "d-inline-block")
 
-        guard let url = URL(string: url) else {
+        guard let url = URL(markupReference: url) else {
             publishingContext.addWarning("One of your links uses an invalid URL.")
             return Markup()
         }

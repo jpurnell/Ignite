@@ -106,9 +106,8 @@ class ThemeHelpersTests: IgniteTestSuite {
         let lightBodyColor = lightStyles.first { $0.property == "--bs-body-color" }?.value
         let darkBodyColor = darkStyles.first { $0.property == "--bs-body-color" }?.value
 
-        #expect(lightBodyColor != nil)
-        #expect(darkBodyColor != nil)
-        #expect(lightBodyColor != darkBodyColor)
+        #expect(lightBodyColor == "rgb(33 37 41 / 100%)")
+        #expect(darkBodyColor == "rgb(222 226 230 / 100%)")
     }
 
     @Test("Theme styles include syntax highlighter theme variable", .publishingContext())

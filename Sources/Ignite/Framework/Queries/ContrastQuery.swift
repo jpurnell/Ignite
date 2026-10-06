@@ -14,10 +14,12 @@ public enum ContrastQuery: String, Query, CaseIterable {
     /// Low contrast preference
     case low = "prefers-contrast: less"
 
+    /// The raw CSS media feature string.
     public var condition: String { rawValue }
 }
 
 extension ContrastQuery: MediaFeature {
+    /// The media feature as it is written in CSS.
     public var description: String {
         rawValue
     }

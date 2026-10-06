@@ -144,7 +144,7 @@ public struct List: HTML {
             // We need to convert our symbol to something
             // Unicode friendly, in case they use emoji.
             let cssHex = symbol.unicodeScalars
-                .map { String(format: "\\%X", $0.value) }
+                .map { "\\" + String($0.value, radix: 16, uppercase: true) }
                 .joined()
 
             listMarkerType = "'\(cssHex)'"

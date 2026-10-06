@@ -28,7 +28,7 @@ public struct Script: HTML, HeadElement {
     /// Creates a new script that references a local file.
     /// - Parameter file: The URL of the file to load.
     public init(file: String) {
-        self.file = URL(string: file)
+        self.file = URL(markupReference: file)
     }
 
     /// Creates a new script that references an external file.

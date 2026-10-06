@@ -25,32 +25,46 @@ struct NewCommand: ParsableCommand {
 
     /// Runs this command. Automatically called by Argument Parser.
     func run() throws {
+        try run(output: .standard, errors: .standardError)
+    }
+
+    /// Creates the site, saying what happened on the outputs given.
+    /// - Parameters:
+    ///   - output: Receives progress and, on success, what to do next.
+    ///   - errors: Receives the reasons a site could not be created.
+    func run(output: Output, errors: Output) throws {
         guard template.starts(with: "https://") else {
-            print("❌ Template URL must start with https://")
+            logger.error("Refused template \(template, privacy: .public): not an https:// address.")
+            errors.line("❌ Template URL must start with https://")
             return
         }
 
         // Ensure we aren't trying to overwrite an existing site.
         guard FileManager.default.fileExists(atPath: "./\(name)") == false else {
-            print("❌ Directory '\(name)' is not empty; aborting.")
+            logger.error("Refused to create \(name, privacy: .public): it already exists.")
+            errors.line("❌ Directory '\(name)' is not empty; aborting.")
             return
         }
 
         // Clone from remote Git repository
-        print("⚙️  Creating a new Ignite site in '\(name)'...")
-        let result = try Process.execute(command: "git clone \(template) \(name)")
+        output.line("⚙️  Creating a new Ignite site in '\(name)'...")
+        let result = try Process.execute(command: ["git", "clone", "--", template, name], timeout: 600)
 
         if result.error.contains("fatal") {
-            print("❌ Failed to create a new site. See errors below:")
-            print(result.error)
+            logger.error("git clone of \(template, privacy: .public) failed.")
+            errors.line("❌ Failed to create a new site. See errors below:")
+            errors.line(result.error)
         } else {
             // If everything worked, remove the Git history
             // for the IgniteStarter repo to avoid confusion.
-            try Process.execute(command: "rm -rf \(name)/.git")
-            print("✅ Success!")
+            try Process.execute(command: ["rm", "-rf", "--", "\(name)/.git"], timeout: 60)
+            logger.info("Created a new site in \(name, privacy: .public).")
+            output.line("✅ Success!")
 
-            print("\nRun the following commands to edit your site in Xcode:\n\tcd \(name)\n\topen Package.swift\n")
-            print("Tip: If you want to build with Xcode, go to the Product menu and choose Destination > My Mac.\n")
+            let nextSteps = "\nRun the following commands to edit your site in Xcode:\n\tcd \(name)\n\topen Package.swift\n"
+            output.line(nextSteps)
+            let tip = "Tip: If you want to build with Xcode, go to the Product menu and choose Destination > My Mac.\n"
+            output.line(tip)
         }
     }
 }

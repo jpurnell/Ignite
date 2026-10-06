@@ -35,37 +35,54 @@ struct Array2D<T> {
     ///   - rows: The number of rows.
     ///   - columns: The number of columns.
     ///   - flattened: The data as a flattened array.
-    init(rows: Int, columns: Int, flattened: [T]) {
-        precondition(
-            rows * columns == flattened.count,
-            "row/column counts don't match initial flattened data count")
+    /// - Returns: `nil` if either dimension is negative, or if `flattened`
+    /// does not contain exactly `rows * columns` values.
+    init?(rows: Int, columns: Int, flattened: [T]) {
+        guard rows >= 0, columns >= 0, rows * columns == flattened.count else {
+            return nil
+        }
         self.rows = rows
         self.columns = columns
         self.array = flattened
     }
 
-    /// Access individual cells in the array.
+    /// Returns the position of a cell in the underlying storage.
     /// - Parameters:
     ///   - row: The row index.
     ///   - column: The column index.
-    subscript(row: Int, column: Int) -> T {
-        get {
-            precondition(
-                row < self.rows,
-                "Row \(row) Index is out of range. Array2D<T>(rows:\(rows), columns: \(columns))")
-            precondition(
-                column < self.columns,
-                "Column \(column) Index is out of range. Array2D<T>(rows:\(rows), columns: \(columns))")
-            return self.array[(row * self.columns) + column]
+    /// - Returns: The storage index, or `nil` if the cell lies outside the array.
+    private func storageIndex(row: Int, column: Int) -> Int? {
+        guard row >= 0, row < rows, column >= 0, column < columns else {
+            return nil
         }
-        set {
-            precondition(
-                row < self.rows,
-                "Row \(row) Index is out of range. Array2D<T>(rows:\(rows), columns: \(columns))")
-            precondition(
-                column < self.columns,
-                "Column \(column) Index is out of range. Array2D<T>(rows:\(rows), columns: \(columns))")
-            self.array[(row * self.columns) + column] = newValue
+        return (row * columns) + column
+    }
+
+    /// Reads an individual cell in the array.
+    /// - Parameters:
+    ///   - row: The row index.
+    ///   - column: The column index.
+    /// - Returns: The value in the cell, or `nil` if the cell lies outside the array.
+    subscript(row: Int, column: Int) -> T? {
+        guard let index = storageIndex(row: row, column: column) else {
+            return nil
         }
+        return array[index]
+    }
+
+    /// Writes an individual cell in the array.
+    /// - Parameters:
+    ///   - value: The value to store.
+    ///   - row: The row index.
+    ///   - column: The column index.
+    /// - Returns: `true` if the value was stored, or `false` if the cell lies
+    /// outside the array, in which case the array is unchanged.
+    @discardableResult
+    mutating func set(_ value: T, row: Int, column: Int) -> Bool {
+        guard let index = storageIndex(row: row, column: column) else {
+            return false
+        }
+        array[index] = value
+        return true
     }
 }

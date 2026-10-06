@@ -40,6 +40,9 @@ public struct ZStack: HTML {
         self.alignment = alignment
     }
 
+    /// Renders the children inside a `<div>` that uses CSS grid to place every child in the
+    /// same cell, with later children drawn above earlier ones.
+    /// - Returns: The HTML for this element.
     public func markup() -> Markup {
         var items = items.elements
 

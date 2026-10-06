@@ -6,17 +6,22 @@
 //
 
 import Foundation
+import Testing
 
 extension String {
     // no, this isn't appropriate for general HTML parsing,
     // but for our purposes, testing nested tags,
     // it should work fine
     func htmlTagWithCloseTag(_ tagName: String) -> (attributes: String, contents: String)? {
-        // this force try is acceptable because it is known to succeed
-        // if it does fail, then there is something wrong at the call site
-        // (maybe tagName is malformed?)
-        // swiftlint:disable:next force_try
-        let regex = try! Regex("(?s)<\(tagName)(.*?)>(.*?)</\(tagName)>")
+        // if the pattern fails to compile, there is something wrong at the call site
+        // (maybe tagName is malformed?), so record it as a test failure rather than trapping
+        let regex: Regex<AnyRegexOutput>
+        do {
+            regex = try Regex("(?s)<\(tagName)(.*?)>(.*?)</\(tagName)>")
+        } catch {
+            Issue.record(error, "Could not build a tag regex for '\(tagName)'")
+            return nil
+        }
 
         guard let unwrapped = firstMatch(of: regex) else {
             return nil
@@ -29,11 +34,15 @@ extension String {
     // no, this isn't appropriate for general HTML parsing,
     // but for our purposes, testing output, it should work fine
     func htmlAttribute(named name: String) -> String? {
-        // this force try is acceptable because it is known to succeed
-        // if it does fail, then there is something wrong at the call site
-        // (maybe tagName is malformed?)
-        // swiftlint:disable:next force_try
-        let regex = try! Regex("\(name)=\"(.*?)\"")
+        // if the pattern fails to compile, there is something wrong at the call site
+        // (maybe name is malformed?), so record it as a test failure rather than trapping
+        let regex: Regex<AnyRegexOutput>
+        do {
+            regex = try Regex("\(name)=\"(.*?)\"")
+        } catch {
+            Issue.record(error, "Could not build an attribute regex for '\(name)'")
+            return nil
+        }
 
         guard let found = firstMatch(of: regex)?[1].substring else { return nil }
         return String(found)

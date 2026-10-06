@@ -61,15 +61,15 @@ extension PublishingContext {
 
     /// Renders one piece of Markdown content.
     /// - Parameter content: The content to render.
-    func render(_ article: Article) {
-        let layout = layout(for: article)
+    func render(_ article: Article) throws {
+        let layout = try layout(for: article)
         currentRenderingPath = article.path
 
         let pageMetadata = PageMetadata(
             title: article.title,
             description: article.description,
             url: site.url.appending(path: article.path),
-            image: article.image.flatMap { URL(string: $0) }
+            image: article.image.flatMap { URL(markupReference: $0) }
         )
 
         let values = EnvironmentValues(
@@ -168,7 +168,7 @@ extension PublishingContext {
     /// layout in your site's `layouts` property is used.
     /// - Parameter content: The content that is being rendered.
     /// - Returns: The correct `ContentPage` instance to use for this content.
-    func layout(for article: Article) -> any ArticlePage {
+    func layout(for article: Article) throws -> any ArticlePage {
         if let contentLayout = article.layout {
             for layout in site.articlePages {
                 let layoutName = String(describing: type(of: layout))
@@ -178,11 +178,11 @@ extension PublishingContext {
                 }
             }
 
-            fatalError(.missingNamedLayout(contentLayout))
+            throw PublishingError.missingNamedLayout(contentLayout)
         } else if let defaultLayout = site.articlePages.first {
             return defaultLayout
         } else {
-            fatalError(.missingDefaultLayout)
+            throw PublishingError.missingDefaultLayout
         }
     }
 }

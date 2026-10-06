@@ -24,7 +24,7 @@ struct ItemTests {
         let output = element.markupString()
 
         // extract the itemID
-        let startIndex = output.firstIndex(of: "#")!
+        let startIndex = try #require(output.firstIndex(of: "#"))
         let itemIDStringRange =  output.index(after: startIndex)..<output.index(startIndex, offsetBy: 25)
         let itemID = output[itemIDStringRange]
 

@@ -54,6 +54,9 @@ public struct Label: InlineElement {
         self.icon = icon()
     }
 
+    /// Renders the icon followed by the title inside an inline-flex `<span>`, placing 10 pixels
+    /// between them unless either one already sets that margin itself.
+    /// - Returns: The HTML for this element.
     public func markup() -> Markup {
         var icon = icon
 

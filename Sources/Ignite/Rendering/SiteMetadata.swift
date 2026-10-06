@@ -26,6 +26,6 @@ extension SiteMetadata {
         name: "",
         titleSuffix: "",
         description: "",
-        url: URL(string: "about:blank")!
+        url: .blankPlaceholder
     )
 }

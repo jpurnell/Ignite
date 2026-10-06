@@ -28,12 +28,8 @@ public extension HTML {
     }
 }
 
-protocol CSSRepresentable {
-    var css: String { get }
-}
-
 /// The possible background sizes
-public enum BackgroundImageContentMode: CSSRepresentable, Sendable {
+public enum BackgroundImageContentMode: Sendable {
     /// This is the default value. The background image is displayed at its original size.
     case original
 
@@ -58,16 +54,17 @@ public enum BackgroundImageContentMode: CSSRepresentable, Sendable {
 }
 
 /// A type representing the background image position within the page element
-public struct BackgroundPosition: CSSRepresentable, Sendable {
+public struct BackgroundPosition: Sendable {
 
     /// The possible absolute values going from left to right and top to bottom.
     /// For example an offset from the top edge of `10px` means 10 px down from the top.
     /// Likewise an offset from the top edge of 50% means down 50 % of the total height.
     /// Calculation can be made using calc, e.g. calc(50% + 100px) means centered plus 100px.
-    public enum Value: CSSRepresentable {
+    public enum Value {
         case pixel(_ value: Int)
         case percent(_ value: Int)
 
+        /// An offset of zero, written as `0%`.
         public static var zero: Self { .percent(0) }
 
         /// The css description of the offset
@@ -80,7 +77,7 @@ public struct BackgroundPosition: CSSRepresentable, Sendable {
     }
 
     /// The possible horizontal alignment values.
-    public enum HorizontalAlignment: CSSRepresentable {
+    public enum HorizontalAlignment {
         case leading, center, trailing, absolute(Value)
 
         /// The CSS name of the alignment.
@@ -105,7 +102,7 @@ public struct BackgroundPosition: CSSRepresentable, Sendable {
     }
 
     /// The possible vertical alignment values.
-    public enum VerticalAlignment: CSSRepresentable {
+    public enum VerticalAlignment {
         case top, center, bottom, absolute(Value)
 
         /// The CSS name of the alignment.

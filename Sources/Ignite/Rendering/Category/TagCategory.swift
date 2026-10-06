@@ -5,7 +5,7 @@
 // See LICENSE for license information.
 //
 
-// A single tag applied to an article.
+/// A single tag applied to an article.
 public struct TagCategory: Category {
     /// The name of the tag.
     public var name: String

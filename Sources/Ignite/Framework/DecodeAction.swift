@@ -7,7 +7,9 @@
 
 import Foundation
 
-public struct DecodeAction {
+/// Finds, loads and decodes files in the Resources folder of your site, usually through
+/// `@Environment(\.decode)`.
+public struct DecodeAction: Sendable {
     /// The root directory for the user's website package.
     var sourceDirectory: URL
 
@@ -15,10 +17,14 @@ public struct DecodeAction {
     /// - Parameter resource: The file to look for, e.g. "quotes.json"
     /// - Returns: A `Data` instance of the file's contents, if it can be found.
     public func data(forResource resource: String) -> Data? {
-        if let url = url(forResource: resource) {
-            try? Data(contentsOf: url)
-        } else {
-            nil
+        guard let url = url(forResource: resource) else { return nil }
+
+        do {
+            return try Data(contentsOf: url)
+        } catch {
+            let reason = error.localizedDescription
+            logger.error("Failed to load \(resource, privacy: .public): \(reason, privacy: .public)")
+            return nil
         }
     }
 
@@ -49,36 +55,60 @@ public struct DecodeAction {
         dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = .deferredToDate,
         keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy = .useDefaultKeys
     ) -> T? {
-        if let url = url(forResource: resource) {
-            if let data = try? Data(contentsOf: url) {
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = dateDecodingStrategy
-                decoder.keyDecodingStrategy = keyDecodingStrategy
-
-                do {
-                    return try decoder.decode(T.self, from: data)
-                } catch let DecodingError.keyNotFound(key, context) {
-                    // swiftlint:disable:next line_length
-                    print("Failed to decode \(resource) due to missing key '\(key.stringValue)' – \(context.debugDescription)")
-                } catch let DecodingError.typeMismatch(_, context) {
-                    print("Failed to decode \(resource) due to type mismatch – \(context.debugDescription)")
-                } catch let DecodingError.valueNotFound(type, context) {
-                    print("Failed to decode \(resource) due to missing \(type) value – \(context.debugDescription)")
-                } catch DecodingError.dataCorrupted(_) {
-                    print("Failed to decode \(resource) because it appears to be invalid JSON.")
-                } catch {
-                    print("Failed to decode \(resource): \(error.localizedDescription)")
-                }
-            } else {
-                print("Failed to load \(resource)")
-            }
-        } else {
-            print("Failed to locate \(resource) in Resources folder.")
+        guard let url = url(forResource: resource) else {
+            report("Failed to locate \(resource) in Resources folder.")
+            return nil
         }
 
-        // If we're still here it means something failed, and
-        // an appropriate message has already been printed. So,
-        // we can safely send back `nil`, meaning "not decoded."
-        return nil
+        let data: Data
+        do {
+            data = try Data(contentsOf: url)
+        } catch {
+            let reason = error.localizedDescription
+            logger.error("Failed to load \(resource, privacy: .public): \(reason, privacy: .public)")
+            report("Failed to load \(resource)")
+            return nil
+        }
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = dateDecodingStrategy
+        decoder.keyDecodingStrategy = keyDecodingStrategy
+
+        do {
+            return try decoder.decode(T.self, from: data)
+        } catch {
+            // The message says what went wrong, so sending back
+            // `nil` is enough to mean "not decoded."
+            let message = Self.failureMessage(for: error, resource: resource)
+            logger.error("\(message, privacy: .public)")
+            report(message)
+            return nil
+        }
+    }
+
+    /// Describes why a resource could not be decoded, for the site's author.
+    /// - Parameters:
+    ///   - error: The error thrown while decoding.
+    ///   - resource: The file that was being decoded, e.g. "quotes.json".
+    /// - Returns: A one-line explanation naming the resource.
+    static func failureMessage(for error: any Error, resource: String) -> String {
+        switch error {
+        case let DecodingError.keyNotFound(key, context):
+            "Failed to decode \(resource) due to missing key '\(key.stringValue)' – \(context.debugDescription)"
+        case let DecodingError.typeMismatch(_, context):
+            "Failed to decode \(resource) due to type mismatch – \(context.debugDescription)"
+        case let DecodingError.valueNotFound(type, context):
+            "Failed to decode \(resource) due to missing \(type) value – \(context.debugDescription)"
+        case DecodingError.dataCorrupted:
+            "Failed to decode \(resource) because it appears to be invalid JSON."
+        default:
+            "Failed to decode \(resource): \(error.localizedDescription)"
+        }
+    }
+
+    /// Tells the site's author that a resource could not be used, on the output
+    /// of the publish in progress, or standard output when there is none.
+    private func report(_ message: String) {
+        (PublishingContext.current?.output ?? .standard).line(message)
     }
 }

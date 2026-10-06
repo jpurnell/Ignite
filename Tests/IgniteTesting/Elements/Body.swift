@@ -42,7 +42,7 @@ class BodyTests: IgniteTestSuite {
     func simpleBody() async throws {
         let element = Body()
         let output = element.markupString()
-        let path = publishingContext.path(for: URL(string: "/js")!)
+        let path = try publishingContext.path(for: #require(URL(string: "/js")))
 
         #expect(output == """
         <body class="container">\

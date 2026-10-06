@@ -5,6 +5,7 @@
 // See LICENSE for license information.
 //
 
+/// The standard font weights, from ultra light (100) through black (900).
 public typealias FontWeight = Font.Weight
 
 /// The list of standard font weights supported by HTML. This
@@ -32,6 +33,7 @@ public extension Font {
             return false
         }
 
+        /// The numeric CSS weight written as a string, such as `700` for `.bold`.
         public var description: String {
             rawValue.formatted()
         }

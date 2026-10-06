@@ -284,11 +284,34 @@ public extension Site {
         buildDirectoryPath: String = "Build",
         logOptions: PublishingLogOptions = .standard
     ) async throws {
+        try await publish(
+            from: file,
+            buildDirectoryPath: buildDirectoryPath,
+            logOptions: logOptions,
+            output: .standard
+        )
+    }
+
+    /// Performs the entire publishing flow from a file in user space, writing the
+    /// build's results to an output you provide rather than to standard output.
+    /// - Parameters:
+    ///   - file: The path of the file that triggered the build.
+    ///   - buildDirectoryPath: This path will generate the necessary
+    ///   artifacts for the web page. Please modify as needed.
+    ///   - logOptions: Which publishing diagnostics should be written.
+    ///   - output: Where the notices, warnings and errors of this build are written.
+    mutating func publish(
+        from file: StaticString = #filePath,
+        buildDirectoryPath: String = "Build",
+        logOptions: PublishingLogOptions = .standard,
+        output: PublishingOutput
+    ) async throws {
         try await PublishingContext.withInitialized(
             for: self,
             from: file,
             buildDirectoryPath: buildDirectoryPath,
-            logOptions: logOptions
+            logOptions: logOptions,
+            output: output
         ) { context in
             try await performPublish(with: context)
         }
@@ -304,11 +327,33 @@ public extension Site {
         buildDirectory: URL,
         logOptions: PublishingLogOptions = .standard
     ) async throws {
+        try await publish(
+            sourceDirectory: sourceDirectory,
+            buildDirectory: buildDirectory,
+            logOptions: logOptions,
+            output: .standard
+        )
+    }
+
+    /// Publishes the site using explicit directory paths, writing the build's
+    /// results to an output you provide rather than to standard output.
+    /// - Parameters:
+    ///   - sourceDirectory: The root directory containing Assets, Content, and Includes folders.
+    ///   - buildDirectory: The directory where the generated site will be written.
+    ///   - logOptions: Which publishing diagnostics should be written.
+    ///   - output: Where the notices, warnings and errors of this build are written.
+    mutating func publish(
+        sourceDirectory: URL,
+        buildDirectory: URL,
+        logOptions: PublishingLogOptions = .standard,
+        output: PublishingOutput
+    ) async throws {
         try await PublishingContext.withInitialized(
             for: self,
             sourceDirectory: sourceDirectory,
             buildDirectory: buildDirectory,
-            logOptions: logOptions
+            logOptions: logOptions,
+            output: output
         ) { context in
             try await performPublish(with: context)
         }
@@ -337,20 +382,7 @@ public extension Site {
 
         try await context.publish()
 
-        let errorMessages = context.shouldLog(.errors) ? context.errors.compactMap(\.errorDescription) : []
-        let warningMessages = context.shouldLog(.warnings) ? Array(context.warnings) : []
-
-        if !errorMessages.isEmpty || !warningMessages.isEmpty {
-            print("📘 Publish completed with exceptions:")
-            if !errorMessages.isEmpty {
-                print(errorMessages.map { "\t📕 \($0)" }.joined(separator: "\n"))
-            }
-            if !warningMessages.isEmpty {
-                print(warningMessages.map { "\t📙 \($0)" }.joined(separator: "\n"))
-            }
-        } else if context.errors.isEmpty && context.warnings.isEmpty && context.shouldLog(.notices) {
-            print("📗 Publish completed!")
-        }
+        context.writeCompletionSummary()
     }
 
     /// The default implementation does nothing.

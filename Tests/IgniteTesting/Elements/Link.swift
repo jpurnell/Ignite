@@ -31,6 +31,17 @@ enum LinkDestination: Sendable {
             TestSubsitePage()
         }
     }
+
+    /// The `href` a link to ``page`` renders: the page's slug with the trailing slash
+    /// that directory-style pages are served at.
+    var expectedHref: String {
+        switch self {
+        case .standard:
+            "/test-page/"
+        case .subsite:
+            "/test-subsite-page/"
+        }
+    }
 }
 
 /// Tests for the `title` element.
@@ -45,9 +56,8 @@ class LinkTests: IgniteTestSuite {
         try withPublishingContext(for: site) { context in
             let element = Link(link.description, target: link.target)
             let output = element.markupString()
-            let expectedPath = context.linkPath(for: URL(string: link.target)!)
 
-            #expect(output == "<a href=\"\(expectedPath)\">\(link.description)</a>")
+            #expect(output == "<a href=\"\(link.target)\">\(link.description)</a>")
         }
     }
 
@@ -59,9 +69,8 @@ class LinkTests: IgniteTestSuite {
         try withPublishingContext(for: site) { context in
             let element = Link("This is a test", target: page).linkStyle(.button)
             let output = element.markupString()
-            let expectedPath = context.linkPath(for: URL(string: page.path)!)
 
-            #expect(output == "<a href=\"\(expectedPath)\" class=\"btn btn-primary\">This is a test</a>")
+            #expect(output == "<a href=\"\(destination.expectedHref)\" class=\"btn btn-primary\">This is a test</a>")
         }
     }
 
@@ -76,9 +85,8 @@ class LinkTests: IgniteTestSuite {
                 Text("CONTENT")
             }
             let output = element.markupString()
-            let expectedPath = context.linkPath(for: URL(string: page.path)!)
 
-            #expect(output == "<a href=\"\(expectedPath)\" class=\"link-plain d-inline-block\">MORE <p>CONTENT</p></a>")
+            #expect(output == "<a href=\"\(destination.expectedHref)\" class=\"link-plain d-inline-block\">MORE <p>CONTENT</p></a>")
         }
     }
 
@@ -90,9 +98,8 @@ class LinkTests: IgniteTestSuite {
         try withPublishingContext(for: site) { context in
             let element = Link("Link with warning role.", target: page).role(.warning)
             let output = element.markupString()
-            let expectedPath = context.linkPath(for: URL(string: page.path)!)
 
-            #expect(output == "<a href=\"\(expectedPath)\" class=\"link-warning\">Link with warning role.</a>")
+            #expect(output == "<a href=\"\(destination.expectedHref)\" class=\"link-warning\">Link with warning role.</a>")
         }
     }
 

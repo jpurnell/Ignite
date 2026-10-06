@@ -18,16 +18,6 @@ public enum LineSpacing: String, CaseIterable, Sendable {
 
     /// Relaxed line height (2.0)
     case large = "lg"
-
-    /// The actual multiplier value for this line height
-    var value: Double {
-        switch self {
-        case .xSmall: 1.0
-        case .small: 1.25
-        case .standard: 1.5
-        case .large: 2.0
-        }
-    }
 }
 
 private enum LineSpacingType {

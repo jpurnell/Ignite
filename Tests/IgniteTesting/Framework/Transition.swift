@@ -20,7 +20,7 @@ struct TransitionTests {
         #expect(item.property == .opacity)
         #expect(item.initial == "0")
         #expect(item.final == "1")
-        #expect(item.duration == 0.35)
+        #expect(abs(item.duration - 0.35) < 1e-9)
         #expect(item.timing == .automatic)
     }
 
@@ -81,26 +81,32 @@ struct TransitionTests {
     func flipDurationAndTiming() async throws {
         let transition = Transition.flip(.right)
         let item = transition.data[0]
-        #expect(item.duration == 0.5)
+        #expect(abs(item.duration - 0.5) < 1e-9)
         #expect(item.timing == .easeInOut)
     }
 
     @Test("speed() halves the last data item's duration", .publishingContext())
     func speedModifier() async throws {
         let transition = Transition.fadeIn.speed(2.0)
-        #expect(transition.data[0].duration == 0.35 / 2.0)
+        #expect(abs(transition.data[0].duration - 0.175) < 1e-9)
+    }
+
+    @Test("speed() leaves the duration alone for a speed that isn't positive", .publishingContext(), arguments: [0, -2, Double.nan])
+    func nonPositiveSpeedModifier(speed: Double) async throws {
+        let transition = Transition.fadeIn.speed(speed)
+        #expect(abs(transition.data[0].duration - 0.35) < 1e-9)
     }
 
     @Test("duration() sets the last data item's duration", .publishingContext())
     func durationModifier() async throws {
         let transition = Transition.fadeIn.duration(1.0)
-        #expect(transition.data[0].duration == 1.0)
+        #expect(abs(transition.data[0].duration - 1.0) < 1e-9)
     }
 
     @Test("delay() sets the last data item's delay", .publishingContext())
     func delayModifier() async throws {
         let transition = Transition.fadeIn.delay(0.5)
-        #expect(transition.data[0].delay == 0.5)
+        #expect(abs(transition.data[0].delay - 0.5) < 1e-9)
     }
 
     @Test("Chaining fadeIn and slideIn produces 2 data items", .publishingContext())

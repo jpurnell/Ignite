@@ -85,11 +85,24 @@ public struct Carousel: HTML {
 
     /// Sets the display duration for each slide in the carousel.
     /// - Parameter duration: The amount of time, in seconds, each slide will be displayed before advancing.
+    /// A duration that is not a number, is infinite, or is too large to express in whole
+    /// milliseconds leaves the carousel without an interval of its own.
     /// - Returns: A modified carousel with the updated slide duration.
     public func slideDuration(_ duration: Double) -> Carousel {
         var copy = self
         copy.duration = duration
         return copy
+    }
+
+    /// The slide duration as Bootstrap's `data-bs-interval` wants it: whole milliseconds.
+    ///
+    /// This is `nil` when no duration was set, and also when the duration is not
+    /// representable as a whole number of milliseconds – NaN, infinity, or a value
+    /// too large for `Int` – so that such a duration renders as no interval rather
+    /// than stopping the build.
+    private var intervalInMilliseconds: Int? {
+        guard let duration else { return nil }
+        return Int(exactly: (duration * 1000).rounded(.towardZero))
     }
 
     /// Creates a transition style definition based on the specified carousel style.
@@ -161,7 +174,7 @@ public struct Carousel: HTML {
         .id(carouselID)
         .class("carousel", "slide", doesCrossfade ? "carousel-fade" : nil)
         .data("bs-ride", "carousel")
-        .data("bs-interval", duration != nil ? Int(duration! * 1000).formatted() : "")
+        .data("bs-interval", intervalInMilliseconds?.formatted() ?? "")
         .markup()
     }
 }

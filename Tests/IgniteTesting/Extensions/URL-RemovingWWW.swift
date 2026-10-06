@@ -16,7 +16,7 @@ struct URLRemovingWWWTests {
     @Test("URL contains 'www'", .publishingContext())
     func removingWWW_fromURLWithWWW() async throws {
         // Given
-        let url = URL(string: "https://www.example.com")!
+        let url = try #require(URL(string: "https://www.example.com"))
         // When
         let result = url.removingWWW
         // Then
@@ -26,7 +26,7 @@ struct URLRemovingWWWTests {
     @Test("URL does NOT contain 'www", .publishingContext())
     func removingWWW_fromURLWithoutWWW() async throws {
         // Given
-        let url = URL(string: "https://example.com")!
+        let url = try #require(URL(string: "https://example.com"))
         // When
         let result = url.removingWWW
         // Then
@@ -36,8 +36,8 @@ struct URLRemovingWWWTests {
     @Test("URL contains 'www' in the subdomain", .publishingContext())
     func removingWWW_fromURLWithSubdomain() async throws {
         // Given
-        let url1 = URL(string: "https://www.blog.example.com")!
-        let url2 = URL(string: "https://www.longersubdomain.blog.example.com")!
+        let url1 = try #require(URL(string: "https://www.blog.example.com"))
+        let url2 = try #require(URL(string: "https://www.longersubdomain.blog.example.com"))
         // When
         let result1 = url1.removingWWW
         let result2 = url2.removingWWW
@@ -49,7 +49,7 @@ struct URLRemovingWWWTests {
     @Test("URL contains 'www' and also contains a path", .publishingContext())
     func removingWWW_fromURLWithPath() async throws {
         // Given
-        let url = URL(string: "https://www.example.com/path/to/resource")!
+        let url = try #require(URL(string: "https://www.example.com/path/to/resource"))
         // When
         let result = url.removingWWW
         // Then
@@ -59,7 +59,7 @@ struct URLRemovingWWWTests {
     @Test("URL has an invalid scheme", .publishingContext())
     func removingWWW_fromURLWithInvalidScheme() async throws {
         // Given
-        let url = URL(string: "htp://www.example.com")! // host extraction will succeed
+        let url = try #require(URL(string: "htp://www.example.com")) // host extraction will succeed
         // When
         let result = url.removingWWW
         // Then
@@ -69,9 +69,9 @@ struct URLRemovingWWWTests {
     @Test(" URL contains www in domain or subdomain", .publishingContext())
     func removingWWW_fromURLWithWWWInDomainOrSubdomain() async throws {
         // Given
-        let url1 = URL(string: "https://wwwmywww.example.com")!
-        let url2 = URL(string: "https://www.mysecretwww.com")!
-        let url3 = URL(string: "https://www.www.com")!
+        let url1 = try #require(URL(string: "https://wwwmywww.example.com"))
+        let url2 = try #require(URL(string: "https://www.mysecretwww.com"))
+        let url3 = try #require(URL(string: "https://www.www.com"))
         // When
         let result1 = url1.removingWWW
         let result2 = url2.removingWWW
@@ -85,7 +85,7 @@ struct URLRemovingWWWTests {
     @Test("URL contains an empty host", .publishingContext())
     func removingWWW_fromURLWithEmptyHost() async throws {
         // Given
-        let url = URL(string: "https://www.")!
+        let url = try #require(URL(string: "https://www."))
         // When
         let result = url.removingWWW
         // Then

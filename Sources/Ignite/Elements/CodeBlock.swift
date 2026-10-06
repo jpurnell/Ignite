@@ -116,8 +116,16 @@ public struct CodeBlock: HTML {
     /// Renders this element using publishing context passed in.
     /// - Returns: The HTML for this element.
     public func markup() -> Markup {
-        guard publishingContext.site.allHighlighterThemes.isEmpty == false else {
-            fatalError(.missingDefaultSyntaxHighlighterTheme)
+        // A site with no highlighter theme still gets its code blocks, unstyled, and
+        // the build reports what is missing – once, however many blocks there are.
+        if publishingContext.site.allHighlighterThemes.isEmpty {
+            let alreadyReported = publishingContext.errors.contains { error in
+                if case .missingDefaultSyntaxHighlighterTheme = error { true } else { false }
+            }
+
+            if alreadyReported == false {
+                publishingContext.addError(.missingDefaultSyntaxHighlighterTheme)
+            }
         }
 
         if let language {

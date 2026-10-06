@@ -5,35 +5,38 @@
 // See LICENSE for license information.
 //
 
-private func hintData(text: String) -> [Attribute] {
-    [.init(name: "bs-toggle", value: "tooltip"),
-     .init(name: "bs-title", value: text)]
+/// A data attribute used to configure a tooltip, which always has a value.
+private typealias HintAttribute = (name: String, value: String)
+
+private func hintData(text: String) -> [HintAttribute] {
+    [(name: "bs-toggle", value: "tooltip"),
+     (name: "bs-title", value: text)]
 }
 
-private func hintData(html: String) -> [Attribute] {
-    [.init(name: "bs-toggle", value: "tooltip"),
-     .init(name: "bs-title", value: html),
-     .init(name: "bs-html", value: "true")]
+private func hintData(html: String) -> [HintAttribute] {
+    [(name: "bs-toggle", value: "tooltip"),
+     (name: "bs-title", value: html),
+     (name: "bs-html", value: "true")]
 }
 
-private func hintData(markdown: String) -> [Attribute] {
+private func hintData(markdown: String) -> [HintAttribute] {
     let parser = MarkdownToHTML(markdown: markdown, removeTitleFromBody: true)
     let cleanedHTML = parser.body.replacing(#/<\/?p>/#, with: "")
     return hintData(html: cleanedHTML)
 }
 
 private func hintModifier(
-    data: [Attribute],
+    data: [HintAttribute],
     content: any HTML
 ) -> any HTML {
-    data.reduce(content) { $0.data($1.name, $1.value!) }
+    data.reduce(content) { $0.data($1.name, $1.value) }
 }
 
 private func hintModifier(
-    data: [Attribute],
+    data: [HintAttribute],
     content: any InlineElement
 ) -> any InlineElement {
-    data.reduce(content) { $0.data($1.name, $1.value!) }
+    data.reduce(content) { $0.data($1.name, $1.value) }
 }
 
 public extension HTML {

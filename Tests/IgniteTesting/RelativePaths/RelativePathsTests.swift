@@ -20,7 +20,7 @@ struct RelativePathsTests {
     func defaultBehaviorProducesAbsolutePaths() throws {
         try withPublishingContext(for: TestSite()) { context in
             // Test path(for:) with a local URL
-            let localURL = URL(string: "/js/test.js")!
+            let localURL = try #require(URL(string: "/js/test.js"))
             let result = context.path(for: localURL)
             #expect(result == "/js/test.js")
 
@@ -65,7 +65,7 @@ struct RelativePathsTests {
     @Test("useRelativePaths strips leading slash from path(for:)", .publishingContext())
     func relativePathsStripsLeadingSlash() throws {
         let result = try withPublishingContext(for: TestRelativePathsSite()) { context in
-            let localURL = URL(string: "/js/test.js")!
+            let localURL = try #require(URL(string: "/js/test.js"))
             return context.path(for: localURL)
         }
 
@@ -151,7 +151,7 @@ struct RelativePathsTests {
     @Test("External URLs are never modified by path(for:)", .publishingContext())
     func externalURLsNotModified() throws {
         let result = try withPublishingContext(for: TestRelativePathsSite()) { context in
-            let externalURL = URL(string: "https://cdn.example.com/lib.js")!
+            let externalURL = try #require(URL(string: "https://cdn.example.com/lib.js"))
             return context.path(for: externalURL)
         }
 
@@ -184,7 +184,7 @@ struct RelativePathsTests {
     @Test("Script with external URL is not modified", .publishingContext())
     func externalScriptNotModified() throws {
         let output = try withPublishingContext(for: TestRelativePathsSite()) { _ in
-            let externalURL = URL(string: "https://cdn.example.com/external.js")!
+            let externalURL = try #require(URL(string: "https://cdn.example.com/external.js"))
             let script = Script(file: externalURL)
             return script.markupString()
         }

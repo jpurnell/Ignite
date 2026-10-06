@@ -13,18 +13,15 @@ import Testing
 /// Tests for the `URL-Unwrapped` extension.
 @Suite("URL Static Init Tests")
 struct URLUnwrappedTests {
-    @Test("Creates URL from valid static string", .publishingContext(), arguments: [
-        "https://example.com",
-        "https://www.github.com/twostraws/Ignite",
-        "https://apple.com/path/to/page",
-        "file:///Users/test/Documents"
-    ])
-    func createsURLFromValidStaticString(urlString: String) async throws {
-        // We can't pass StaticString as a test argument, so we verify
-        // the underlying URL(string:) behavior that the static init uses.
-        let url = URL(string: urlString)
-        #expect(url != nil)
-        #expect(url?.absoluteString == urlString)
+    @Test("Creates URL from valid static string", .publishingContext())
+    func createsURLFromValidStaticString() async throws {
+        // StaticString can't be passed as a test argument, so each case is written out
+        // and goes through the static initializer itself.
+        #expect(URL(static: "https://example.com").absoluteString == "https://example.com")
+        #expect(URL(static: "https://www.github.com/twostraws/Ignite").absoluteString
+            == "https://www.github.com/twostraws/Ignite")
+        #expect(URL(static: "https://apple.com/path/to/page").absoluteString == "https://apple.com/path/to/page")
+        #expect(URL(static: "file:///Users/test/Documents").absoluteString == "file:///Users/test/Documents")
     }
 
     @Test("Valid static strings produce correct URLs", .publishingContext())

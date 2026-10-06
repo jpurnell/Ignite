@@ -36,14 +36,17 @@ public protocol ErrorPage: LayoutContent {
 }
 
 extension ErrorPage {
+    /// The HTTP error currently being rendered.
     public var error: HTTPError {
         PublishingContext.shared.environment.httpError
     }
 
+    /// The title of the error being rendered.
     public var title: String {
         error.title
     }
 
+    /// The description of the error being rendered.
     public var description: String {
         error.description
     }

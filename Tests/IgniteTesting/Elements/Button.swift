@@ -84,8 +84,9 @@ class ButtonTests: IgniteTestSuite {
 
     @Test("Link Button", .publishingContext())
     func linkButton() async throws {
+        let target = try contentExamples()
         let element = Text {
-            Link("This is a link button", target: self.contentExamples())
+            Link("This is a link button", target: target)
                 .linkStyle(.button)
         }
 
@@ -106,7 +107,7 @@ class ButtonTests: IgniteTestSuite {
 
     // MARK: Targets
 
-    private func contentExamples() -> URL {
-        URL(string: "https://www.hackingwithswift.com")!
+    private func contentExamples() throws -> URL {
+        try #require(URL(string: "https://www.hackingwithswift.com"))
     }
 }

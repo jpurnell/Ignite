@@ -5,6 +5,7 @@
 // See LICENSE for license information.
 //
 
+/// The style of a font face: normal, italic or oblique.
 public typealias FontVariant = Font.Variant
 
 /// A type that represents a font configuration including style, size, and weight
@@ -61,18 +62,6 @@ public struct Font: Hashable, Equatable, Sendable {
         "monospace"
     ]
 
-    /// The default sans-serif system font.
-    static let systemSansSerif = Font(name: systemFonts.joined(separator: ","), weight: .regular)
-
-    /// The default monospace system font.
-    static let systemMonospace = Font(name: monospaceFonts.joined(separator: ","), weight: .regular)
-
-    /// The default font used for body text.
-    static let systemBodyFont = systemSansSerif
-
-    /// The default font used for code blocks.
-    static let systemCodeFont = systemMonospace
-
     /// Creates a font with the specified properties.
     /// - Parameters:
     ///   - name: The name of the font family.
@@ -103,9 +92,20 @@ public struct Font: Hashable, Equatable, Sendable {
     /// - Parameters:
     ///   - name: The name of the font family.
     ///   - source: A URL string pointing to the font file.
-    /// - Note: This initializer assumes the source URL is valid and force-unwraps it.
+    /// - Note: If `source` cannot be parsed as a URL, the font is created without
+    /// any sources – so it is referenced by name only – and a warning is added
+    /// to the current build.
     public init(name: String, source: String) {
-        self.init(name: name, sources: [FontSource(url: URL(string: source)!)])
+        guard let url = URL(markupReference: source) else {
+            PublishingContext.current?.addWarning("""
+            The font '\(name)' uses an invalid source URL: '\(source)'. \
+            It will be used without a font file.
+            """)
+            self.init(name: name, sources: [])
+            return
+        }
+
+        self.init(name: name, sources: [FontSource(url: url)])
     }
 
     init(
@@ -221,6 +221,7 @@ public struct Font: Hashable, Equatable, Sendable {
 }
 
 extension Font: CustomStringConvertible {
+    /// The name of the font family, or "System" for a font that has no name.
     public var description: String {
         name ?? "System"
     }

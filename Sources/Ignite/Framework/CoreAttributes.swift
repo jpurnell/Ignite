@@ -303,6 +303,8 @@ public struct CoreAttributes: Equatable, Sendable {
 }
 
 extension String.StringInterpolation {
+    /// Appends the attributes as they are written inside an HTML tag, each one preceded by a space.
+    /// - Parameter attributes: The attributes to write.
     @available(*, deprecated, message: "Interpolate CoreAttributes into Markup, not String — String interpolation drops publishing-time registrations.")
     public mutating func appendInterpolation(_ attributes: CoreAttributes) {
         appendLiteral(attributes.markupAttributeString)
