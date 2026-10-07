@@ -40,9 +40,6 @@ struct BoolMatrix {
     /// The width and height of the matrix.
     var dimension: Int { content.rows }
 
-    /// The matrix data as a flattened array.
-    var flattened: [Bool] { content.flattened }
-
     /// Access individual cells in the matrix.
     ///
     /// Cells outside the matrix read as `false` – an unset module, like the quiet

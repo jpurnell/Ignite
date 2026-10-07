@@ -16,9 +16,6 @@ struct Array2D<T> {
     /// The underlying storage.
     private var array: [T]
 
-    /// The array data as a flattened array.
-    var flattened: [T] { array }
-
     /// Creates a 2D array with the specified dimensions and initial value.
     /// - Parameters:
     ///   - rows: The number of rows.

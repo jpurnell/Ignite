@@ -52,6 +52,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `BoolMatrix.flattened` and `Array2D.flattened` are removed from the command-line
+  tool. Nothing read either; a stale index unit had been hiding that from the
+  unreachable-code check.
+
 - Most force unwraps, `fatalError` calls and other traps were removed from the
   library, the command-line tool and the tests, in favour of thrown errors,
   build warnings and safe fallbacks. Four public paths still trap:
