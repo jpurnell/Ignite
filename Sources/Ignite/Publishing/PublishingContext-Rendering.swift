@@ -17,6 +17,26 @@ extension PublishingContext {
         render(page, rootPath: page.path, pagePath: page.path)
     }
 
+    /// Prepares an article to be shown on the page being rendered.
+    /// - Parameter article: The article as it was loaded.
+    /// - Returns: The article with the addresses in its text resolved for this page.
+    func resolvedForCurrentPage(_ article: Article) -> Article {
+        guard site.useRelativePaths else { return article }
+        var article = article
+        article.text = resolvingRootRelativeAddresses(in: article.text)
+        return article
+    }
+
+    /// The site's content as the page being rendered should show it.
+    ///
+    /// On a site that uses relative paths the addresses in each article's text depend on
+    /// where the page showing it is, so the content is prepared afresh for every page.
+    /// A site that writes absolute paths uses its content as loaded.
+    var contentForCurrentPage: [Article] {
+        guard site.useRelativePaths else { return allContent }
+        return allContent.map(resolvedForCurrentPage)
+    }
+
     func render(homePage: any StaticPage) {
         render(homePage, rootPath: "/", pagePath: "", priority: 1)
     }
@@ -48,7 +68,7 @@ extension PublishingContext {
         let values = EnvironmentValues(
             sourceDirectory: sourceDirectory,
             site: site,
-            allContent: allContent,
+            allContent: contentForCurrentPage,
             pageMetadata: pageMetadata,
             pageContent: page,
             context: self)
@@ -78,10 +98,10 @@ extension PublishingContext {
         let values = EnvironmentValues(
             sourceDirectory: sourceDirectory,
             site: site,
-            allContent: allContent,
+            allContent: contentForCurrentPage,
             pageMetadata: pageMetadata,
             pageContent: layout,
-            article: article,
+            article: resolvedForCurrentPage(article),
             context: self)
 
         let outputString = withEnvironment(values) {
@@ -126,7 +146,7 @@ extension PublishingContext {
             let values = EnvironmentValues(
                 sourceDirectory: sourceDirectory,
                 site: site,
-                allContent: allContent,
+                allContent: contentForCurrentPage,
                 pageMetadata: metadata,
                 pageContent: tagLayout,
                 category: category,
@@ -156,7 +176,7 @@ extension PublishingContext {
             let values = EnvironmentValues(
                 sourceDirectory: sourceDirectory,
                 site: site,
-                allContent: allContent,
+                allContent: contentForCurrentPage,
                 pageMetadata: metadata,
                 pageContent: site.errorPage,
                 httpError: error,

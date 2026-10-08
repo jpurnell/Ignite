@@ -335,7 +335,8 @@ public struct NavigationBar: HTML {
         let logo: Link = if let link = logo.as(Link.self) {
             link
         } else {
-            Link(logo, target: "/")
+            // The home page of this site, wherever the site is deployed.
+            Link(logo, sitePath: "/")
         }
 
         return logo

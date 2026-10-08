@@ -61,7 +61,7 @@ public struct MetaLink: HeadElement, Sendable {
                 ?? "/feed.\(format.rawValue)"
             MetaLink(href: path, rel: .alternate)
                 .customAttribute(name: "type", value: format.contentType)
-                .customAttribute(name: "title", value: "\(format.displayName) Feed")
+                .customAttribute(name: "title", value: format.linkTitle)
         }
     }
 

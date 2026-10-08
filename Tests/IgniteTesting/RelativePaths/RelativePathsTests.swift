@@ -110,7 +110,7 @@ struct RelativePathsTests {
             return link.markupString()
         }
 
-        #expect(output.contains("href=\"about/\""))
+        #expect(output == #"<a href="about/index.html">About</a>"#)
         #expect(!output.contains("href=\"/about/\""))
     }
 

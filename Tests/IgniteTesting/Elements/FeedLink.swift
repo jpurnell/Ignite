@@ -62,4 +62,46 @@ class FeedLinkTests: IgniteTestSuite {
         let output = element.markupString()
         #expect(output == "")
     }
+
+    @Test("On a site deployed in a subdirectory the feed links lead into the site",
+          .publishingContext(.subsite))
+    func feedLinksOnSubsite() async throws {
+        let environment = EnvironmentValues(
+            sourceDirectory: publishingContext.sourceDirectory,
+            site: FeedLinkAllFormatsSite(),
+            allContent: [])
+        let output = publishingContext.withEnvironment(environment) {
+            FeedLink().markupString()
+        }
+        #expect(output.contains(#"<a href="/subsite/feed.atom">Atom Feed</a>"#))
+        #expect(output.contains(#"<a href="/subsite/feed.json">JSON Feed</a>"#))
+        #expect(output.contains(#"<a href="/subsite/feed.rss">RSS Feed</a>"#))
+    }
+
+    @Test("Each feed is named once: the JSON Feed is not the JSON Feed Feed", .publishingContext())
+    func feedNames() async throws {
+        #expect(FeedFormat.rss.linkTitle == "RSS Feed")
+        #expect(FeedFormat.atom.linkTitle == "Atom Feed")
+        #expect(FeedFormat.json.linkTitle == "JSON Feed")
+
+        let config = try #require(FeedConfiguration(mode: .full, contentCount: 20, formats: [.rss, .atom, .json]))
+        let links = MetaLink.feedDiscoveryLinks(for: config).markupString()
+        #expect(links == """
+        <link type="application/atom+xml" title="Atom Feed" href="/feed.atom" rel="alternate" />\
+        <link type="application/feed+json" title="JSON Feed" href="/feed.json" rel="alternate" />\
+        <link type="application/rss+xml" title="RSS Feed" href="/feed.rss" rel="alternate" />
+        """)
+    }
+}
+
+/// A site at a subdirectory with every feed format switched on.
+private struct FeedLinkAllFormatsSite: Site {
+    var name = "Feeds"
+    var url = URL(static: "https://www.example.com/subsite")
+    var homePage = TestSubsitePage()
+    var layout = EmptyLayout()
+
+    var feedConfiguration: FeedConfiguration? {
+        FeedConfiguration(mode: .full, contentCount: 20, formats: [.rss, .atom, .json])
+    }
 }

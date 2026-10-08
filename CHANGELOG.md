@@ -534,6 +534,33 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
     and one in the range 0x80–0x9F is read as Windows-1252 (`&#x92;` is `’`).
 
   Text with none of these is unchanged, and `&bogus;` is still left alone.
+- **A relative-path site opens from disk.** With `useRelativePaths`, links to
+  pages ended at the page's directory – `about/`, `../` – which a web server
+  turns into `index.html` and `file://` does not, so a site built to be opened
+  from a folder showed a directory listing, or nothing, for every link. In
+  relative mode a link to a page now names its file:
+  - `Link(_:target:)` to a page, an article or a path, `Link(_:sitePath:)`,
+    `LinkGroup`, tag links and navigation bar items: `about/index.html`,
+    `../guides/setup/index.html`.
+  - The home page is `index.html` (`../index.html` from deeper), where it was
+    `./` and `../`.
+  - A query or fragment stays after the file: `about/index.html#team`.
+  - Links and images written from the root in Markdown – `[Home](/)`,
+    `![](/images/a.png)` – are made relative to the page showing the article.
+    They were left as `/` and `/images/a.png`, the root of the disk.
+
+  A link that already names a file (`files/report.pdf`), a fragment, and an
+  address with a scheme or a host are unchanged, and so is everything on a
+  site that does not use relative paths: links there still end in `/`.
+- The logo of a `NavigationBar` leads to the home page of the site. It was
+  written as `/`, the root of the host, so on `https://example.com/subsite` it
+  left the site; it is now `/subsite/`. A logo that is already a `Link` keeps
+  its own target. Sites at the root of their host are unchanged.
+- `FeedLink` links to the feeds of the site. Its links were paths from the
+  root of the host (`/feed.rss`), which on a subsite do not exist; they are
+  now `/subsite/feed.rss`. Sites at the root of their host are unchanged.
+- The JSON feed is called `JSON Feed` in `FeedLink` and in the `title` of its
+  `<link rel="alternate">`. It was `JSON Feed Feed`.
 
 ### Changed
 

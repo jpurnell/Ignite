@@ -63,12 +63,12 @@ struct PathResolutionTests {
         let context = try Self.context(.relativePaths)
 
         PublishingContext.withCurrent(context) {
-            #expect(Link("About", target: "/about").markupString() == #"<a href="about/">About</a>"#)
-            #expect(Link("Home", target: "/").markupString() == #"<a href="./">Home</a>"#)
+            #expect(Link("About", target: "/about").markupString() == #"<a href="about/index.html">About</a>"#)
+            #expect(Link("Home", target: "/").markupString() == #"<a href="index.html">Home</a>"#)
 
             context.pageDirectoryDepth = 2
-            #expect(Link("About", target: "/about").markupString() == #"<a href="../../about/">About</a>"#)
-            #expect(Link("Home", target: "/").markupString() == #"<a href="../../">Home</a>"#)
+            #expect(Link("About", target: "/about").markupString() == #"<a href="../../about/index.html">About</a>"#)
+            #expect(Link("Home", target: "/").markupString() == #"<a href="../../index.html">Home</a>"#)
             #expect(Link("File", target: "/files/a.pdf").markupString() == #"<a href="../../files/a.pdf">File</a>"#)
         }
     }

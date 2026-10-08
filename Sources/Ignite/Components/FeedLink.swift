@@ -29,7 +29,9 @@ public struct FeedLink: HTML {
                     let path = feedConfig.paths[format]
                         ?? FeedConfiguration.defaultPaths[format]
                         ?? "/feed.\(format.rawValue)"
-                    Link("\(format.displayName) Feed", target: path)
+                    // The feed is a file of this site, so its path is taken from the site's
+                    // root and not from the host's.
+                    Link(format.linkTitle, sitePath: path)
                     EmptyInlineElement()
                 }
                 .horizontalAlignment(.center)

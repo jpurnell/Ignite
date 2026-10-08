@@ -25,6 +25,13 @@ public enum FeedFormat: String, Sendable, CaseIterable, Hashable {
         }
     }
 
+    /// The words that name a link to this feed: `RSS Feed`, `Atom Feed`, `JSON Feed`.
+    ///
+    /// JSON Feed is the name of its format, so it is not given the word a second time.
+    var linkTitle: String {
+        displayName.hasSuffix("Feed") ? displayName : "\(displayName) Feed"
+    }
+
     /// The MIME content type for this feed format.
     public var contentType: String {
         switch self {

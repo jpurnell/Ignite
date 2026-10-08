@@ -436,6 +436,10 @@ final class PublishingContext: @unchecked Sendable {
     /// touched: a query or a fragment stays after it (`/about#team` becomes
     /// `/about/#team`), and an address with a scheme – `https:`, `mailto:`, `tel:` – or
     /// on another host is never altered.
+    ///
+    /// On a site that uses relative paths the link goes on to name the page's file
+    /// (`about/index.html`, and `index.html` for the home page), because such a site is
+    /// opened from a folder and `file://` does not open a directory's `index.html`.
     /// - Parameters:
     ///   - url: The link's target.
     ///   - withinSite: Whether a path from the root names a page of this site, in which
@@ -467,7 +471,41 @@ final class PublishingContext: @unchecked Sendable {
             }
         }
 
+        // A relative-path site is opened from a folder, where nothing turns a directory
+        // into its `index.html` the way a web server does. The link has to name the file.
+        if site.useRelativePaths, path.hasSuffix("/") {
+            path = path == "./" ? "index.html" : "\(path)index.html"
+        }
+
         return path + suffix
+    }
+
+    /// Resolves the addresses in rendered Markdown for the page being rendered, on a
+    /// site that uses relative paths.
+    ///
+    /// Markdown is turned into HTML when content is loaded, before anything knows which
+    /// page will show it, so a link or an image written from the root – `[Home](/)`,
+    /// `![](/images/a.png)` – is still a path from the root. On a relative-path site
+    /// there is no root to follow it from. Each `href` is resolved as a link within the
+    /// site and each `src` as one of the site's files, relative to the current page.
+    ///
+    /// A site that writes absolute paths shows its Markdown as written.
+    /// - Parameter html: HTML rendered from Markdown.
+    /// - Returns: The HTML with its root-relative addresses made relative to this page.
+    func resolvingRootRelativeAddresses(in html: String) -> String {
+        guard site.useRelativePaths else { return html }
+
+        return html.replacing(#/\b(?<name>href|src)="(?<value>\/(?:[^\/"][^"]*)?)"/#) { match in
+            let reference = String(match.output.value).decodingHTMLCharacterReferences()
+
+            let resolved = if match.output.name == "href", let url = URL(markupReference: reference) {
+                linkPath(for: url, withinSite: true)
+            } else {
+                assetPath(reference)
+            }
+
+            return "\(match.output.name)=\"\(resolved.escapedForHTML())\""
+        }
     }
 
     /// How many directories lie between the page being rendered and the root of the
