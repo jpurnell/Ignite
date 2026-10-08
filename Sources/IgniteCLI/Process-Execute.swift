@@ -71,40 +71,88 @@ private struct PipeDrain: Sendable {
 
     /// Starts draining `handle` immediately.
     ///
-    /// The reading is done by a dispatch channel, which hands over each piece
-    /// of output as a value this code owns. No buffer is lent to a system call
-    /// here, so there is no pointer whose lifetime needs watching.
+    /// The reading is done on a thread of its own. It used to be done by a dispatch
+    /// channel, whose work needs a thread from the system's shared pool; when every one
+    /// of those was waiting – as happens when commands are run from many concurrent
+    /// tasks at once – nothing was read before the wait below gave up, and a command
+    /// that had worked was reported as having written nothing. A thread that belongs to
+    /// this pipe cannot be kept from it.
+    ///
+    /// Each read fills a buffer that lives only for that read, and what was read is
+    /// copied out of it before the next.
     init(reading handle: FileHandle) {
-        // One serial queue per pipe, so pieces are collected in the order they were written.
-        let queue = DispatchQueue(label: "ignite.pipe-drain")
+        let thread = Thread { [collected, failure, finished] in
+            // The handle is held for as long as the thread reads, so its descriptor
+            // stays open.
+            withExtendedLifetime(handle) {
+                var isOpen = true
 
-        // The handle is captured by the channel's clean-up, not just its
-        // descriptor, so the descriptor stays open for as long as the channel
-        // is reading from it.
-        let channel = DispatchIO(type: .stream, fileDescriptor: handle.fileDescriptor, queue: queue) { _ in
-            withExtendedLifetime(handle) {}
+                while isOpen {
+                    switch Self.readOnce(from: handle.fileDescriptor) {
+                    case .bytes(let chunk):
+                        collected.withValue { $0.append(chunk) }
+                    case .interrupted:
+                        // A signal arrived before anything was read; ask again.
+                        continue
+                    case .endOfFile:
+                        // Every process holding the other end has let go.
+                        isOpen = false
+                    case .failed(let reason):
+                        failure.withValue { $0 = reason }
+                        isOpen = false
+                    }
+                }
+            }
+
+            // Signalled exactly once: at end of file, or when reading fails.
+            finished.signal()
         }
 
-        // Hand over output as soon as any arrives rather than waiting for a
-        // full buffer, so what has been written is already collected if the
-        // wait for end of file has to be abandoned.
-        channel.setLimit(lowWater: 1)
+        thread.name = "ignite.pipe-drain"
+        thread.start()
+    }
 
-        channel.read(offset: 0, length: Int.max, queue: queue) { [collected, failure, finished] done, chunk, code in
-            if let chunk, chunk.isEmpty == false {
-                collected.withValue { $0.append(contentsOf: chunk) }
-            }
+    /// The most to take from the pipe in one read: as much as a pipe holds.
+    private static let chunkSize = 65_536
 
-            if code != 0 {
-                let reason = String(cString: strerror(code))
-                failure.withValue { $0 = reason }
-            }
+    /// What one read from a pipe came back with.
+    private enum ReadResult {
+        /// Some output. A read never waits to fill its buffer.
+        case bytes(Data)
 
-            // `done` arrives exactly once: at end of file, or when reading fails.
-            if done {
-                channel.close()
-                finished.signal()
-            }
+        /// Nothing yet: the read was interrupted by a signal and should be repeated.
+        case interrupted
+
+        /// The pipe is closed and everything written to it has been read.
+        case endOfFile
+
+        /// The read failed, for the reason given.
+        case failed(String)
+    }
+
+    /// Reads whatever a pipe has, waiting only if it has nothing.
+    ///
+    /// `read` returns as soon as anything has been written, rather than waiting for a
+    /// full buffer, so what has arrived is already collected if the wait for end of
+    /// file has to be abandoned. The buffer is created, filled and copied out of here.
+    /// It is handed to `read` as an in-out argument, which lends it for that call alone:
+    /// no pointer to it is ever held, so there is none whose lifetime needs watching.
+    /// - Parameter descriptor: The reading end of the pipe.
+    /// - Returns: What was read, or why nothing was.
+    private static func readOnce(from descriptor: Int32) -> ReadResult {
+        var buffer = [UInt8](repeating: 0, count: chunkSize)
+        let count = read(descriptor, &buffer, buffer.count)
+        // Taken at once, before anything else can set it.
+        let code = errno
+
+        if count > 0 {
+            return .bytes(Data(buffer[..<count]))
+        } else if count == 0 {
+            return .endOfFile
+        } else if code == EINTR {
+            return .interrupted
+        } else {
+            return .failed(String(cString: strerror(code)))
         }
     }
 
@@ -142,11 +190,31 @@ struct CommandResult {
     /// so neither is mistaken for success.
     let status: Int32
 
+    /// Whether the command was still running when its caller stopped it.
+    ///
+    /// Only a command that is meant to keep running – the local server – is ever stopped
+    /// this way, and its status is then the signal that stopped it, not a verdict on it.
+    /// When this is `false` the command ended by itself and `status` is its own.
+    let stoppedByCaller: Bool
+
     /// Whether the command exited normally with a status of 0.
     ///
     /// This is the only reliable sign that a command worked. What it writes to standard
     /// error is not: tools print warnings that mention errors, and fail without a word.
     var succeeded: Bool { status == 0 }
+
+    /// Creates the result of a command.
+    /// - Parameters:
+    ///   - output: Everything the command wrote to standard output.
+    ///   - error: Everything the command wrote to standard error.
+    ///   - status: The command's exit status.
+    ///   - stoppedByCaller: Whether the command was stopped rather than ending by itself.
+    init(output: String, error: String, status: Int32, stoppedByCaller: Bool = false) {
+        self.output = output
+        self.error = error
+        self.status = status
+        self.stoppedByCaller = stoppedByCaller
+    }
 }
 
 /// A command that has been launched, with both of its pipes being drained.
@@ -191,10 +259,12 @@ private struct LaunchedCommand {
     /// The program is run directly, with each argument handed to it exactly as
     /// given. No shell reads the command, so nothing in an argument – a space, a
     /// semicolon, a quote – can be taken for anything but part of that argument.
-    /// - Parameter arguments: The program to run, followed by its arguments.
+    /// - Parameters:
+    ///   - arguments: The program to run, followed by its arguments.
+    ///   - directory: The directory to run it in, or `nil` for this process's own.
     /// - Throws: `ProcessExecutionError` if there is no program to run, or whatever
     /// `Process.run()` throws if it cannot be launched.
-    init(arguments: [String]) throws {
+    init(arguments: [String], in directory: URL? = nil) throws {
         guard let program = arguments.first else {
             throw ProcessExecutionError.emptyCommand
         }
@@ -207,6 +277,10 @@ private struct LaunchedCommand {
         let process = Process()
         process.executableURL = executableURL
         process.arguments = Array(arguments.dropFirst())
+
+        if let directory {
+            process.currentDirectoryURL = directory
+        }
 
         let output = Pipe()
         let error = Pipe()
@@ -233,8 +307,11 @@ private struct LaunchedCommand {
     }
 
     /// Stops the command if it is still running: asks first, then insists.
-    func stop() {
-        guard process.isRunning else { return }
+    /// - Returns: `true` if the command was running and had to be stopped, `false` if it
+    /// had already ended by itself.
+    @discardableResult
+    func stop() -> Bool {
+        guard process.isRunning else { return false }
 
         process.terminate()
 
@@ -242,12 +319,15 @@ private struct LaunchedCommand {
             kill(process.processIdentifier, SIGKILL)
             _ = waitForExit(upTo: Self.grace)
         }
+
+        return true
     }
 
     /// Returns everything the command wrote and its exit status, waiting a bounded time
     /// for its pipes to close.
+    /// - Parameter stoppedByCaller: Whether the command was stopped rather than ending by itself.
     /// - Throws: `ProcessExecutionError.unreadableOutput` if either pipe could not be read.
-    func collectedOutput() throws -> CommandResult {
+    func collectedOutput(stoppedByCaller: Bool = false) throws -> CommandResult {
         // One deadline for both pipes, so the wait is `grace` in total, not each.
         let deadline = DispatchTime.now() + Self.grace
         let outputString = try output.text(waitingUntil: deadline, command: command)
@@ -255,20 +335,23 @@ private struct LaunchedCommand {
 
         // A process that is somehow still running has no status to read yet.
         let status = process.isRunning ? -1 : process.terminationStatus
-        return CommandResult(output: outputString, error: errorString, status: status)
+        return CommandResult(
+            output: outputString, error: errorString, status: status, stoppedByCaller: stoppedByCaller)
     }
 
     /// Runs a command until it exits, stopping it if it outlives `timeout`.
     /// - Parameters:
     ///   - arguments: The program to run, followed by its arguments.
     ///   - timeout: How long the command may run, in seconds.
+    ///   - directory: The directory to run it in, or `nil` for this process's own.
     /// - Returns: What the command wrote, and its exit status.
     /// - Throws: `ProcessExecutionError.timedOut` if the command had to be stopped.
     static func runToCompletion(
         arguments: [String],
-        timeout: TimeInterval
+        timeout: TimeInterval,
+        in directory: URL? = nil
     ) throws -> CommandResult {
-        let launched = try LaunchedCommand(arguments: arguments)
+        let launched = try LaunchedCommand(arguments: arguments, in: directory)
 
         guard launched.waitForExit(upTo: timeout) else {
             launched.stop()
@@ -312,6 +395,11 @@ extension Process {
     ///   any array – even an empty one, which runs nothing – to keep the first
     ///   command running until the user presses Return.
     ///   - timeout: How long, in seconds, a command may run before it is stopped.
+    ///   - directory: The directory to run the commands in, or `nil`, the default, for
+    ///   this process's own.
+    ///   - waitToStop: With a subsequent command, what to wait for before stopping the
+    ///   first. It returns when the first command should stop. The default waits for
+    ///   the user to press Return.
     /// - Returns: What the command wrote to stdout and stderr, and its exit status.
     /// A command that runs and exits with a non-zero status is returned, not thrown:
     /// check `succeeded`.
@@ -321,14 +409,16 @@ extension Process {
     static func execute(
         command arguments: [String],
         then subsequentArguments: [String]? = nil,
-        timeout: TimeInterval = Process.defaultTimeout
+        timeout: TimeInterval = Process.defaultTimeout,
+        in directory: URL? = nil,
+        waitToStop: @Sendable () -> Void = { _ = readLine() }
     ) throws -> CommandResult {
         // With nothing to run afterwards this is a plain bounded run.
         guard let subsequentArguments else {
-            return try LaunchedCommand.runToCompletion(arguments: arguments, timeout: timeout)
+            return try LaunchedCommand.runToCompletion(arguments: arguments, timeout: timeout, in: directory)
         }
 
-        let launched = try LaunchedCommand(arguments: arguments)
+        let launched = try LaunchedCommand(arguments: arguments, in: directory)
         let subsequentFailure = LockedBox<(any Error)?>(nil)
 
         if subsequentArguments.isEmpty == false {
@@ -337,7 +427,8 @@ extension Process {
             // command.
             DispatchQueue.global().asyncAfter(deadline: .now() + 1) {
                 do {
-                    _ = try LaunchedCommand.runToCompletion(arguments: subsequentArguments, timeout: timeout)
+                    _ = try LaunchedCommand.runToCompletion(
+                        arguments: subsequentArguments, timeout: timeout, in: directory)
                 } catch {
                     // Kept as well as logged: it is thrown once the first command stops.
                     logger.error("Follow-up command failed: \(error.localizedDescription, privacy: .public)")
@@ -347,8 +438,8 @@ extension Process {
         }
 
         // The first command keeps running until the user presses Return.
-        _ = readLine()
-        launched.stop()
+        waitToStop()
+        let stoppedByCaller = launched.stop()
 
         // A subsequent command that failed is reported once the first has been
         // stopped, rather than leaving it running behind a thrown error.
@@ -356,6 +447,6 @@ extension Process {
             throw failure
         }
 
-        return try launched.collectedOutput()
+        return try launched.collectedOutput(stoppedByCaller: stoppedByCaller)
     }
 }

@@ -561,6 +561,29 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   now `/subsite/feed.rss`. Sites at the root of their host are unchanged.
 - The JSON feed is called `JSON Feed` in `FeedLink` and in the `title` of its
   `<link rel="alternate">`. It was `JSON Feed Feed`.
+- `ignite run` fails when the local server does. If the server ended by
+  itself with a failure – Python missing a module, the port taken between the
+  check and the start – the tool had already written ✅, showed none of what
+  the server said, and exited with 0 when Return was pressed. It now writes
+  what the server wrote to standard error, then
+  `❌ The local web server stopped with an error (exit status N).`, and exits
+  with 1. A server that was still running when Return was pressed is stopped
+  as before and the tool exits with 0.
+- `ignite run` no longer takes a canonical link that is not an address for a
+  subdirectory. A site with no URL writes `about:blank` as its canonical
+  link, and the tool served that site under `blank` and offered
+  `http://localhost:8000blank`. Only a canonical address with a path from the
+  root names a subdirectory.
+- The command-line tool's process helper returns a command's output however
+  many commands are running. Each pipe was read by a dispatch channel, which
+  needs a thread from the system's shared pool; with every one of those
+  waiting, nothing was read before the helper stopped waiting, and a command
+  that had succeeded was returned with empty output and a status of 0. Each
+  pipe is now read on a thread of its own. The tool itself runs one command
+  at a time and was not affected; the fault showed when its tests ran several
+  at once.
+- `make install` exits with a non-zero status when installing fails. It wrote
+  `❌ Installation failed.` and exited with 0.
 
 ### Changed
 
@@ -636,6 +659,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   into `HTMLNamedCharacterReferences.swift`. The table is © WHATWG and, as
   source code, under the BSD 3-Clause License; the notice is at the top of the
   generated file.
+- The command-line tool has a test target, `IgniteCLITesting`. Each command
+  now reaches the outside world – its two outputs, its working directory, the
+  programs it runs – through a `CommandContext`, so its logic is tested
+  without a compiler, `git` or a web server; the process helper is tested
+  against small real child processes; and the built tool is run to check its
+  exit status and where its messages go. None of this changes how the tool
+  behaves, apart from the fixes listed above.
 
 ## [0.6.9] - 2026-04-21
 

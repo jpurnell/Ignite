@@ -33,29 +33,34 @@ struct RunCommand: ParsableCommand {
     /// - Throws: `ExitCode.failure` when the server could not be started, so the tool
     /// exits with a non-zero status and a script that called it can tell.
     func run() throws {
-        try run(output: .standard, errors: .standardError)
+        try run(in: CommandContext())
     }
 
-    /// Serves the site, saying what happened on the outputs given.
-    /// - Parameters:
-    ///   - output: Receives the server's address and how to stop it.
-    ///   - errors: Receives the reasons the server could not be started.
-    /// - Throws: `ExitCode.failure` once the reason has been written to `errors`, when
-    /// there is no directory to serve, no free port, or the server script is missing.
-    func run(output: Output, errors: Output) throws {
+    /// Serves the site, saying what happened on the context's outputs.
+    ///
+    /// The server's address and how to stop it go to `context.output`; the reasons the
+    /// server could not be started, or stopped by itself, go to `context.errors`.
+    /// - Parameter context: The outputs, the working directory, the tool's own path and
+    /// the way to run the server.
+    /// - Throws: `ExitCode.failure` once the reason has been written to the errors output,
+    /// when there is no directory to serve, no free port, the server script is missing,
+    /// or the server ends with a failure before it is stopped.
+    func run(in context: CommandContext) throws {
+        let (output, errors) = (context.output, context.errors)
+
         // Make sure we actually have a folder to serve up.
-        guard FileManager.default.fileExists(atPath: "./\(directory)") else {
+        guard context.fileExists(directory) else {
             logger.error("Nothing to serve: no directory named \(directory, privacy: .public).")
             errors.line("❌ Failed to find directory named '\(directory)'.")
             throw ExitCode.failure
         }
 
         // Detect if the site is an subsite
-        let subsite = identifySubsite(directory: directory) ?? ""
+        let subsite = identifySubsite(in: context.workingDirectory.appending(path: directory)) ?? ""
 
         // Find an available port
         var currentPort = port
-        while try isServerRunning(on: currentPort) {
+        while try isServerRunning(on: currentPort, context: context) {
             currentPort += 1
             if currentPort >= 9000 {
                 logger.error("No free port below 9000, starting from \(port, privacy: .public).")
@@ -77,7 +82,7 @@ struct RunCommand: ParsableCommand {
             }
 
         // Find the server script installed next to the tool itself
-        let tool = ProcessInfo.processInfo.arguments.first ?? "NEVER"
+        let tool = context.toolPath
         let dirLoc = tool.lastIndex(of: "/") ?? tool.endIndex
         let toolDir = String(tool[..<dirLoc])
         let serverScriptURL = URL(filePath: "\(toolDir)/ignite-server.py")
@@ -99,15 +104,31 @@ struct RunCommand: ParsableCommand {
         output.line("Press ↵ Return to exit.")
 
         let subsiteArguments = subsite.isEmpty ? [] : ["-s", subsite]
-        try Process.execute(
-            command: ["python3", serverScriptURL.path, "-d", directory] + subsiteArguments + [String(currentPort)],
+        let server = try context.execute(
+            ["python3", serverScriptURL.path, "-d", directory] + subsiteArguments + [String(currentPort)],
             then: previewCommand
         )
+
+        // A server that was still running when Return was pressed did its job, and its
+        // status is only the signal that stopped it. One that ended by itself with a
+        // failure never served the site – the port was taken after all, Python is
+        // broken – and saying nothing would leave ✅ as the last word on it.
+        guard server.stoppedByCaller || server.succeeded else {
+            logger.error("The local server exited with status \(server.status, privacy: .public).")
+            // Everything it said, whether or not it called any of it an error.
+            if server.error.isEmpty == false {
+                errors.line(server.error)
+            }
+
+            errors.line("")
+            errors.line("❌ The local web server stopped with an error (exit status \(server.status)).")
+            throw ExitCode.failure
+        }
     }
 
     /// Returns true if there is a server running on the specified port.
-    private func isServerRunning(on port: Int) throws -> Bool {
-        let result = try Process.execute(command: ["lsof", "-t", "-i", "tcp:\(port)"], timeout: 30)
+    private func isServerRunning(on port: Int, context: CommandContext) throws -> Bool {
+        let result = try context.execute(["lsof", "-t", "-i", "tcp:\(port)"], timeout: 30)
         return !result.output.isEmpty
     }
 
@@ -172,9 +193,10 @@ struct RunCommand: ParsableCommand {
 
     /// Identify subsite by looking at the canonical url of 
     /// the root index.html of given directory
-    private func identifySubsite(directory: String) -> String? {
+    private func identifySubsite(in directory: URL) -> String? {
         // Find the root index.html
-        guard let indexData = FileManager.default.contents(atPath: "\(directory)/index.html") else { return nil }
+        let index = directory.appending(path: "index.html")
+        guard let indexData = FileManager.default.contents(atPath: index.path) else { return nil }
 
         // Locate and extract the canonical url 
         let indexString = String(decoding: indexData, as: UTF8.self)
@@ -192,8 +214,10 @@ struct RunCommand: ParsableCommand {
             path.removeLast()
         }
 
-        // If there is no subsite, we don't want to return anything
-        guard path != "/" else { return nil }
+        // If there is no subsite, we don't want to return anything. A canonical address
+        // that is not an address with a path from the root – `about:blank`, which a site
+        // with no URL writes, or a relative path – says nothing about a subsite either.
+        guard path.hasPrefix("/"), path != "/" else { return nil }
 
         return path
     }

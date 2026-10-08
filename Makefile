@@ -11,7 +11,7 @@ install:
 	  install ./server.py $(PREFIX_DIR)/ignite-server.py && \
 	  chmod +x $(PREFIX_DIR)/ignite && \
 	  (echo \\n✅ Success! Run \`ignite\` to get started.)) || \
-	 (echo \\n❌ Installation failed. You might need to run \`sudo make\` instead.\\n)
+	 (echo \\n❌ Installation failed. You might need to run \`sudo make\` instead.\\n; exit 1)
 
 clean:
 	@echo "Cleaning the Ignite build folder...\\n"

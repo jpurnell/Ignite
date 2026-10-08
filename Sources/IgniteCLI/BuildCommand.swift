@@ -20,19 +20,22 @@ struct BuildCommand: ParsableCommand {
     /// - Throws: `ExitCode.failure` when the site could not be built, so the tool exits
     /// with a non-zero status and a script that called it can tell.
     func run() throws {
-        try run(output: .standard, errors: .standardError)
+        try run(in: CommandContext())
     }
 
-    /// Builds the site, saying what happened on the outputs given.
-    /// - Parameters:
-    ///   - output: Receives progress, the site's own output, and the final result.
-    ///   - errors: Receives the reasons a build could not finish, along with
-    ///   whatever the compiler and the site wrote to standard error.
-    /// - Throws: `ExitCode.failure` once the reason has been written to `errors`, when
-    /// there is no package to build, it does not compile, or generating the site fails.
-    func run(output: Output, errors: Output) throws {
+    /// Builds the site, saying what happened on the context's outputs.
+    ///
+    /// Progress, the site's own output and the final result go to `context.output`; the
+    /// reasons a build could not finish, along with whatever the compiler and the site
+    /// wrote to standard error, go to `context.errors`.
+    /// - Parameter context: The outputs, the working directory and the way to run `swift`.
+    /// - Throws: `ExitCode.failure` once the reason has been written to the errors output,
+    /// when there is no package to build, it does not compile, or generating the site fails.
+    func run(in context: CommandContext) throws {
+        let (output, errors) = (context.output, context.errors)
+
         // Ensure we're in a valid directory.
-        guard FileManager.default.fileExists(atPath: "./Package.swift") else {
+        guard context.fileExists("Package.swift") else {
             logger.error("No Package.swift in the current directory; nothing to build.")
             errors.line("❌ Can't find Package.swift in the current directory.")
             throw ExitCode.failure
@@ -43,7 +46,7 @@ struct BuildCommand: ParsableCommand {
         // Build the executable. Whether that worked is the compiler's exit status, not
         // what it printed: a warning can contain the text "error:", and a build can
         // fail without printing it. Its diagnostics are relayed either way.
-        let build = try Process.execute(command: ["swift", "build"])
+        let build = try context.execute(["swift", "build"])
 
         guard build.succeeded else {
             logger.error("swift build exited with status \(build.status, privacy: .public).")
@@ -60,7 +63,7 @@ struct BuildCommand: ParsableCommand {
         relay(build.error, to: errors)
 
         // Generate the site, relaying its output and anything it reported.
-        let generation = try Process.execute(command: ["swift", "run"])
+        let generation = try context.execute(["swift", "run"])
         output.line(generation.output)
 
         guard generation.succeeded else {

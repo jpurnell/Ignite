@@ -27,16 +27,19 @@ struct NewCommand: ParsableCommand {
     /// - Throws: `ExitCode.failure` when the site could not be created, so the tool exits
     /// with a non-zero status and a script that called it can tell.
     func run() throws {
-        try run(output: .standard, errors: .standardError)
+        try run(in: CommandContext())
     }
 
-    /// Creates the site, saying what happened on the outputs given.
-    /// - Parameters:
-    ///   - output: Receives progress and, on success, what to do next.
-    ///   - errors: Receives the reasons a site could not be created.
-    /// - Throws: `ExitCode.failure` once the reason has been written to `errors`, when
-    /// the template is not an https:// address, the folder already exists, or cloning fails.
-    func run(output: Output, errors: Output) throws {
+    /// Creates the site, saying what happened on the context's outputs.
+    ///
+    /// Progress and, on success, what to do next go to `context.output`; the reasons a
+    /// site could not be created go to `context.errors`.
+    /// - Parameter context: The outputs, the working directory and the way to run `git`.
+    /// - Throws: `ExitCode.failure` once the reason has been written to the errors output,
+    /// when the template is not an https:// address, the folder already exists, or cloning fails.
+    func run(in context: CommandContext) throws {
+        let (output, errors) = (context.output, context.errors)
+
         guard template.starts(with: "https://") else {
             logger.error("Refused template \(template, privacy: .public): not an https:// address.")
             errors.line("❌ Template URL must start with https://")
@@ -44,7 +47,7 @@ struct NewCommand: ParsableCommand {
         }
 
         // Ensure we aren't trying to overwrite an existing site.
-        guard FileManager.default.fileExists(atPath: "./\(name)") == false else {
+        guard context.fileExists(name) == false else {
             logger.error("Refused to create \(name, privacy: .public): it already exists.")
             errors.line("❌ Directory '\(name)' is not empty; aborting.")
             throw ExitCode.failure
@@ -52,7 +55,7 @@ struct NewCommand: ParsableCommand {
 
         // Clone from remote Git repository
         output.line("⚙️  Creating a new Ignite site in '\(name)'...")
-        let result = try Process.execute(command: ["git", "clone", "--", template, name], timeout: 600)
+        let result = try context.execute(["git", "clone", "--", template, name], timeout: 600)
 
         // Whether the clone worked is git's exit status. Its messages are not a reliable
         // sign either way: it can fail without writing "fatal", and write it without failing.
@@ -65,7 +68,7 @@ struct NewCommand: ParsableCommand {
 
         // If everything worked, remove the Git history
         // for the IgniteStarter repo to avoid confusion.
-        let cleanup = try Process.execute(command: ["rm", "-rf", "--", "\(name)/.git"], timeout: 60)
+        let cleanup = try context.execute(["rm", "-rf", "--", "\(name)/.git"], timeout: 60)
 
         // The site exists either way, so this is reported rather than treated as failure.
         if cleanup.succeeded == false {
