@@ -174,7 +174,7 @@ public struct Carousel: HTML {
         .id(carouselID)
         .class("carousel", "slide", doesCrossfade ? "carousel-fade" : nil)
         .data("bs-ride", "carousel")
-        .data("bs-interval", intervalInMilliseconds?.formatted() ?? "")
+        .data("bs-interval", intervalInMilliseconds?.markupDigits ?? "")
         .markup()
     }
 }

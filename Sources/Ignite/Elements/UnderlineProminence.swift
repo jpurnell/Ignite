@@ -23,6 +23,6 @@ public enum UnderlineProminence: Int, CustomStringConvertible, Equatable {
 
     /// The Bootstrap opacity suffix.
     public var description: String {
-        rawValue.formatted()
+        rawValue.markupDigits
     }
 }

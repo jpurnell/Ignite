@@ -81,4 +81,32 @@ struct FormatStyleNonLocalizedDecimalTests {
         // Accept either "-2.75" or a locale-aware minus sign variant
         #expect(result.contains("2.75"))
     }
+
+    @Test("Double of a thousand or more has no grouping separator", arguments: zip(
+        [999.5, 1000, 1234.5, 1_000_000, -98765.25],
+        ["999.5", "1000", "1234.5", "1000000", "-98765.2"]))
+    func doubleHasNoGroupingSeparator(value: Double, expected: String) {
+        #expect(value.formatted(.nonLocalizedDecimal) == expected)
+    }
+
+    @Test("Float of a thousand or more has no grouping separator", arguments: zip(
+        [Float(1000), 1234.5, -2048],
+        ["1000", "1234.5", "-2048"]))
+    func floatHasNoGroupingSeparator(value: Float, expected: String) {
+        #expect(value.formatted(.nonLocalizedDecimal) == expected)
+    }
+
+    @Test("Negative numbers use an ASCII hyphen-minus", arguments: zip(
+        [-2.75, -0.5, -1],
+        ["-2.75", "-0.5", "-1"]))
+    func negativeNumbersUseHyphenMinus(value: Double, expected: String) {
+        #expect(value.formatted(.nonLocalizedDecimal(places: 2)) == expected)
+    }
+
+    @Test("Small fractions are written in full, to the places asked for", arguments: zip(
+        [0.5, 0.125, 0.333, 0.0004, 1],
+        ["0.5", "0.125", "0.333", "0", "1"]))
+    func fractions(value: Double, expected: String) {
+        #expect(value.formatted(.nonLocalizedDecimal(places: 3)) == expected)
+    }
 }

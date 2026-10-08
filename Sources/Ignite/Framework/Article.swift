@@ -237,11 +237,18 @@ public struct Article: Sendable {
         }
     }
 
-    /// Attempts to parse a date string in the format "y-M-d HH:mm" or "y-M-d".
+    /// Attempts to parse a front-matter date written as "y-M-d", optionally followed by
+    /// a time as "HH:mm" or "HH:mm:ss".
+    ///
+    /// The date is read in the Gregorian calendar and in GMT whatever the locale of the
+    /// machine running the build. Left to the process locale, the same front matter means
+    /// a different day elsewhere: under `th_TH`, whose calendar is Buddhist, the year 2024
+    /// is read as 1481.
     /// - Parameter date: The date string to parse
     /// - Returns: A `Date` if parsing succeeds, `nil` otherwise
-    private func process(date: String) -> Date? {
+    static func frontMatterDate(from date: String) -> Date? {
         let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = .gmt
 
         let formats = ["y-M-d", "y-M-d HH:mm", "y-M-d H:m", "y-M-d HH:mm:ss", "y-M-d H:m:s"]
@@ -262,7 +269,7 @@ public struct Article: Sendable {
     private func parseMetadataDate(for ids: String...) -> Date? {
         for id in ids {
             guard let dateString = metadata[id] as? String else { continue }
-            if let date = process(date: dateString) {
+            if let date = Self.frontMatterDate(from: dateString) {
                 return date
             } else {
                 PublishingContext.shared.addError(.badContentDateFormat)

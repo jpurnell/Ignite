@@ -92,7 +92,7 @@ public struct CodeBlock: HTML {
             copy.attributes.append(classes: "line-numbers")
 
             if elementFirstLine != 1 {
-                copy.attributes.append(dataAttributes: .init(name: "start", value: elementFirstLine.formatted()))
+                copy.attributes.append(dataAttributes: .init(name: "start", value: elementFirstLine.markupDigits))
             }
             if elementWrapped {
                 copy.attributes.append(styles: .init(.whiteSpace, value: "pre-wrap"))
@@ -100,7 +100,7 @@ public struct CodeBlock: HTML {
 
         case (.visible(let siteFirstLine, let siteWrapped), .visible(let elementFirstLine, let elementWrapped)):
             if elementFirstLine != siteFirstLine {
-                copy.attributes.append(dataAttributes: .init(name: "start", value: elementFirstLine.formatted()))
+                copy.attributes.append(dataAttributes: .init(name: "start", value: elementFirstLine.markupDigits))
             }
             if elementWrapped != siteWrapped {
                 copy.attributes.append(styles: .init(.whiteSpace, value: elementWrapped ? "pre-wrap" : "pre"))

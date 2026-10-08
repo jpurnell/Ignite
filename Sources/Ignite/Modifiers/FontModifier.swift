@@ -8,7 +8,7 @@
 private func fontModifier(_ font: Font, content: any HTML) -> any HTML {
     if let content = content.as(Text.self) {
         var styles = [InlineStyle]()
-        styles.append(.init(.fontWeight, value: font.weight.rawValue.formatted()))
+        styles.append(.init(.fontWeight, value: font.weight.description))
 
         if let name = font.name, !name.isEmpty {
             styles.append(.init(.fontFamily, value: "'\(name)'"))
@@ -35,7 +35,7 @@ private func fontModifier(_ font: Font, content: any HTML) -> any HTML {
         var styles = [InlineStyle]()
         var classes = [String]()
 
-        styles.append(.init(.fontWeight, value: String(font.weight.rawValue)))
+        styles.append(.init(.fontWeight, value: font.weight.description))
 
         if let name = font.name, !name.isEmpty {
             styles.append(.init(.fontFamily, value: "'\(name)'"))
@@ -65,7 +65,7 @@ private func fontModifier(_ font: Font, content: any HTML) -> any HTML {
 
 private func fontModifier(_ font: Font, content: any InlineElement) -> any InlineElement {
     var styles = [InlineStyle]()
-    styles.append(.init(.fontWeight, value: font.weight.rawValue.formatted()))
+    styles.append(.init(.fontWeight, value: font.weight.description))
 
     if let name = font.name, !name.isEmpty {
         styles.append(.init(.fontFamily, value: "'\(name)'"))

@@ -81,7 +81,7 @@ public struct Body: HTML {
             publishingContext.site.syntaxHighlighterConfiguration.lineNumberVisibility {
             attributes.append(classes: "line-numbers")
             if firstLine != 1 {
-                attributes.append(dataAttributes: .init(name: "start", value: firstLine.formatted()))
+                attributes.append(dataAttributes: .init(name: "start", value: firstLine.markupDigits))
             }
             if shouldWrap {
                 attributes.append(styles: .init(.whiteSpace, value: "pre-wrap"))

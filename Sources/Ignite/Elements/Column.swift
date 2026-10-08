@@ -71,7 +71,7 @@ public struct Column: HTML {
         if verticalAlignment != .top {
             columnAttributes.append(classes: ["align-\(verticalAlignment.rawValue)"])
         }
-        columnAttributes.append(customAttributes: .init(name: "colspan", value: columnSpan.formatted()))
+        columnAttributes.append(customAttributes: .init(name: "colspan", value: columnSpan.markupDigits))
         let itemHTML = items.markupString()
         return Markup("<td\(columnAttributes)>\(itemHTML)</td>")
     }

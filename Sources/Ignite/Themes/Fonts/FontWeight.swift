@@ -35,7 +35,7 @@ public extension Font {
 
         /// The numeric CSS weight written as a string, such as `700` for `.bold`.
         public var description: String {
-            rawValue.formatted()
+            rawValue.markupDigits
         }
     }
 }

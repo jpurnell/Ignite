@@ -50,7 +50,7 @@ public struct Text: HTML, DropdownItem {
         var copy = self
         if let number {
             copy.attributes.append(classes: "ig-line-clamp")
-            copy.attributes.append(styles: .init("--ig-max-line-length", value: number.formatted()))
+            copy.attributes.append(styles: .init("--ig-max-line-length", value: number.markupDigits))
         } else {
             copy.attributes.append(classes: "ig-line-clamp-none")
         }

@@ -10,7 +10,7 @@ public extension HTML {
     /// - Parameter weight: The new font weight.
     /// - Returns: A new `Text` instance with the updated weight.
     func fontWeight(_ weight: Font.Weight) -> some HTML {
-        self.style(.fontWeight, weight.rawValue.formatted())
+        self.style(.fontWeight, weight.description)
     }
 }
 
@@ -19,7 +19,7 @@ public extension InlineElement {
     /// - Parameter weight: The new font weight.
     /// - Returns: A new `Text` instance with the updated weight.
     func fontWeight(_ weight: Font.Weight) -> some InlineElement {
-        self.style(.fontWeight, weight.rawValue.formatted())
+        self.style(.fontWeight, weight.description)
     }
 }
 

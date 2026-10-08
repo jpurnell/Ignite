@@ -49,6 +49,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   from a file, are unaffected.
 - The command-line tool's process helper reads both of a command's pipes while
   it runs, so a command that writes more than a pipe holds no longer stalls.
+- Numbers written into HTML attributes and CSS no longer follow the locale of
+  the machine running the build. They were formatted for a reader, so a value
+  of 1,000 or more gained a grouping separator under `en_US` (`5,000`), a
+  different one elsewhere (`5.000`, `5 000`), and under locales with their own
+  digits even small values changed (`٤٠٠` for a font weight of 400). Values
+  below 1,000 built under `en_US` are written exactly as before. Affected:
+  - `Carousel` `data-bs-interval`: a slide duration of one second or more.
+    Five seconds is now `5000`; it was `5,000`, which Bootstrap cannot read.
+  - `CodeBlock.lineNumberVisibility` and the site-wide line number setting on
+    `Body`, `data-start`: a first line of 1,000 or more.
+  - `Column.columnSpan`, `colspan`: a span of 1,000 or more.
+  - `Text.lineLimit`, `--ig-max-line-length`: a limit of 1,000 or more.
+  - `lineSpacing` with an exact value, `line-height`: 1,000 or more
+    (`1234.5`, not `1,234.5`). The same format writes `opacity`, whose values
+    never reach 1,000 and are unchanged.
+  - `font-weight` from `fontWeight` and `font`, and the underline opacity
+    classes of `Link`: unchanged under `en_US`; fixed under locales that do
+    not use ASCII digits.
+- Front-matter dates are read in the Gregorian calendar whatever the locale of
+  the machine running the build. Under a locale with another calendar the same
+  `date: 2024-03-05` was read as a different year (1481 under `th_TH`). Dates
+  parsed under Gregorian-calendar locales are unchanged.
 
 ### Changed
 
