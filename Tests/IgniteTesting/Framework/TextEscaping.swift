@@ -121,7 +121,7 @@ struct TextEscapingTests {
         #expect("Just some text, it's fine.".plainTextFromHTML() == "Just some text, it's fine.")
         #expect("<p>Some <em>text</em></p>".plainTextFromHTML() == "Some text")
         #expect("&amp;lt; &quot;q&quot; &#39;s&#x27; &apos; &copy; &bogus".plainTextFromHTML()
-            == "&lt; \"q\" 's' ' &copy; &bogus")
+            == "&lt; \"q\" 's' ' \u{A9} &bogus")
     }
 
     // MARK: - Code elements

@@ -487,6 +487,53 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   rule outranks the component's own: the toggler lost its border, and a
   collapsed accordion header its background, under the pointer. A `Button`
   you write yourself still has `btn`, whatever other class you give it.
+- The content of a `<style>` or `<script>` element can no longer end the
+  element. Nothing is escaped inside these two – a browser reads up to the
+  first `</style` or `</script`, wherever it is – so a `MetaStyle` whose
+  selector contained `</style>`, or a `Script(code:)` whose JavaScript had
+  `</script>` in a string, closed its element there and spilled the rest onto
+  the page. Both are now written through one place, which rewrites those
+  sequences into forms CSS and JavaScript read as the same characters:
+  - In CSS, `</style` is written `<\/style`.
+  - In JavaScript, `</script` is written `<\/script`.
+  - In JavaScript, `<script` after an unclosed `<!--` is written
+    `\x3Cscript`. HTML reads that pair as a script inside a comment and then
+    never closes the real element.
+
+  CSS and JavaScript with none of these sequences are written exactly as
+  before, including a bare `<!--`, `<script` and `<`.
+- **Addresses in `StructuredData` are absolute.** The convenience methods and
+  the node builders wrote the addresses they were given, so a path such as
+  `/about` reached crawlers as a path. They now complete it with the site's
+  address, including its path on a subsite. Affected: the `url` of
+  `organization`, `webSite`, `personNode`, `webSiteNode`, `webPageNode`,
+  `profilePageNode`, `collectionPageNode` and `articleNode`; `sameAs`; the
+  `url` of a parent organization, an event organizer and an article's
+  publisher; the `image` of `articleNode`; the items of `breadcrumbListNode`;
+  and every `@id` and reference to one (`publisherId`, `isPartOfId`,
+  `authorId`, `mainEntityId`, `breadcrumbId`), so `"#organization"` becomes
+  `https://example.com/#organization` wherever it is written. An address that
+  already has a scheme is written exactly as before, as is a blank node
+  identifier (`_:name`). `StructuredData(_:properties:)` and
+  `StructuredData(json:)` still write what they are given. Node builders
+  called while no site is being published have no address to use and return
+  theirs unchanged.
+- **Article titles and descriptions decode every HTML character reference.**
+  Only `&amp;`, `&lt;`, `&gt;`, `&quot;`, `&apos;` and numeric references were
+  decoded, so a heading `# Caf&eacute; &copy; 2026` gave the page title
+  `Caf&eacute; &copy; 2026`, shown literally in the browser tab, the metadata
+  and the feeds. The full set of named references in the HTML Standard is now
+  decoded, as a browser decodes them:
+  - Named references: `&copy;` is `©`, `&nbsp;` is a no-break space, and so on
+    for all 2,231 names. The names the standard accepts without a semicolon
+    (`&amp`, `&copy`) are decoded without one.
+  - Numeric references reach every code point and no longer need a semicolon
+    or a limited number of digits.
+  - A numeric reference that cannot be a character – zero, a surrogate, a
+    number beyond U+10FFFF – becomes U+FFFD (�) where it was left as written,
+    and one in the range 0x80–0x9F is read as Windows-1252 (`&#x92;` is `’`).
+
+  Text with none of these is unchanged, and `&bogus;` is still left alone.
 
 ### Changed
 
@@ -557,6 +604,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `swift-tools-version` is raised from 6.0 to 6.2.
 - The package depends on `swift-docc-plugin`, so its documentation can be built
   and checked with `swift package generate-documentation`.
+- The table of named character references is generated from the HTML
+  Standard's own list by `scripts/generate-html-named-character-references.py`
+  into `HTMLNamedCharacterReferences.swift`. The table is © WHATWG and, as
+  source code, under the BSD 3-Clause License; the notice is at the top of the
+  generated file.
 
 ## [0.6.9] - 2026-04-21
 

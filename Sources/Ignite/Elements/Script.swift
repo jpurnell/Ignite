@@ -53,7 +53,7 @@ public struct Script: HTML, HeadElement {
             attributes.append(customAttributes: .init(name: "src", value: path))
             return Markup("<script\(attributes)></script>")
         } else if let code {
-            return Markup("<script\(attributes)>\(code)</script>")
+            return RawTextElement.script.markup(attributes: attributes, content: code)
         } else {
             publishingContext.addWarning("""
             Creating a script with no source or code should not be possible. \

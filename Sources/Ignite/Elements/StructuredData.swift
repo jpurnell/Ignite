@@ -35,6 +35,19 @@ import Foundation
 ///     StructuredData(json: customJSONString)
 /// }
 /// ```
+///
+/// ## Addresses
+///
+/// Structured data is read by crawlers away from the page it was written in, so the
+/// addresses in it have to be whole. The convenience methods and the node builders
+/// complete the ones you give them – `url`, `image`, `sameAs`, breadcrumb items, `@id`
+/// and the references to an `@id` – with the address of your site: on
+/// `https://example.com/docs`, `"/about"` is written `https://example.com/docs/about` and
+/// `"#organization"` is written `https://example.com/docs/#organization`. An address
+/// that already has a scheme is written exactly as you gave it.
+///
+/// The generic initializer and `init(json:)` write what they are given: they cannot
+/// know which of your properties are addresses.
 public struct StructuredData: HeadElement, Sendable {
     /// The standard set of control attributes for HTML elements.
     public var attributes = CoreAttributes()
@@ -174,7 +187,7 @@ extension StructuredData {
 
         if let publisher {
             var pub: [String: Any] = ["@type": "Organization", "name": publisher]
-            if let publisherURL { pub["url"] = publisherURL }
+            if let publisherURL { pub["url"] = siteAddress(publisherURL) }
             json["publisher"] = pub
         }
 
@@ -206,18 +219,18 @@ extension StructuredData {
     ) -> StructuredData {
         var properties: [String: Any] = [
             "name": name,
-            "url": url
+            "url": siteAddress(url)
         ]
 
         if let description { properties["description"] = description }
         if let foundingDate { properties["foundingDate"] = foundingDate }
-        if !sameAs.isEmpty { properties["sameAs"] = sameAs }
+        if !sameAs.isEmpty { properties["sameAs"] = sameAs.map(siteAddress) }
 
         if let parent = parentOrganization {
             properties["parentOrganization"] = [
                 "@type": parentOrganizationType,
                 "name": parent.name,
-                "url": parent.url
+                "url": siteAddress(parent.url)
             ]
         }
 
@@ -241,7 +254,7 @@ extension StructuredData {
     ) -> StructuredData {
         var properties: [String: Any] = [
             "name": name,
-            "url": url
+            "url": siteAddress(url)
         ]
 
         if let description { properties["description"] = description }
@@ -303,7 +316,7 @@ extension StructuredData {
             properties["organizer"] = [
                 "@type": "Organization",
                 "name": organizer.name,
-                "url": organizer.url
+                "url": siteAddress(organizer.url)
             ]
         }
 
@@ -401,10 +414,10 @@ extension StructuredData {
         var node: [String: Any] = [
             "@type": "Person",
             "name": name,
-            "url": url
+            "url": siteAddress(url)
         ]
-        if let id { node["@id"] = id }
-        if !sameAs.isEmpty { node["sameAs"] = sameAs }
+        if let id { node["@id"] = siteAddress(id) }
+        if !sameAs.isEmpty { node["sameAs"] = sameAs.map(siteAddress) }
         return node
     }
 
@@ -429,12 +442,12 @@ extension StructuredData {
         var node: [String: Any] = [
             "@type": "WebSite",
             "name": name,
-            "url": url
+            "url": siteAddress(url)
         ]
-        if let id { node["@id"] = id }
+        if let id { node["@id"] = siteAddress(id) }
         if let description { node["description"] = description }
         if let inLanguage { node["inLanguage"] = inLanguage }
-        if let publisherId { node["publisher"] = ["@id": publisherId] }
+        if let publisherId { node["publisher"] = ["@id": siteAddress(publisherId)] }
         return node
     }
 
@@ -459,12 +472,12 @@ extension StructuredData {
         var node: [String: Any] = [
             "@type": "WebPage",
             "name": title,
-            "url": url
+            "url": siteAddress(url)
         ]
-        if let id { node["@id"] = id }
+        if let id { node["@id"] = siteAddress(id) }
         if let description { node["description"] = description }
-        if let isPartOfId { node["isPartOf"] = ["@id": isPartOfId] }
-        if let breadcrumbId { node["breadcrumb"] = ["@id": breadcrumbId] }
+        if let isPartOfId { node["isPartOf"] = ["@id": siteAddress(isPartOfId)] }
+        if let breadcrumbId { node["breadcrumb"] = ["@id": siteAddress(breadcrumbId)] }
         return node
     }
 
@@ -489,12 +502,12 @@ extension StructuredData {
         var node: [String: Any] = [
             "@type": "ProfilePage",
             "name": title,
-            "url": url
+            "url": siteAddress(url)
         ]
-        if let id { node["@id"] = id }
+        if let id { node["@id"] = siteAddress(id) }
         if let description { node["description"] = description }
-        if let mainEntityId { node["mainEntity"] = ["@id": mainEntityId] }
-        if let isPartOfId { node["isPartOf"] = ["@id": isPartOfId] }
+        if let mainEntityId { node["mainEntity"] = ["@id": siteAddress(mainEntityId)] }
+        if let isPartOfId { node["isPartOf"] = ["@id": siteAddress(isPartOfId)] }
         return node
     }
 
@@ -519,12 +532,12 @@ extension StructuredData {
         var node: [String: Any] = [
             "@type": "CollectionPage",
             "name": title,
-            "url": url
+            "url": siteAddress(url)
         ]
-        if let id { node["@id"] = id }
+        if let id { node["@id"] = siteAddress(id) }
         if let description { node["description"] = description }
-        if let isPartOfId { node["isPartOf"] = ["@id": isPartOfId] }
-        if let mainEntityId { node["mainEntity"] = ["@id": mainEntityId] }
+        if let isPartOfId { node["isPartOf"] = ["@id": siteAddress(isPartOfId)] }
+        if let mainEntityId { node["mainEntity"] = ["@id": siteAddress(mainEntityId)] }
         return node
     }
 
@@ -561,16 +574,16 @@ extension StructuredData {
         var node: [String: Any] = [
             "@type": "Article",
             "headline": headline,
-            "url": url,
+            "url": siteAddress(url),
             "datePublished": datePublished
         ]
-        if let id { node["@id"] = id }
+        if let id { node["@id"] = siteAddress(id) }
         if let dateModified { node["dateModified"] = dateModified }
         if let description { node["description"] = description }
-        if let image { node["image"] = image }
-        if let authorId { node["author"] = ["@id": authorId] }
-        if let publisherId { node["publisher"] = ["@id": publisherId] }
-        if let isPartOfId { node["isPartOf"] = ["@id": isPartOfId] }
+        if let image { node["image"] = siteAddress(image) }
+        if let authorId { node["author"] = ["@id": siteAddress(authorId)] }
+        if let publisherId { node["publisher"] = ["@id": siteAddress(publisherId)] }
+        if let isPartOfId { node["isPartOf"] = ["@id": siteAddress(isPartOfId)] }
         return node
     }
 
@@ -599,18 +612,54 @@ extension StructuredData {
                     "@type": "ListItem",
                     "position": 1,
                     "name": homeName,
-                    "item": siteURL
+                    "item": siteAddress(siteURL)
                 ] as [String: Any],
                 [
                     "@type": "ListItem",
                     "position": 2,
                     "name": pageTitle,
-                    "item": pageURL
+                    "item": siteAddress(pageURL)
                 ] as [String: Any]
             ]
         ]
-        if let id { node["@id"] = id }
+        if let id { node["@id"] = siteAddress(id) }
         return node
+    }
+}
+
+// MARK: - Addresses
+
+extension StructuredData {
+    /// Completes an address written in structured data with the address of the site
+    /// being published.
+    ///
+    /// Structured data is read by crawlers away from the page it was written in, so a
+    /// path means nothing to them: `url`, `image`, `sameAs`, `item` and `@id` have to be
+    /// whole addresses. A path, a fragment or a protocol-relative address is completed
+    /// with ``Site/absoluteAddress(for:)``; an address that already has a scheme is
+    /// returned exactly as it was written, and so is a JSON-LD blank node identifier
+    /// (`_:name`), which is a label and not an address.
+    ///
+    /// The node builders return their dictionaries at once, so they can only complete an
+    /// address while a site is being published – which is when a page or a layout builds
+    /// them. With no publish in progress there is no site to take an address from: the
+    /// reference is returned as it was given, and the unified log says so.
+    /// - Parameter reference: The address or path as the author wrote it.
+    /// - Returns: The address to write into the JSON.
+    static func siteAddress(_ reference: String) -> String {
+        guard reference.isEmpty == false, reference.hasPrefix("_:") == false else { return reference }
+
+        guard let site = PublishingContext.current?.site else {
+            if reference.hasPrefix("//") || URL(string: reference)?.scheme == nil {
+                logger.warning("""
+                StructuredData was given the address '\(reference, privacy: .public)' with no site being \
+                published, so it could not be made absolute. Build structured data while the page renders.
+                """)
+            }
+            return reference
+        }
+
+        return site.absoluteAddress(for: reference)
     }
 }
 

@@ -46,6 +46,6 @@ public struct MetaStyle: HeadElement {
             selector: .type(selector),
             isImportant: isImportant,
             themes: allThemes)
-        return Markup("<style>\(css)</style>")
+        return RawTextElement.style.markup(content: css)
     }
 }
