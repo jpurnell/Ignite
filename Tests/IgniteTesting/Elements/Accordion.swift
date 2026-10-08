@@ -30,9 +30,18 @@ class AccordionTests: IgniteTestSuite {
             .htmlAttribute(named: "id")
         )
 
-        let expected = /accordion[a-zA-Z0-9]{5}/
-        let match = try #require(idattribute.wholeMatch(of: expected))
-        #expect(String(match.output) == idattribute)
+        // The ID is the first one generated on this page. It used to be `accordion`
+        // followed by five random characters, which made every build differ.
+        #expect(idattribute == "ig-accordion-1")
+    }
+
+    @Test("Two accordions on a page have different IDs", .publishingContext())
+    func accordionsOnAPageHaveDifferentIDs() async throws {
+        let first = try #require(Accordion {}.markupString().htmlAttribute(named: "id"))
+        let second = try #require(Accordion {}.markupString().htmlAttribute(named: "id"))
+
+        #expect(first == "ig-accordion-1")
+        #expect(second == "ig-accordion-2")
     }
 
     @Test("Outputs Items Provided", .publishingContext(), arguments: [Accordion.OpenMode.all, .individual])
@@ -48,8 +57,7 @@ class AccordionTests: IgniteTestSuite {
 
         let accordionID = try #require(output.htmlTagWithCloseTag("div")?.attributes.htmlAttribute(named: "id"))
 
-        // the item id will be unique
-        // each time render() is called on each Item
+        // each item takes the next number on the page each time it is rendered,
         // so that part of the result will never match
         let deterministicOutput = output
             .clearingItemIDs()
@@ -82,7 +90,8 @@ class AccordionTests: IgniteTestSuite {
 
         let accordionID = try #require(output.htmlTagWithCloseTag("div")?.attributes.htmlAttribute(named: "id"))
 
-        let pattern = /accordion[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]/
+        let pattern = /ig-accordion-[0-9]+/
+        #expect(output.matches(of: pattern).isEmpty == false)
 
         for match in output.matches(of: pattern) {
             #expect(String(match.0) == accordionID)
@@ -94,12 +103,12 @@ class AccordionTests: IgniteTestSuite {
 
 private extension String {
     func clearingItemIDs() -> String {
-        let toReplace = /item[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]/
+        let toReplace = /-item-[0-9]+/
         return replacing(toReplace, with: "-----")
     }
 
     func clearingAccordionIDs() -> String {
-        let toReplace = /accordion[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]/
+        let toReplace = /ig-accordion-[0-9]+/
         return replacing(toReplace, with: "-----")
     }
 }

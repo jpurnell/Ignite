@@ -15,7 +15,7 @@ import Testing
 struct ItemTests {
     @Test("Basic accordian item test with default open mode .individual", .publishingContext())
     func basicItemWithParentAccordianOpenModeIndividual() async throws {
-        let accordianID = "accordion\(UUID().uuidString.truncatedHash)"
+        let accordianID = "ig-accordion-1"
         let element = Item("First item") {
             Text("This is an accordion item.")
         }
@@ -23,10 +23,9 @@ struct ItemTests {
 
         let output = element.markupString()
 
-        // extract the itemID
-        let startIndex = try #require(output.firstIndex(of: "#"))
-        let itemIDStringRange =  output.index(after: startIndex)..<output.index(startIndex, offsetBy: 25)
-        let itemID = output[itemIDStringRange]
+        // The item's ID is its accordion's ID, then the next number on the page – the
+        // first, here, since nothing else on this page has asked for one.
+        let itemID = "ig-accordion-1-item-1"
 
         #expect(output == """
         <div class="accordion-item">\
@@ -43,7 +42,7 @@ struct ItemTests {
 
     @Test("Item with startsOpen true renders without collapsed class and with show class", .publishingContext())
     func startsOpenTrue() async throws {
-        let accordionID = "accordion\(UUID().uuidString.truncatedHash)"
+        let accordionID = "ig-accordion-1"
         let element = Item("Open item", startsOpen: true) {
             Text("Visible content")
         }
@@ -58,7 +57,7 @@ struct ItemTests {
 
     @Test("Item with contentBackground adds background style", .publishingContext())
     func contentBackgroundColor() async throws {
-        let accordionID = "accordion\(UUID().uuidString.truncatedHash)"
+        let accordionID = "ig-accordion-1"
         let element = Item("Colored item") {
             Text("Content")
         }
@@ -71,7 +70,7 @@ struct ItemTests {
 
     @Test("Item with openMode all omits data-bs-parent with accordion ID", .publishingContext())
     func openModeAll() async throws {
-        let accordionID = "accordion\(UUID().uuidString.truncatedHash)"
+        let accordionID = "ig-accordion-1"
         let element = Item("All mode") {
             Text("Content")
         }

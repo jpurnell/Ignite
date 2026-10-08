@@ -135,7 +135,7 @@ struct AnimationClassGenerator {
     /// 3. Optionally includes an .appeared class if appear properties are present
     /// 4. Formats the output to avoid empty declarations
     private func buildBaseClass(_ animation: any Animatable) -> String {
-        var baseProperties = Set<String>()
+        var baseProperties = OrderedSet<String>()
 
         if trigger == .appear {
             if let transition = animation as? Transition {
@@ -146,7 +146,7 @@ struct AnimationClassGenerator {
         }
 
         if trigger == .click {
-            baseProperties.insert("cursor: pointer")
+            baseProperties.append("cursor: pointer")
         }
 
         let appearedProperties = getAppearedProperties()

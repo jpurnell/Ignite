@@ -32,8 +32,8 @@ struct FontFaceRule: Hashable, Equatable, Sendable {
     func render() -> String {
         """
         @font-face {
-            font-family: '\(family)';
-            src: url('\(source)');
+            font-family: \(family.cssStringLiteral());
+            src: url(\(source.cssStringLiteral()));
             font-weight: \(weight);
             font-style: \(style);
             font-display: \(display);

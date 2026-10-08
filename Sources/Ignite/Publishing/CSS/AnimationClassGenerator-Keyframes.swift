@@ -10,12 +10,12 @@ import Foundation
 extension AnimationClassGenerator {
     /// Generates the base CSS properties for a keyframe animation
     /// - Parameter animation: The keyframe animation to process
-    /// - Returns: A set of CSS properties including animation name and timing
-    func buildBaseKeyframeClass(_ animation: Animation) -> Set<String> {
-        var baseProperties = Set<String>()
+    /// - Returns: The CSS declarations, in the order they are to be written.
+    func buildBaseKeyframeClass(_ animation: Animation) -> OrderedSet<String> {
+        var baseProperties = OrderedSet<String>()
         let baseClass = "animation-" + animation.id
         let timing = getAnimationTiming(animation)
-        baseProperties.insert("animation: \(baseClass)-appear \(timing)")
+        baseProperties.append("animation: \(baseClass)-appear \(timing)")
         return baseProperties
     }
 

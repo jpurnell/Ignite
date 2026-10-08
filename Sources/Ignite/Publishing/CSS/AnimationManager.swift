@@ -27,11 +27,6 @@ final class AnimationManager {
         }
     }
 
-    /// The manager for the current publish operation.
-    static var shared: AnimationManager {
-        PublishingContext.shared.animationManager
-    }
-
     /// Storage for registered animations, keyed by element ID and trigger type.
     ///
     /// The structure maps element IDs to a dictionary of animation triggers and their

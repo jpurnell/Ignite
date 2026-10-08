@@ -24,7 +24,7 @@ public extension HTML {
         let address = PublishingContext.current?.assetPath(image) ?? image
 
         return self.style(
-            .init(.backgroundImage, value: "url('\(address)')"),
+            .init(.backgroundImage, value: "url(\(address.cssStringLiteral()))"),
             .init(.backgroundSize, value: contentMode.css),
             .init(.backgroundRepeat, value: repeats ? "repeat" : "no-repeat"),
             .init(.backgroundPosition, value: position.css)

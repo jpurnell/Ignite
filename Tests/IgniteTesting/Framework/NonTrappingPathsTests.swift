@@ -185,7 +185,7 @@ class NonTrappingPathsTests: IgniteTestSuite {
     func accordionItemWithoutAccordion() throws {
         let output = Item("Shipping") { Text("Three days.") }.markupString()
 
-        let itemID = try #require(output.firstMatch(of: #/ id="(accordion-item[^"]+)"/#)?.1)
+        let itemID = "ig-accordion-item-1"
         #expect(output == """
         <div class="accordion-item"><h2 class="accordion-header">\
         <button type="button" class="accordion-button collapsed btn" data-bs-toggle="collapse" \

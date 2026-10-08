@@ -34,6 +34,54 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Two builds of an unchanged site produce identical files.** Several things
+  in the output changed from one build to the next:
+  - Generated IDs were random. `Accordion` and its `Item`s, `Carousel`, a
+    filterable `Table`, `Form`, `SubscribeForm` and `TextField` each took a
+    new ID on every build. An ID is now the element's kind and a number –
+    `ig-accordion-3`, `ig-accordion-3-item-4`, `ig-field-2` – counting the IDs
+    given out on the page, starting again at 1 on each page. IDs are unique
+    within a page, and a page that has not changed keeps its IDs. If your own
+    CSS or JavaScript matched the old shape (`accordion` or `carousel`
+    followed by five characters, `table-` followed by five), give the element
+    an ID of your own with `id(_:)`.
+  - The CSS rules of a `Style` were written in a different order on each
+    build, because they were held in a dictionary. The order of rules decides
+    which wins when two apply, so a style with several conditions could look
+    different from one build to the next. Rules are now written in the order
+    Ignite considers the conditions, every time.
+  - The declarations of an `.appear` transition were written in a different
+    order on each build. They are now the initial value of each property, in
+    the order given, followed by the transition.
+  - `Video` and `Audio` chose a file's type by looking for any known
+    extension anywhere in its name and taking the first found, in an order
+    that changed on each build: `podcast.item.mp3` was `audio/mpeg` on one
+    build and `audio/it` on the next, and `clip.asfplugin` was sometimes
+    `video/x-ms-asf`. The type now comes from the file's own extension,
+    whatever its case and ignoring a query or fragment, so `clip.MP4` and
+    `clip.mp4?v=2` are recognised too. A name whose extension is not a known
+    type is still searched for one, and the longest found is used.
+  - Articles with the same date were ordered as the file system listed them,
+    which differs between machines. Within a date they are now ordered by
+    path. This is the order of `allContent`, of the feeds and of tag pages.
+  - An Atom feed with no entries carried the time of the build in `updated`.
+    It now carries `1970-01-01T00:00:00Z`; a feed with entries is dated by
+    its newest entry, as before.
+  - The `srcset` of an `Image` listed its variants in the order the file
+    system returned them. They are listed by name.
+- **Every transition and animation has its own CSS class.** The class was
+  derived from the type of the animation, not from what it does, so every
+  `Transition` on a site was given the same class – and likewise every
+  `Animation` – and the rules of the last one registered applied to them all.
+  A page with a fade and a slide showed two of whichever came last. The class
+  is now derived from the animation itself: the same animation shares a class,
+  different ones do not. The class names in your HTML and in `animations.min.css`
+  change as a result.
+- A font family, a font file's address, an `@import` address and a
+  `background(image:)` address cannot end the CSS string they are written in.
+  A `'` or a backslash in one is escaped (`\'`, `\\`); it used to close
+  the string, and the rest of the value became CSS. Values without those
+  characters are unchanged.
 - **On a site deployed in a subdirectory, links to the site's own pages lead
   to them.** `Link(_:target:)` given a page or an article, `Link(article)`,
   `LinkGroup(target:)` given a page or an article, and the tag links of
@@ -381,6 +429,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `AnimationManager.shared` and `CSSManager.shared` are removed. Both were
+  internal, and nothing in the library called either; the managers are reached
+  through the publishing context.
 - `BoolMatrix.flattened` and `Array2D.flattened` are removed from the command-line
   tool. Nothing read either; a stale index unit had been hiding that from the
   unreachable-code check.

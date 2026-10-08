@@ -90,7 +90,7 @@ public struct SubscribeForm: HTML, NavigationItem {
         case .sendFox(_, let formID):
             attributes.id = formID
         default:
-            attributes.id = UUID().uuidString.truncatedHash
+            attributes.id = PublishingContext.nextElementID("form")
         }
     }
 

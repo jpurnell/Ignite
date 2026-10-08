@@ -11,7 +11,7 @@ private func fontModifier(_ font: Font, content: any HTML) -> any HTML {
         styles.append(.init(.fontWeight, value: font.weight.description))
 
         if let name = font.name, !name.isEmpty {
-            styles.append(.init(.fontFamily, value: "'\(name)'"))
+            styles.append(.init(.fontFamily, value: name.cssStringLiteral()))
         }
 
         if let size = font.size {
@@ -38,7 +38,7 @@ private func fontModifier(_ font: Font, content: any HTML) -> any HTML {
         styles.append(.init(.fontWeight, value: font.weight.description))
 
         if let name = font.name, !name.isEmpty {
-            styles.append(.init(.fontFamily, value: "'\(name)'"))
+            styles.append(.init(.fontFamily, value: name.cssStringLiteral()))
         }
 
         if let size = font.size {
@@ -68,7 +68,7 @@ private func fontModifier(_ font: Font, content: any InlineElement) -> any Inlin
     styles.append(.init(.fontWeight, value: font.weight.description))
 
     if let name = font.name, !name.isEmpty {
-        styles.append(.init(.fontFamily, value: "'\(name)'"))
+        styles.append(.init(.fontFamily, value: name.cssStringLiteral()))
     }
 
     if let size = font.size {
@@ -153,7 +153,7 @@ public extension StyledHTML {
         }
 
         if let name = font.name, !name.isEmpty {
-            styles.append(.init(.fontFamily, value: "'\(name)'"))
+            styles.append(.init(.fontFamily, value: name.cssStringLiteral()))
         }
 
         if let size = font.size {

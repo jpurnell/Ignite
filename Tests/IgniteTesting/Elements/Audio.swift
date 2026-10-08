@@ -59,4 +59,16 @@ class AudioTests: IgniteTestSuite {
         #expect(output.contains(#"<source src="/audio/song.ogg" type="audio/ogg">"#))
         #expect(!output.contains("song.xyz"))
     }
+
+    @Test("An audio file's type comes from its extension, whatever else the name contains", .publishingContext(), arguments: [
+        ("/audio/song.mp3", "audio/mpeg"),
+        ("/audio/podcast.item.mp3", "audio/mpeg"),
+        ("/audio/song.aif", "audio/aiff"),
+        ("/audio/song.aifc", "audio/x-aiff"),
+        ("/audio/song.la", "audio/nspaudio"),
+        ("/audio/song.lam", "audio/x-liveaudio")
+    ])
+    func audioTypeFromExtension(filename: String, expectedMIMEType: String) async throws {
+        #expect(Audio(filename).audioType(for: filename)?.mimeType == expectedMIMEType)
+    }
 }

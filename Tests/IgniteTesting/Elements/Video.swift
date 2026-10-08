@@ -61,4 +61,16 @@ class VideoTests: IgniteTestSuite {
         #expect(output.contains(#"<source src="/videos/clip.webm" type="video/webm" />"#))
         #expect(!output.contains("clip.xyz"))
     }
+
+    @Test("A video's type comes from its extension, whatever else the name contains", .publishingContext(), arguments: [
+        ("/videos/clip.mp4", "video/mp4"),
+        ("/videos/clip.asf", "video/x-ms-asf"),
+        ("/videos/clip.asfplugin", "video/x-ms-asf-plugin"),
+        ("/videos/my.aviary.webm", "video/webm"),
+        ("/videos/clip.MOV", "video/quicktime"),
+        ("/videos/clip.mp4?v=2", "video/mp4")
+    ])
+    func videoTypeFromExtension(filename: String, expectedMIMEType: String) async throws {
+        #expect(Video(filename).videoType(for: filename)?.rawValue == expectedMIMEType)
+    }
 }

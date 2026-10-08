@@ -37,7 +37,7 @@ extension PublishingContext {
     ) {
         let path = pagePath
         currentRenderingPath = rootPath
-        pageDirectoryDepth = Self.directoryDepth(of: path)
+        beginPage(at: path)
         let pageMetadata = PageMetadata(
             title: page.title,
             description: page.description,
@@ -66,7 +66,7 @@ extension PublishingContext {
     func render(_ article: Article) throws {
         let layout = try layout(for: article)
         currentRenderingPath = article.path
-        pageDirectoryDepth = Self.directoryDepth(of: article.path)
+        beginPage(at: article.path)
 
         let pageMetadata = PageMetadata(
             title: article.title,
@@ -109,7 +109,7 @@ extension PublishingContext {
 
             let outputDirectory = buildDirectory.appending(path: path)
             let tagLayout = site.tagPage
-            pageDirectoryDepth = Self.directoryDepth(of: path)
+            beginPage(at: path)
 
             let metadata = PageMetadata(
                 title: "Tags",
@@ -144,7 +144,7 @@ extension PublishingContext {
         if site.errorPage is EmptyErrorPage { return }
 
         // An error page is written at the root of the site.
-        pageDirectoryDepth = 0
+        beginPage(at: "/")
 
         for error in [PageNotFoundError()] {
             let metadata = PageMetadata(

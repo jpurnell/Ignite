@@ -75,7 +75,7 @@ public struct Form: HTML, NavigationItem {
     ) {
         self.items = content()
         self.spacing = spacing
-        attributes.id = UUID().uuidString.truncatedHash
+        attributes.id = PublishingContext.nextElementID("form")
     }
 
     /// Renders this form as a `<form>` element, using a compact single-row layout when it

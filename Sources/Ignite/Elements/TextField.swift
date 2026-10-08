@@ -58,7 +58,7 @@ public struct TextField: InlineElement, FormItem {
     ///   - label: The label text to display with the field.
     ///   - prompt: The text to display when the field is empty.
     public init(_ label: any InlineElement, prompt: String? = nil) {
-        let id = UUID().uuidString.truncatedHash
+        let id = PublishingContext.nextElementID("field")
         input.attributes.id = id
         input.attributes.append(classes: "form-control")
         input.attributes.append(customAttributes: .init(name: "type", value: TextType.text.rawValue))

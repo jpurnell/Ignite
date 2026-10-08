@@ -169,7 +169,7 @@ public struct Table: HTML {
         var output = Markup()
 
         if let filterTitle {
-            tableAttributes.id = "table-\(UUID().uuidString.truncatedHash)"
+            tableAttributes.id = PublishingContext.nextElementID("table")
             output += """
             <input class=\"form-control mb-2\" type=\"text\" \
             placeholder=\"\(filterTitle.escapedForHTML())\" \

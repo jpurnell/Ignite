@@ -105,9 +105,9 @@ public struct Item: HTML {
             """)
         }
 
-        let parentID = parentID ?? "accordion"
+        let parentID = parentID ?? "ig-accordion"
         let parentOpenMode = parentOpenMode ?? .all
-        let itemID = "\(parentID)-item\(UUID().uuidString.truncatedHash)"
+        let itemID = "\(parentID)-item-\(PublishingContext.nextElementNumber())"
 
         return Section {
             Text {

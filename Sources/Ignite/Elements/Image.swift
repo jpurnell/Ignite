@@ -223,8 +223,11 @@ extension Image {
 
         let files: [URL]
         do {
+            // Sorted by name: a directory's contents come back in whatever order the file
+            // system keeps them, and the order here is the order of the `srcset`.
             files = try FileManager.default.contentsOfDirectory(at: assetPath, includingPropertiesForKeys: nil)
                 .filter { $0.pathExtension == pathExtension }
+                .sorted { $0.lastPathComponent < $1.lastPathComponent }
         } catch {
             let reason = error.localizedDescription
             logger.warning("Could not list \(assetPath.path, privacy: .public): \(reason, privacy: .public)")

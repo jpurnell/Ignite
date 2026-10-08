@@ -479,6 +479,10 @@ final class PublishingContext: @unchecked Sendable {
     /// is not at the root. It is 0 whenever no page is being rendered.
     var pageDirectoryDepth = 0
 
+    /// How many element IDs have been handed out on the page being rendered.
+    /// See ``nextElementID(_:)``.
+    var elementIDCount = 0
+
     /// Counts the directories in a page's path.
     /// - Parameter path: A path within the site, with or without leading and trailing slashes.
     /// - Returns: The number of path components.
@@ -588,11 +592,12 @@ final class PublishingContext: @unchecked Sendable {
             return true // always continuing
         }
 
-        // Make content be sorted newest first by default.
-        allContent.sort(
-            by: \.date,
-            order: .reverse
-        )
+        // Make content be sorted newest first by default. Articles with the same date are
+        // put in order of their paths: left as they were found, they would follow the
+        // order the file system lists files in, which differs from one machine to another.
+        allContent.sort { first, second in
+            first.date != second.date ? first.date > second.date : first.path < second.path
+        }
     }
 
     /// Performs all steps required to publish a site.

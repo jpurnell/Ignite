@@ -25,7 +25,8 @@ final class StyleManager {
 
         /// A mapping of environment conditions to their corresponding style attributes,
         /// containing only the minimal conditions needed for each unique style variation.
-        let uniqueConditions: [EnvironmentConditions: [InlineStyle]]
+        /// Ordered, because the order of the conditions is the order of the CSS rules.
+        let uniqueConditions: OrderedDictionary<EnvironmentConditions, [InlineStyle]>
     }
 
     /// Registers a style for CSS generation

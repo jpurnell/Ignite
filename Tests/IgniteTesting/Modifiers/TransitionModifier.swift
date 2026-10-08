@@ -12,6 +12,23 @@ import Testing
 /// Tests for the `TransitionModifier`.
 @Suite("TransitionModifier Tests")
 class TransitionModifierTests: IgniteTestSuite {
+    @Test("Different transitions get different classes, and the same transition the same class", .publishingContext())
+    func classIsDerivedFromTheTransition() async throws {
+        let fade = Text("A").transition(.fadeIn, on: .appear).markupString()
+        let fadeAgain = Text("B").transition(.fadeIn, on: .appear).markupString()
+        let slide = Text("C").transition(.slideIn(from: .top), on: .appear).markupString()
+
+        let fadeID = try #require(firstAnimationID(in: fade))
+        #expect(firstAnimationID(in: fadeAgain) == fadeID)
+        #expect(firstAnimationID(in: slide) != fadeID)
+
+        // Each class has its own rule, so one transition's CSS cannot replace another's.
+        #expect(Transition.fadeIn.id != Transition.slideIn(from: .top).id)
+        #expect(Transition.fadeIn.id != Transition.fadeOut.id)
+        #expect(Transition.fadeIn.id == Transition.fadeIn.id)
+        #expect(Animation().id != Transition().id)
+    }
+
     @Test("Hover transition adds hover class and 3D transform style", .publishingContext())
     func hoverTransitionAddsHoverClassAndStyle() async throws {
         let transition = Transition.scale()

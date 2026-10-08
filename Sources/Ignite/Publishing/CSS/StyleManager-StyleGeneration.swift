@@ -73,7 +73,7 @@ extension StyleManager {
         styles: [InlineStyle],
         using collector: StyledHTML,
         style: any Style,
-        existingConditions uniqueConditions: [EnvironmentConditions: [InlineStyle]]
+        existingConditions uniqueConditions: OrderedDictionary<EnvironmentConditions, [InlineStyle]>
     ) -> (EnvironmentConditions, [InlineStyle])? {
         let testResult = style.style(content: collector, environment: environment)
         guard Array(testResult.attributes.styles) == styles else { return nil }
@@ -102,7 +102,7 @@ extension StyleManager {
     ///   - uniqueConditions: The current map of unique conditions
     private func processStyleVariation(
         context: StyleVariationContext,
-        uniqueConditions: inout [EnvironmentConditions: [InlineStyle]]
+        uniqueConditions: inout OrderedDictionary<EnvironmentConditions, [InlineStyle]>
     ) {
         guard context.styles != context.defaultStyles else { return }
 
@@ -139,8 +139,8 @@ extension StyleManager {
         for style: any Style,
         conditions allConditions: [EnvironmentConditions],
         using collector: StyledHTML
-    ) -> [EnvironmentConditions: [InlineStyle]] {
-        var tempMap: [EnvironmentConditions: [InlineStyle]] = [:]
+    ) -> OrderedDictionary<EnvironmentConditions, [InlineStyle]> {
+        var tempMap: OrderedDictionary<EnvironmentConditions, [InlineStyle]> = [:]
 
         for environment in allConditions {
             let styledHTML = style.style(content: collector, environment: environment)
@@ -157,7 +157,7 @@ extension StyleManager {
     /// - Returns: A `StyleMapResult` containing the default style and unique style variations
     private func generateStylesMap(for style: any Style, themes: [any Theme]) -> StyleMapResult {
         let collector = StyledHTML()
-        var uniqueConditions: [EnvironmentConditions: [InlineStyle]] = [:]
+        var uniqueConditions: OrderedDictionary<EnvironmentConditions, [InlineStyle]> = [:]
 
         // Get all possible conditions and collect styles
         let allConditions = generateAllPossibleEnvironmentConditions(themes: themes)
@@ -169,6 +169,9 @@ extension StyleManager {
         let defaultStyle = Array(defaultHTML.attributes.styles)
 
         // Analyze conditions that produce different styles from default
+        // `tempMap` and `uniqueConditions` keep the order of `allConditions`, so the rules
+        // below are always considered, and later written, in that one order. A plain
+        // dictionary iterates in an order that changes with every run of the build.
         for (environment, styles) in tempMap {
             let context = StyleVariationContext(
                 environment: environment,

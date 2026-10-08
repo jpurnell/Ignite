@@ -60,7 +60,10 @@ struct AtomFeedGenerator {
         <id>\(site.url.absoluteString.escapedForXML())/</id>
         """
 
-        let mostRecentDate = content.first?.date ?? Date.now
+        // Atom requires `updated`. A feed with no entries has never been updated, and is
+        // given the start of the Unix epoch rather than the time of the build, which would
+        // make every build of an unchanged site differ from the last.
+        let mostRecentDate = content.first?.date ?? Date(timeIntervalSince1970: 0)
         header += "<updated>\(mostRecentDate.asISO8601(timeZone: site.timeZone))</updated>"
 
         if site.author.isEmpty == false {

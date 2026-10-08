@@ -14,7 +14,7 @@ struct ImportRule {
     }
 
     func render() -> String {
-        "@import url('\(source.absoluteString)');"
+        "@import url(\(source.absoluteString.cssStringLiteral()));"
     }
 }
 

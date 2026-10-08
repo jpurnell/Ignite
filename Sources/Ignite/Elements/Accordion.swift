@@ -139,7 +139,7 @@ public struct Accordion: HTML {
         // each element linked back to a unique accordion ID.
         // This is generated below, then passed into individual
         // items so they can adapt accordinly.
-        let accordionID = "accordion\(UUID().uuidString.truncatedHash)"
+        let accordionID = PublishingContext.nextElementID("accordion")
         let content = Section {
             ForEach(items) { item in
                 item.assigned(to: accordionID, openMode: openMode)

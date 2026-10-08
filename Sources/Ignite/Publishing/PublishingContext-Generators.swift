@@ -24,7 +24,7 @@ extension PublishingContext {
 
         await renderTagPages()
         await renderErrorPages()
-        pageDirectoryDepth = 0
+        beginPage(at: "/")
     }
 
     /// Generates a sitemap.xml file for this site.

@@ -37,7 +37,7 @@ public struct Carousel: HTML {
 
     /// An automatically-generated unique identifier for this carousel.
     /// Used to tell its buttons which carousel they are controlling.
-    private let carouselID = "carousel\(UUID().uuidString.truncatedHash)"
+    private let carouselID = PublishingContext.nextElementID("carousel")
 
     /// The collection of slides to show inside this carousel.
     var items: [Slide]

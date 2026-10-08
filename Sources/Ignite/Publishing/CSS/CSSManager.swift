@@ -7,11 +7,6 @@
 
 /// A manager that generates and maintains CSS classes for media query-based styling rules.
 final class CSSManager {
-    /// The manager for the current publish operation.
-    static var shared: CSSManager {
-        PublishingContext.shared.cssManager
-    }
-
     /// Queue of registrations waiting to be processed
     private struct PendingRegistration {
         let queries: [any Query]

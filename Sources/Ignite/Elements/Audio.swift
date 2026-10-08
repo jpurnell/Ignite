@@ -328,6 +328,6 @@ public extension Audio {
     ///            Returns `nil` if the extension does not match any known audio types.
 
     func audioType(for filename: String) -> AudioType? {
-        audioTypeMapping.first { filename.contains($0.key) }?.value
+        audioTypeMapping.value(forFileNamed: filename)
     }
 }

@@ -66,21 +66,22 @@ extension AnimationClassGenerator {
 
     /// Generates base CSS properties for transition animations including cursor and initial property values
     /// - Parameter transition: The transition animation to process
-    /// - Returns: A set of CSS properties including transitions and initial values
-    func buildBaseTransitionClass(_ transition: Transition) -> Set<String> {
-        var baseProperties: Set<String> = []
+    /// - Returns: The CSS declarations, in the order they are to be written: the initial
+    /// value of each property, then the transition.
+    func buildBaseTransitionClass(_ transition: Transition) -> OrderedSet<String> {
+        var baseProperties: OrderedSet<String> = []
         let timing = getTransitionTiming(transition).first ?? "0.35s ease"
 
         // Set initial values for all properties
         for data in transition.data {
-            baseProperties.insert("\(data.property.rawValue): \(data.initial)")
+            baseProperties.append("\(data.property.rawValue): \(data.initial)")
         }
 
         // Add transitions for all properties in one declaration
         let transitions = transition.data.map { data in
             "\(data.property.rawValue) \(timing)"
         }.joined(separator: ", ")
-        baseProperties.insert("transition: \(transitions)")
+        baseProperties.append("transition: \(transitions)")
 
         return baseProperties
     }

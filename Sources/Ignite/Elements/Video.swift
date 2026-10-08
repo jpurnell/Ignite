@@ -220,14 +220,16 @@ extension Video {
         case webm = "video/webm"
     }
 
-    /// Determines the video file type based on the file extension present in the filename.
+    /// Determines the video file type from the file's extension.
+    ///
+    /// The extension is the text after the last `.` of the name, whatever its case, and
+    /// a query or fragment after it is ignored, so `clip.MP4` and `clip.mp4?v=2` are both
+    /// MP4. A name whose own extension is not a known video type is searched for one
+    /// elsewhere in it, and the longest found is used.
     /// - Parameter filename: The name of the file, including its extension.
     /// - Returns: An optional `VideoType` corresponding to the file extension.
     ///            Returns `nil` if the extension does not match any known video types.
     public func videoType(for filename: String) -> VideoType? {
-        for (fileExtension, type) in videoTypeDictionary where filename.contains(fileExtension) {
-            return type
-        }
-        return nil
+        videoTypeDictionary.value(forFileNamed: filename)
     }
 }

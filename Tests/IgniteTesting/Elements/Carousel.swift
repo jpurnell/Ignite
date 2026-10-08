@@ -22,7 +22,7 @@ class CarouselTests: IgniteTestSuite {
         let output = element.markupString()
         let carouselID = try #require(firstCarouselID(in: output))
 
-        #expect(carouselID.wholeMatch(of: /carousel[A-Za-z0-9]{5}/)?.output == carouselID[...])
+        #expect(carouselID == "ig-carousel-1")
         #expect(output.contains(#"class="carousel-indicators""#))
         #expect(output.contains(#"data-bs-slide-to="0""#))
         #expect(output.contains(#"data-bs-slide-to="1""#))
@@ -79,7 +79,7 @@ class CarouselTests: IgniteTestSuite {
     }
 
     private func firstCarouselID(in source: String) -> String? {
-        source.firstMatch(of: /id="(carousel[^"]+)"/).map { String($0.1) }
+        source.firstMatch(of: /id="(ig-carousel[^"]+)"/).map { String($0.1) }
     }
 
     private func countOccurrences(of substring: String, in source: String) -> Int {

@@ -23,7 +23,7 @@ struct HiddenTests {
 
     @Test("MediaQuery based hidden Modifier for Text", .publishingContext())
     func hiddenMediaQueryForText() async throws {
-        let className = CSSManager.shared.registerStyles(.init(small: true))
+        let className = PublishingContext.shared.cssManager.registerStyles(.init(small: true))
         let element = Text("Hello world!").hidden(.responsive(small: true))
         let output = element.markupString()
 
