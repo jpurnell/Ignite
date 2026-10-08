@@ -55,7 +55,7 @@ struct ModalTests {
         <div id="dismissModalId" tabindex="-1" class="modal fade" aria-hidden="true">\
         <div class="modal-dialog modal-dialog-centered"><div class="modal-content">\
         <div class="modal-body"><div class="text-end">\
-        <button type="button" class="btn btn-close" aria-label="Close" onclick="\
+        <button type="button" class="btn-close" aria-label="Close" onclick="\
         const modal = document.getElementById('dismissModalId');
         const modalInstance = bootstrap.Modal.getInstance(modal);
         if (modalInstance) { modalInstance.hide(); }"></button></div>\
@@ -127,7 +127,7 @@ struct ModalTests {
         aria-labelledby="headerModalId-label" aria-hidden="true">\
         <div class="modal-dialog modal-dialog-centered"><div class="modal-content">\
         <div id="headerModalId-label" class="modal-header"><h5>Header</h5>\
-        <button type="button" class="btn btn-close" aria-label="Close" onclick="\
+        <button type="button" class="btn-close" aria-label="Close" onclick="\
         const modal = document.getElementById('headerModalId');
         const modalInstance = bootstrap.Modal.getInstance(modal);
         if (modalInstance) { modalInstance.hide(); }"></button></div>\
@@ -254,7 +254,7 @@ struct ModalTests {
         aria-labelledby="headerAndFooterModalId-label" aria-hidden="true">\
         <div class="modal-dialog modal-dialog-centered">\
         <div class="modal-content"><div id="headerAndFooterModalId-label" class="modal-header"><h5>Header</h5>\
-        <button type="button" class="btn btn-close" aria-label="Close" onclick="\
+        <button type="button" class="btn-close" aria-label="Close" onclick="\
         const modal = document.getElementById('headerAndFooterModalId');
         const modalInstance = bootstrap.Modal.getInstance(modal);
         if (modalInstance) { modalInstance.hide(); }"></button></div>\

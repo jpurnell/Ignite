@@ -147,6 +147,11 @@ public struct Button: InlineElement, FormItem {
     ///   - size: The size we are styling.
     /// - Returns: The CSS classes to apply for this button
     static func classes(forRole role: Role, size: Size) -> [String] {
+        // Bootstrap's close button is `btn-close` on its own. It is not a `btn`: that class
+        // adds padding, a border and hover colors over the close icon, and Bootstrap
+        // defines no size variants for it.
+        guard role != .close else { return ["btn-close"] }
+
         var outputClasses = ["btn"]
 
         switch size {
@@ -158,12 +163,9 @@ public struct Button: InlineElement, FormItem {
             break
         }
 
-        // Bootstrap colors a button with `btn-<theme color>` and draws a close button
-        // with `btn-close`. No other role has a button class.
+        // Bootstrap colors a button with `btn-<theme color>`. No other role has a button class.
         if let color = role.themeColorName {
             outputClasses.append("btn-\(color)")
-        } else if role == .close {
-            outputClasses.append("btn-close")
         }
 
         return outputClasses

@@ -92,7 +92,22 @@ struct RoleClassesTests {
           .publishingContext())
     func buttonClose() {
         #expect(Button().role(.close).markupString()
-            == #"<button type="button" class="btn btn-close" aria-label="Close"></button>"#)
+            == #"<button type="button" class="btn-close" aria-label="Close"></button>"#)
+    }
+
+    @Test("A close button has no size class, since Bootstrap defines none for it", .publishingContext())
+    func closeButtonIgnoresSize() {
+        for size in Button.Size.allCases {
+            #expect(Button().role(.close).buttonSize(size).markupString()
+                == #"<button type="button" class="btn-close" aria-label="Close"></button>"#)
+        }
+    }
+
+    @Test("A sized button with a theme color keeps Bootstrap's base, size and color classes",
+          .publishingContext())
+    func sizedThemeButtonIsUnchanged() {
+        #expect(Button("x").role(.danger).buttonSize(.large).markupString()
+            == #"<button type="button" class="btn btn-lg btn-danger">x</button>"#)
     }
 
     @Test("Only a close button is given a label", .publishingContext())

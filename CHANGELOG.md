@@ -426,12 +426,32 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   clone, no directory to serve, no free port, and a missing server script. The
   messages are unchanged and still go to standard error; successful commands
   still exit with 0.
+- `Button().role(.close)`, and the close buttons Ignite adds to modals, are
+  written as Bootstrap writes them: `class="btn-close"`. They were
+  `class="btn btn-close"`, and `btn` put a button's padding, border and hover
+  colors over the close icon. A size set with `buttonSize(_:)` no longer adds
+  `btn-sm` or `btn-lg` to a close button, since Bootstrap defines no sizes for
+  it. Buttons with any other role are unchanged.
+- A link or a script given a `file:` address is written with that address.
+  `Link("Manual", target: "file:///Users/me/manual.pdf")`, `Link(_:target:)`
+  given a file `URL`, and `Script(file:)` given a file `URL` appended the
+  whole address to the site's own path – `/file:///Users/me/manual.pdf`, or
+  `/subsite/file:///…` on a subsite – which names nothing. A `file:` address
+  is now treated like any other address with a scheme and left as written.
+- `Spacer` takes space on both axes when it is given both. Its axis was
+  compared with `.horizontal` and with `.vertical` rather than searched for
+  them, so a spacer on `.all` axes matched neither and rendered an empty
+  `<div>`. Nothing in Ignite gives a spacer both axes today, so no generated
+  site changes.
 
 ### Changed
 
 - `AnimationManager.shared` and `CSSManager.shared` are removed. Both were
   internal, and nothing in the library called either; the managers are reached
   through the publishing context.
+- `Array.localizedContains(_:)` is removed. It was internal and only its own
+  tests called it, and it compared strings by the locale of the machine
+  running the build, which nothing that decides a site's output should do.
 - `BoolMatrix.flattened` and `Array2D.flattened` are removed from the command-line
   tool. Nothing read either; a stale index unit had been hiding that from the
   unreachable-code check.

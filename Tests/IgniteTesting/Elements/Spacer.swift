@@ -58,4 +58,27 @@ class SpacerTests: IgniteTestSuite {
         #expect(Spacer(size: 30).axis(.horizontal).axis(.vertical).markupString()
             == "<div style=\"height: 30px\"></div>")
     }
+
+    @Test("A spacer on both axes takes the space on both", .publishingContext())
+    func bothAxesAutomatic() async throws {
+        #expect(Spacer().axis(.all).markupString() == "<div class=\"ms-auto mt-auto\"></div>")
+    }
+
+    @Test("A spacer of an exact size on both axes has that width and height", .publishingContext())
+    func bothAxesExact() async throws {
+        #expect(Spacer(size: 30).axis(.all).markupString()
+            == "<div style=\"width: 30px; height: 30px\"></div>")
+    }
+
+    @Test("A spacer of a semantic size on both axes has both margins", .publishingContext())
+    func bothAxesSemantic() async throws {
+        #expect(Spacer(size: .large).axis(.all).markupString() == "<div class=\"ms-4 mt-4\"></div>")
+    }
+
+    @Test("A spacer of a semantic size keeps the margin of its single axis", .publishingContext())
+    func singleAxisSemantic() async throws {
+        #expect(Spacer(size: .large).markupString() == "<div class=\"mt-4\"></div>")
+        #expect(Spacer(size: .large).axis(.horizontal).markupString() == "<div class=\"ms-4\"></div>")
+        #expect(Spacer(size: 30).axis(.horizontal).markupString() == "<div style=\"width: 30px\"></div>")
+    }
 }

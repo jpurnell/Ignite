@@ -407,8 +407,8 @@ final class PublishingContext: @unchecked Sendable {
 
     /// Converts a URL to the address to write in markup.
     ///
-    /// An address on another host, a protocol-relative address and a path relative to the
-    /// page are returned as they are. So is a path from the root of the host, such as
+    /// An address on another host, an address with a scheme of its own (`file:`, `tel:`), a
+    /// protocol-relative address and a path relative to the page are returned as they are. So is a path from the root of the host, such as
     /// `/about`, on a site that writes absolute paths: it is the author's address and is
     /// not given the path of a subsite. On a site that uses relative paths there is no
     /// host root to speak of, so such a path is taken to be within the site and is made
@@ -416,12 +416,10 @@ final class PublishingContext: @unchecked Sendable {
     /// - Parameter url: The URL to convert.
     /// - Returns: The address to write.
     func path(for url: URL) -> String {
+        // A `file:` URL needs no case of its own. It has a scheme, so its string does not
+        // begin with a slash and it is returned as written, like any other address that
+        // is not a path within the site.
         let path = url.relativeString
-
-        if url.isFileURL {
-            let result = site.url.appending(path: path).decodedPath
-            return site.useRelativePaths && result.hasPrefix("/") ? String(result.dropFirst()) : result
-        }
 
         if site.useRelativePaths, path.hasPrefix("/"), !path.hasPrefix("//") {
             return siteAddress(forRootRelativePath: path)
@@ -543,7 +541,7 @@ final class PublishingContext: @unchecked Sendable {
     /// Resolves a reference to a file the site serves, given as a URL.
     ///
     /// A URL with no scheme and no host is a path within the site and is resolved by
-    /// ``assetPath(_:)``. A file URL or a URL on another host is handled by ``path(for:)``.
+    /// ``assetPath(_:)``. A file URL or a URL on another host is written as it was given.
     /// - Parameter url: The reference to resolve.
     /// - Returns: The address to write in markup.
     func assetPath(for url: URL) -> String {

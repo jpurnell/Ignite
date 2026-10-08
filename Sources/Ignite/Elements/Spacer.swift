@@ -56,20 +56,28 @@ public struct Spacer: HTML, NavigationItem {
     /// Renders this element using publishing context passed in.
     /// - Returns: The HTML for this element.
     public func markup() -> Markup {
+        // `axis` is a set, so each axis is looked for in it rather than compared with it:
+        // a spacer on both axes takes space on both.
+        let isHorizontal = axis.contains(.horizontal)
+        let isVertical = axis.contains(.vertical)
+
         switch spacingAmount {
         case .automatic:
-            Section {}
-                .class(axis == .horizontal ? "ms-auto" : nil)
-                .class(axis == .vertical ? "mt-auto" : nil)
+            return Section {}
+                .class(isHorizontal ? "ms-auto" : nil)
+                .class(isVertical ? "mt-auto" : nil)
                 .markup()
         case .semantic(let spacingAmount):
-            Section {}
-                .margin(axis == .vertical ? .top : .leading, spacingAmount)
+            var edges: Edge = []
+            if isVertical { edges.insert(.top) }
+            if isHorizontal { edges.insert(.leading) }
+            return Section {}
+                .margin(edges, spacingAmount)
                 .markup()
         case .exact(let int):
-            Section {}
-                .frame(width: axis == .horizontal ? .px(int) : nil)
-                .frame(height: axis == .vertical ? .px(int) : nil)
+            return Section {}
+                .frame(width: isHorizontal ? .px(int) : nil)
+                .frame(height: isVertical ? .px(int) : nil)
                 .markup()
         }
     }
