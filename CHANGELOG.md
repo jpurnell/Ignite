@@ -18,6 +18,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `Site.publish(sourceDirectory:buildDirectory:logOptions:output:)`, which
   publish a site and write its results to a `PublishingOutput` you choose. The
   existing `publish` methods are unchanged and write to standard output.
+- `String.javaScriptStringLiteral()`, which writes a string as a complete,
+  quoted JavaScript string literal that no input can end early. Use it in your
+  own `Action` types wherever a Swift string becomes a JavaScript string. It is
+  safe in an event attribute and inside a `<script>` element.
 
 ### Fixed
 
@@ -71,6 +75,27 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the machine running the build. Under a locale with another calendar the same
   `date: 2024-03-05` was read as a different year (1481 under `th_TH`). Dates
   parsed under Gregorian-calendar locales are unchanged.
+- An element ID or message can no longer break out of the JavaScript an action
+  generates. `ToggleElementVisibility`, `ShowElement`, `HideElement`,
+  `DismissModal` and `ShowModal` wrote the ID straight into a single-quoted
+  string, so an ID containing `'`, a backslash, a line break or `</script>`
+  ended the string and ran as code; `ShowAlert` escaped `'` but not a backslash
+  or a line break. All of them, along with `SwitchTheme`, hover effect values,
+  the table filter and the Google Analytics measurement ID, now go through
+  `javaScriptStringLiteral()`. IDs and messages made of letters, digits,
+  spaces and ordinary punctuation generate the same JavaScript as before.
+  - `ShowAlert` writes a double quote in its message as `\u0022` where it wrote
+    `&quot;`. Both show a `"` in the alert.
+  - A hover effect whose value contains a quote, such as a quoted font family,
+    used to generate JavaScript that did not parse; the quote is now escaped.
+- `CustomAction` no longer rewrites the JavaScript it is given. It put a
+  backslash before every `'`, which is only right inside a string, so
+  `CustomAction("document.title = 'Hello'")` produced code that did not parse.
+  `compile()` now returns the code as written.
+- The JavaScript of every event attribute (`onclick` and the rest) has its
+  double quotes written as `&quot;`, so JavaScript containing a `"` cannot end
+  the attribute. `CustomAction` used to do this for itself and its markup is
+  unchanged; an `Action` of your own that returns a `"` is now handled too.
 
 ### Changed
 

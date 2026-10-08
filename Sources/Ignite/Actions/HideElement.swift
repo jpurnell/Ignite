@@ -19,6 +19,6 @@ public struct HideElement: Action {
     /// Renders this action using publishing context passed in.
     /// - Returns: The JavaScript for this action.
     public func compile() -> String {
-        "document.getElementById('\(id)').classList.add('d-none')"
+        "document.getElementById(\(id.javaScriptStringLiteral())).classList.add('d-none')"
     }
 }

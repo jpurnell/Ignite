@@ -86,7 +86,7 @@ private struct ApplyHoverEffects: Action {
         """
         this.unhoveredStyle = this.style.cssText;
         \(self.styles.map {
-            "this.style.\($0.property.convertingCSSNamesToJS()) = '\($0.value)'"
+            "this.style.\($0.property.convertingCSSNamesToJS()) = \($0.value.javaScriptStringLiteral())"
         }.joined(separator: "; "))
         """
     }

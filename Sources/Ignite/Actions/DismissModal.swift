@@ -20,7 +20,7 @@ public struct DismissModal: Action {
     /// - Returns: The JavaScript for this action.
     public func compile() -> String {
         """
-        const modal = document.getElementById('\(id)');
+        const modal = document.getElementById(\(id.javaScriptStringLiteral()));
         const modalInstance = bootstrap.Modal.getInstance(modal);
         if (modalInstance) { modalInstance.hide(); }
         """

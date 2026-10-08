@@ -171,7 +171,7 @@ public struct Table: HTML {
             output += """
             <input class=\"form-control mb-2\" type=\"text\" \
             placeholder=\"\(filterTitle)\" \
-            onkeyup=\"igniteFilterTable(this.value, '\(tableAttributes.id)')\">
+            onkeyup=\"igniteFilterTable(this.value, \(tableAttributes.id.javaScriptStringLiteral()))\">
             """
         }
 

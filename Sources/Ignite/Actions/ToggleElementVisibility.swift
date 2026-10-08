@@ -22,6 +22,6 @@ public struct ToggleElementVisibility: Action {
     /// element, hiding it if it is visible and showing it if it is hidden.
     /// - Returns: The JavaScript code for this action.
     public func compile() -> String {
-        "document.getElementById('\(id)').classList.toggle('d-none')"
+        "document.getElementById(\(id.javaScriptStringLiteral())).classList.toggle('d-none')"
     }
 }

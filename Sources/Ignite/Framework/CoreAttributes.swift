@@ -104,11 +104,19 @@ public struct CoreAttributes: Equatable, Sendable {
     }
 
     /// All events for this element, collapsed to down to a string.
+    ///
+    /// Each event's JavaScript is the value of a double-quoted attribute, so any double
+    /// quote in it is written as `&quot;`. Without that, a quote in the JavaScript – from
+    /// a `CustomAction`, or from someone's own `Action` – would end the attribute partway
+    /// through the code. Ampersands are left alone: the actions Ignite generates contain
+    /// none, and hand-written code may already hold character references.
     var eventString: String {
         var result = ""
 
         for event in events where event.actions.isEmpty == false {
-            let actions = event.actions.map { $0.compile() }.joined(separator: "; ")
+            let actions = event.actions.map { $0.compile() }
+                .joined(separator: "; ")
+                .replacing("\"", with: "&quot;")
 
             result += " \(event.name)=\"\(actions)\""
         }

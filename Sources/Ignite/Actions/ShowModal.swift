@@ -61,7 +61,7 @@ public struct ShowModal: Action, Sendable {
         const options = {
             \(options.map(\.htmlOption).joined(separator: ",\n\t"))
         };
-        const modal = new bootstrap.Modal(document.getElementById('\(id)'), options);
+        const modal = new bootstrap.Modal(document.getElementById(\(id.javaScriptStringLiteral())), options);
         modal.show();
         """
     }

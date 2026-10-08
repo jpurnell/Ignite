@@ -27,7 +27,7 @@ class ShowAlertTests: IgniteTestSuite {
     @Test("compile() escapes double quotes in the message", .publishingContext())
     func doubleQuotesEscaped() async throws {
         let action = ShowAlert(message: #"She said "hi""#)
-        #expect(action.compile() == "alert('She said &quot;hi&quot;')")
+        #expect(action.compile() == #"alert('She said \u0022hi\u0022')"#)
     }
 
     @Test("compile() produces empty alert for empty message", .publishingContext())
