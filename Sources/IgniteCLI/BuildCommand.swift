@@ -40,44 +40,59 @@ struct BuildCommand: ParsableCommand {
 
         output.line("⚙️  Building your site...")
 
-        // Build executable and report errors & earnings
-        let (_, error) = try Process.execute(command: ["swift", "build"])
+        // Build the executable. Whether that worked is the compiler's exit status, not
+        // what it printed: a warning can contain the text "error:", and a build can
+        // fail without printing it. Its diagnostics are relayed either way.
+        let build = try Process.execute(command: ["swift", "build"])
 
-        // If something went wrong, print a message then
-        // bail out.
-        if error.contains("error:") {
-            logger.error("swift build reported errors.")
-            errors.line(error)
+        guard build.succeeded else {
+            logger.error("swift build exited with status \(build.status, privacy: .public).")
+            // Everything it said, whether or not it called any of it an error.
+            if build.error.isEmpty == false {
+                errors.line(build.error)
+            }
 
             errors.line("")
             errors.line("❌ Failed to build.")
             throw ExitCode.failure
-        } else if error.contains("warning:") {
-            // Warnings can just be printed; they won't hold
-            // up a successful build.
-            errors.line(error)
         }
 
-        // Execute site generation with output, and report errors & earnings
-        let (siteOutput, runError) = try Process.execute(command: ["swift", "run"])
-        output.line(siteOutput)
+        relay(build.error, to: errors)
 
-        // If something went wrong, print a message then
-        // bail out.
-        if runError.contains("error:") {
-            logger.error("swift run reported errors while generating the site.")
-            errors.line(runError)
+        // Generate the site, relaying its output and anything it reported.
+        let generation = try Process.execute(command: ["swift", "run"])
+        output.line(generation.output)
+
+        guard generation.succeeded else {
+            logger.error("swift run exited with status \(generation.status, privacy: .public).")
+            // Everything it said, whether or not it called any of it an error.
+            if generation.error.isEmpty == false {
+                errors.line(generation.error)
+            }
 
             errors.line("")
             errors.line("❌ Failed to generate HTML.")
             throw ExitCode.failure
-        } else if runError.contains("warning:") {
-            // Warnings can just be printed; they won't hold
-            // up a successful build.
-            errors.line(runError)
         }
+
+        relay(generation.error, to: errors)
 
         logger.info("Site built.")
         output.line("✅ Successfully built!")
+    }
+
+    /// Passes on what a successful command wrote to standard error, when that includes a
+    /// compiler diagnostic.
+    ///
+    /// Progress lines such as "Building for debugging..." also arrive on standard error
+    /// and are left out, as they always have been: only output containing a warning or
+    /// an error is shown.
+    /// - Parameters:
+    ///   - diagnostics: Everything the command wrote to standard error.
+    ///   - errors: Where to write it.
+    private func relay(_ diagnostics: String, to errors: Output) {
+        if diagnostics.contains("error:") || diagnostics.contains("warning:") {
+            errors.line(diagnostics)
+        }
     }
 }

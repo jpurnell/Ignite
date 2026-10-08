@@ -54,8 +54,10 @@ struct NewCommand: ParsableCommand {
         output.line("⚙️  Creating a new Ignite site in '\(name)'...")
         let result = try Process.execute(command: ["git", "clone", "--", template, name], timeout: 600)
 
-        guard result.error.contains("fatal") == false else {
-            logger.error("git clone of \(template, privacy: .public) failed.")
+        // Whether the clone worked is git's exit status. Its messages are not a reliable
+        // sign either way: it can fail without writing "fatal", and write it without failing.
+        guard result.succeeded else {
+            logger.error("git clone of \(template, privacy: .public) exited with status \(result.status, privacy: .public).")
             errors.line("❌ Failed to create a new site. See errors below:")
             errors.line(result.error)
             throw ExitCode.failure
@@ -63,7 +65,14 @@ struct NewCommand: ParsableCommand {
 
         // If everything worked, remove the Git history
         // for the IgniteStarter repo to avoid confusion.
-        try Process.execute(command: ["rm", "-rf", "--", "\(name)/.git"], timeout: 60)
+        let cleanup = try Process.execute(command: ["rm", "-rf", "--", "\(name)/.git"], timeout: 60)
+
+        // The site exists either way, so this is reported rather than treated as failure.
+        if cleanup.succeeded == false {
+            logger.warning("Could not remove \(name, privacy: .public)/.git (rm exited with \(cleanup.status, privacy: .public)).")
+            errors.line("⚠️  Could not remove the template's Git history from '\(name)/.git'; delete it yourself.")
+        }
+
         logger.info("Created a new site in \(name, privacy: .public).")
         output.line("✅ Success!")
 

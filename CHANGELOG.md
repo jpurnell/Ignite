@@ -30,6 +30,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `ignite build` and `ignite new` decide whether a command worked by its exit
+  status. They searched what it wrote to standard error for `error:` or
+  `fatal` instead, so a failure that printed neither was reported as
+  ✅ success with an exit status of 0, and a successful build whose warnings
+  mentioned `error:` was reported as ❌ failed.
+  - `ignite build` fails, with exit status 1, when `swift build` or the site's
+    own `swift run` exits with a non-zero status, whatever was printed; and
+    succeeds when both exit with 0. A site that calls `exit(1)` without a
+    message now fails the build.
+  - `ignite new` fails when `git clone` exits with a non-zero status.
+  - Compiler diagnostics are relayed to standard error as before. When a
+    command fails, everything it wrote to standard error is shown, not only
+    output containing `error:`.
+  - `ignite new` says so if it could not remove the template's `.git`
+    directory; it used to ignore that.
 - Identifiers given to `Analytics` and `SubscribeForm` can no longer change the
   code or the address they are written into. Identifiers made of letters,
   digits, `-`, `.`, `_` and `~` generate the same output as before.

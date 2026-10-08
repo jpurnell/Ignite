@@ -129,6 +129,26 @@ private struct PipeDrain: Sendable {
     }
 }
 
+/// What a command wrote and how it ended.
+struct CommandResult {
+    /// Everything the command wrote to standard output.
+    let output: String
+
+    /// Everything the command wrote to standard error.
+    let error: String
+
+    /// The command's exit status: 0 for success. A command ended by a signal reports
+    /// the signal's number, and one that could not be confirmed to have exited reports -1,
+    /// so neither is mistaken for success.
+    let status: Int32
+
+    /// Whether the command exited normally with a status of 0.
+    ///
+    /// This is the only reliable sign that a command worked. What it writes to standard
+    /// error is not: tools print warnings that mention errors, and fail without a word.
+    var succeeded: Bool { status == 0 }
+}
+
 /// A command that has been launched, with both of its pipes being drained.
 private struct LaunchedCommand {
     let command: String
@@ -224,26 +244,30 @@ private struct LaunchedCommand {
         }
     }
 
-    /// Returns everything the command wrote, waiting a bounded time for its pipes to close.
+    /// Returns everything the command wrote and its exit status, waiting a bounded time
+    /// for its pipes to close.
     /// - Throws: `ProcessExecutionError.unreadableOutput` if either pipe could not be read.
-    func collectedOutput() throws -> (output: String, error: String) {
+    func collectedOutput() throws -> CommandResult {
         // One deadline for both pipes, so the wait is `grace` in total, not each.
         let deadline = DispatchTime.now() + Self.grace
         let outputString = try output.text(waitingUntil: deadline, command: command)
         let errorString = try error.text(waitingUntil: deadline, command: command)
-        return (outputString, errorString)
+
+        // A process that is somehow still running has no status to read yet.
+        let status = process.isRunning ? -1 : process.terminationStatus
+        return CommandResult(output: outputString, error: errorString, status: status)
     }
 
     /// Runs a command until it exits, stopping it if it outlives `timeout`.
     /// - Parameters:
     ///   - arguments: The program to run, followed by its arguments.
     ///   - timeout: How long the command may run, in seconds.
-    /// - Returns: The contents of stdout and stderr as a tuple.
+    /// - Returns: What the command wrote, and its exit status.
     /// - Throws: `ProcessExecutionError.timedOut` if the command had to be stopped.
     static func runToCompletion(
         arguments: [String],
         timeout: TimeInterval
-    ) throws -> (output: String, error: String) {
+    ) throws -> CommandResult {
         let launched = try LaunchedCommand(arguments: arguments)
 
         guard launched.waitForExit(upTo: timeout) else {
@@ -288,7 +312,9 @@ extension Process {
     ///   any array – even an empty one, which runs nothing – to keep the first
     ///   command running until the user presses Return.
     ///   - timeout: How long, in seconds, a command may run before it is stopped.
-    /// - Returns: The contents of stdout and stderr as a tuple.
+    /// - Returns: What the command wrote to stdout and stderr, and its exit status.
+    /// A command that runs and exits with a non-zero status is returned, not thrown:
+    /// check `succeeded`.
     /// - Throws: An error if a command cannot be found or launched, runs out of
     /// time, or its output cannot be read.
     @discardableResult
@@ -296,7 +322,7 @@ extension Process {
         command arguments: [String],
         then subsequentArguments: [String]? = nil,
         timeout: TimeInterval = Process.defaultTimeout
-    ) throws -> (output: String, error: String) {
+    ) throws -> CommandResult {
         // With nothing to run afterwards this is a plain bounded run.
         guard let subsequentArguments else {
             return try LaunchedCommand.runToCompletion(arguments: arguments, timeout: timeout)
