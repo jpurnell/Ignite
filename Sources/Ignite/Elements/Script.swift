@@ -26,7 +26,9 @@ public struct Script: HTML, HeadElement {
     private var code: String?
 
     /// Creates a new script that references a local file.
-    /// - Parameter file: The URL of the file to load.
+    /// - Parameter file: The path of the file to load. A path that starts with `/` is
+    /// relative to the root of your site: on a site deployed in a subdirectory it is
+    /// prefixed with that subdirectory, as image and stylesheet paths are.
     public init(file: String) {
         self.file = URL(markupReference: file)
     }
@@ -47,7 +49,7 @@ public struct Script: HTML, HeadElement {
     public func markup() -> Markup {
         var attributes = attributes
         if let file {
-            let path = publishingContext.path(for: file)
+            let path = publishingContext.assetPath(for: file)
             attributes.append(customAttributes: .init(name: "src", value: path))
             return Markup("<script\(attributes)></script>")
         } else if let code {

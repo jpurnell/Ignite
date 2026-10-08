@@ -8,14 +8,16 @@
 /// Represents a CSS @font-face rule
 struct FontFaceRule: Hashable, Equatable, Sendable {
     let family: String
-    let source: URL
+
+    /// The address of the font file, as it is written inside `url()`.
+    let source: String
     let weight: String
     let style: String
     let display: String
 
     init(
         family: String,
-        source: URL,
+        source: String,
         weight: String = "normal",
         style: String = "normal",
         display: String = "swap"
@@ -31,7 +33,7 @@ struct FontFaceRule: Hashable, Equatable, Sendable {
         """
         @font-face {
             font-family: '\(family)';
-            src: url('\(source.absoluteString)');
+            src: url('\(source)');
             font-weight: \(weight);
             font-style: \(style);
             font-display: \(display);

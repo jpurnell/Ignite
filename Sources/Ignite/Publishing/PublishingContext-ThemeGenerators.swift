@@ -46,7 +46,7 @@ extension PublishingContext {
     }
 
     /// Creates @font-face and @import rules for custom fonts in a theme.
-    private func fontRules(for fonts: some Collection<Font>) -> [String] {
+    func fontRules(for fonts: some Collection<Font>) -> [String] {
         let systemFonts = Font.systemFonts + Font.monospaceFonts
         let declarations = fonts.compactMap { font -> [String]? in
             guard let family = font.name,
@@ -68,10 +68,25 @@ extension PublishingContext {
 
         return FontFaceRule(
             family: family,
-            source: source.url,
+            source: fontFileAddress(for: source.url),
             weight: source.weight.description,
             style: source.variant.rawValue
         )
+    }
+
+    /// The address a stylesheet uses for a font file.
+    ///
+    /// A font the site serves itself, given as a path from the root of the site, is
+    /// prefixed with the site's path like every other asset, so a site deployed in a
+    /// subdirectory finds it. Any other address is written as given. So is every address
+    /// on a site that uses relative paths: a path in a stylesheet is resolved against the
+    /// stylesheet rather than the page, so the page-relative form would point elsewhere.
+    private func fontFileAddress(for url: URL) -> String {
+        guard !site.useRelativePaths, url.scheme == nil, url.host() == nil else {
+            return url.absoluteString
+        }
+
+        return assetPath(url.relativeString)
     }
 
     /// Creates CSS rules for light theme

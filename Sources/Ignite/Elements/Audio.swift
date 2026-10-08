@@ -37,7 +37,8 @@ public struct Audio: InlineElement, LazyLoadable {
 
         for filename in files {
             if let fileType = audioType(for: filename) {
-                output += "<source src=\"\(filename)\" type=\"\(fileType.mimeType)\">"
+                let source = publishingContext.assetPath(filename)
+                output += "<source src=\"\(source)\" type=\"\(fileType.mimeType)\">"
             }
         }
 

@@ -32,8 +32,10 @@ class ScriptTests: IgniteTestSuite {
             let element = Script(file: scriptFile)
             let output = element.markupString()
 
-            // Script sources are emitted exactly as given, on a root site and a subsite alike.
-            #expect(output == "<script src=\"\(scriptFile)\"></script>")
+            // A root-relative script is resolved like any other asset: as given on a root
+            // site, and under the subsite's path on a subsite.
+            let expected = siteCase == .subsite ? "/subsite/code.js" : "/code.js"
+            #expect(output == "<script src=\"\(expected)\"></script>")
         }
     }
     
@@ -59,7 +61,8 @@ class ScriptTests: IgniteTestSuite {
                 .customAttribute(name: "custom", value: "part")
             let output = element.markupString()
 
-            #expect(output == "<script custom=\"part\" src=\"\(scriptFile)\" data-key=\"value\"></script>")
+            let expected = siteCase == .subsite ? "/subsite/code.js" : "/code.js"
+            #expect(output == "<script custom=\"part\" src=\"\(expected)\" data-key=\"value\"></script>")
         }
     }
     

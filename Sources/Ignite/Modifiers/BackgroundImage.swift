@@ -8,7 +8,9 @@
 public extension HTML {
     /// Applies a background image to the element.
     /// - Parameters:
-    ///   - image: The path to the image
+    ///   - image: The path to the image. A path that starts with `/` is relative to the
+    ///   root of your site: on a site deployed in a subdirectory it is prefixed with that
+    ///   subdirectory, as the path of an `Image` is.
     ///   - contentMode: How the image should be sized
     ///   - position: The position of the image within the element
     ///   - repeats: Whether the image should be repeated
@@ -19,8 +21,10 @@ public extension HTML {
         position: BackgroundPosition = .center,
         repeats: Bool = false
     ) -> some HTML {
-        self.style(
-            .init(.backgroundImage, value: "url('\(image)')"),
+        let address = PublishingContext.current?.assetPath(image) ?? image
+
+        return self.style(
+            .init(.backgroundImage, value: "url('\(address)')"),
             .init(.backgroundSize, value: contentMode.css),
             .init(.backgroundRepeat, value: repeats ? "repeat" : "no-repeat"),
             .init(.backgroundPosition, value: position.css)

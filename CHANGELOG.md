@@ -136,6 +136,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   build. In-range colors are unchanged. One visible consequence: an eight-digit
   hex color whose last two digits are above `64` is written with 100% opacity
   where it was written with up to 255%, which browsers already drew as 100%.
+- A site deployed in a subdirectory (`https://example.com/subsite`) now finds
+  all of its own files. Images and stylesheets were already given the
+  subdirectory's path; these were not, and so were requested from the root of
+  the host, where they do not exist:
+  - `Script(file:)` with a path starting with `/`, including the Bootstrap,
+    syntax-highlighting and `ignite-core.js` scripts Ignite adds to every
+    `Body`: `/js/ignite-core.js` is now `/subsite/js/ignite-core.js`.
+  - `Audio` and `Video` sources.
+  - `background(image:)`.
+  - Font files in `@font-face` rules.
+
+  If you had been writing the subdirectory into one of these paths yourself,
+  remove it, or it will appear twice. Sites at the root of their host generate
+  the same output as before, as do paths that do not start with `/` and
+  addresses on other hosts.
+- A site whose `url` ends in a slash (`https://example.com/`) no longer writes
+  its stylesheets and images as `//css/…`, which a browser reads as a file on a
+  host named `css`. They are written as `/css/…`.
+- A protocol-relative address (`//cdn.example.com/…`) is no longer prefixed
+  with a subsite's path in a stylesheet link or an image.
 
 ### Changed
 

@@ -444,20 +444,44 @@ final class PublishingContext: @unchecked Sendable {
         return result
     }
 
-    /// Converts a path string to a site-relative path, prepending the site's
-    /// subpath if needed and respecting the `useRelativePaths` setting.
+    /// The path of the site within its host, with no trailing slash: empty for a site at
+    /// the root of its host, and `/subsite` for one at `https://example.com/subsite` or
+    /// `https://example.com/subsite/`.
+    var sitePathPrefix: String {
+        var prefix = site.url.path
+        while prefix.hasSuffix("/") {
+            prefix.removeLast()
+        }
+        return prefix
+    }
+
+    /// Resolves a reference to a file the site serves – a script, stylesheet, image, font,
+    /// icon, audio or video file – into the address to write in markup.
+    ///
+    /// Every such reference goes through here, so they all agree. A path that starts at
+    /// the root of the site, with a single `/`, is prefixed with the site's own path, so
+    /// a site deployed in a subdirectory finds its files there. Anything else is returned
+    /// unchanged: a path relative to the page, an absolute address, and a
+    /// protocol-relative address beginning `//`, which names another host.
     /// - Parameter path: A path string, typically starting with "/" for local assets.
     /// - Returns: The resolved path. For subsites, includes the subsite path prefix.
     /// When `useRelativePaths` is true, the leading slash is removed.
     func assetPath(_ path: String) -> String {
-        let basePath = path.hasPrefix("/") ? site.url.path : ""
-        var fullPath = "\(basePath)\(path)"
+        guard path.hasPrefix("/"), !path.hasPrefix("//") else { return path }
 
-        if site.useRelativePaths, fullPath.hasPrefix("/") {
-            fullPath = String(fullPath.dropFirst())
-        }
+        let fullPath = "\(sitePathPrefix)\(path)"
+        return site.useRelativePaths ? String(fullPath.dropFirst()) : fullPath
+    }
 
-        return fullPath
+    /// Resolves a reference to a file the site serves, given as a URL.
+    ///
+    /// A URL with no scheme and no host is a path within the site and is resolved by
+    /// ``assetPath(_:)``. A file URL or a URL on another host is handled by ``path(for:)``.
+    /// - Parameter url: The reference to resolve.
+    /// - Returns: The address to write in markup.
+    func assetPath(for url: URL) -> String {
+        guard url.scheme == nil, url.host() == nil else { return path(for: url) }
+        return assetPath(url.relativeString)
     }
 
     /// Adds a warning during a site build.

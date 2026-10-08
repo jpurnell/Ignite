@@ -31,12 +31,11 @@ class SubsiteTests: IgniteSubsiteTestSuite {
 
         let element = Body()
         let output = element.markupString()
-        let path = try publishingContext.path(for: #require(URL(string: "/js")))
 
         #expect(output == """
         <body class="container"><p>TEXT</p>\
-        <script src="\(path)/bootstrap.bundle.min.js"></script>\
-        <script src="\(path)/ignite-core.js"></script>\
+        <script src="/subsite/js/bootstrap.bundle.min.js"></script>\
+        <script src="/subsite/js/ignite-core.js"></script>\
         </body>
         """)
     }
@@ -47,7 +46,7 @@ class SubsiteTests: IgniteSubsiteTestSuite {
     func file(scriptFile: String) async throws {
         let element = Script(file: scriptFile)
         let output = element.markupString()
-        #expect(output == "<script src=\"\(scriptFile)\"></script>")
+        #expect(output == "<script src=\"/subsite\(scriptFile)\"></script>")
     }
 
     @Test("Attributes Test", .publishingContext(.subsite), arguments: ["/code.js"])
@@ -57,7 +56,7 @@ class SubsiteTests: IgniteSubsiteTestSuite {
             .customAttribute(name: "custom", value: "part")
         let output = element.markupString()
 
-        #expect(output == "<script custom=\"part\" src=\"\(scriptFile)\" data-key=\"value\"></script>")
+        #expect(output == "<script custom=\"part\" src=\"/subsite\(scriptFile)\" data-key=\"value\"></script>")
     }
 
     // MARK: - Link
