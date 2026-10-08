@@ -12,10 +12,12 @@ public struct Card: HTML {
         /// Default styling.
         case `default`
 
-        /// Solid background color.
+        /// Solid background color, taken from the card's role. A card with no role, or
+        /// with a role that is not one of `Role.standardRoles`, looks like a default card.
         case solid
 
-        /// Solid border color.
+        /// Solid border color, taken from the card's role. A card with no role, or with
+        /// a role that is not one of `Role.standardRoles`, looks like a default card.
         case bordered
     }
 
@@ -165,8 +167,16 @@ public struct Card: HTML {
     private var footer: HTMLCollection
     private var items: HTMLCollection
 
+    /// The Bootstrap class that colors this card, if it has one.
+    ///
+    /// Bootstrap defines `text-bg-*` and `border-*` for its eight theme colors only. A
+    /// card whose role is not one of them – `.default`, `.none` or `.close` – has no color
+    /// to show, so it carries `card` alone and takes Bootstrap's standard card background
+    /// and border, rather than a class such as `text-bg-default` that does not exist.
     var cardClasses: String? {
-        switch style {
+        guard Role.standardRoles.contains(role) else { return nil }
+
+        return switch style {
         case .default:
             nil
         case .solid:

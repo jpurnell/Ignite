@@ -91,28 +91,18 @@ public struct BreakpointQuery: Query, Sendable {
     }
 
     /// Two breakpoint queries are equal when they describe the same breakpoint and either
-    /// neither has a theme, or the ID of the left-hand theme starts with the ID of the right-hand one.
+    /// neither has a theme or both have a theme with the same ID.
+    ///
+    /// This is the same pair of facts `hash(into:)` hashes, so equal queries always hash
+    /// alike and the type can be used in a `Set` or as a `Dictionary` key.
     public static func == (lhs: BreakpointQuery, rhs: BreakpointQuery) -> Bool {
-        if lhs.value != rhs.value {
-            return false
-        }
-
-        switch (lhs.theme, rhs.theme) {
-        case (nil, nil):
-            return true
-        case let (lhsTheme?, rhsTheme?):
-            return lhsTheme.cssID.starts(with: rhsTheme.cssID)
-        default:
-            return false
-        }
+        lhs.value == rhs.value && lhs.theme?.cssID == rhs.theme?.cssID
     }
 
-    /// Hashes the breakpoint and, when there is one, the theme's ID.
+    /// Hashes the breakpoint and the theme's ID, or the absence of a theme.
     public func hash(into hasher: inout Hasher) {
         hasher.combine(value)
-        if let theme = theme {
-            hasher.combine(theme.cssID)
-        }
+        hasher.combine(theme?.cssID)
     }
 }
 

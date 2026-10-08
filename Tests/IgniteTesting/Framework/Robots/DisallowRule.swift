@@ -27,7 +27,7 @@ struct DisallowRuleTests {
     func initWithName() {
         let rule = DisallowRule(name: "example name")
         #expect(rule.name == "example name")
-        #expect(rule.paths == ["*"])
+        #expect(rule.paths == ["/"])
     }
 
     @Test("Initializer with robot and paths", .publishingContext())
@@ -46,6 +46,6 @@ struct DisallowRuleTests {
         let robot = KnownRobot.apple
         let rule = DisallowRule(robot: robot)
         #expect(rule.name == robot.rawValue)
-        #expect(rule.paths == ["*"])
+        #expect(rule.paths == ["/"])
     }
 }

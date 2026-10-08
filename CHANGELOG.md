@@ -96,6 +96,39 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   double quotes written as `&quot;`, so JavaScript containing a `"` cannot end
   the attribute. `CustomAction` used to do this for itself and its markup is
   unchanged; an `Action` of your own that returns a `"` is now handled too.
+- `BreakpointQuery` values that are equal now hash alike. `==` compared the
+  themes of two queries by prefix – the left theme's ID starting with the
+  right's – which is not symmetric, while `hash(into:)` hashed the whole ID, so
+  two queries could be equal one way round and not the other, and equal queries
+  could land in different buckets of a `Set` or `Dictionary`. Two queries are
+  now equal when they have the same breakpoint and the same theme ID, or no
+  theme. Nothing in Ignite relied on the prefix match – themed queries are
+  created and turned straight into media features – and generated CSS is
+  unchanged.
+- `Card.cardStyle(.solid)` and `.cardStyle(.bordered)` on a card with no role
+  no longer emit `text-bg-default` and `border-default`, which are not
+  Bootstrap classes. Bootstrap defines those classes for its eight theme colors
+  only, so a card whose role is `.default`, `.none` or `.close` now carries
+  `card` alone and looks like a default card. Cards with any other role are
+  unchanged.
+- `Modal` no longer points `aria-labelledby` at an element that does not exist.
+  Every modal carried `aria-labelledby="modalLabel"` and nothing had that ID. A
+  modal with a header now gives the header the ID `<modal ID>-label` and refers
+  to that, so two modals on a page are labelled separately; a modal with no
+  header, or with an empty ID, has no `aria-labelledby` attribute.
+- robots.txt follows the Robots Exclusion Protocol (RFC 9309) more closely:
+  - `DisallowRule(name:)` and `DisallowRule(robot:)` write `Disallow: /`. They
+    wrote `Disallow: *`, which is not a path and matches nothing.
+  - A path given without its leading slash is written with one: `private`
+    becomes `Disallow: /private`. Paths that begin with `/` are unchanged.
+  - A rule for the user agent `*` replaces the closing `User-agent: *` /
+    `Allow: /` group instead of being followed by it. Crawlers merge groups for
+    the same agent and prefer `Allow` when both match equally, so the closing
+    group cancelled `DisallowRule(name: "*")`.
+  - The `Sitemap` line has one slash before `sitemap.xml` when the site's URL
+    ends in a slash; it had two.
+  - A robot name or path containing a line break can no longer start a new
+    line of the file.
 
 ### Changed
 

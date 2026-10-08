@@ -24,7 +24,7 @@ struct ModalTests {
         let output = element.markupString()
 
         #expect(output == """
-        <div id="showModalId" tabindex="-1" class="modal fade" aria-labelledby="modalLabel" aria-hidden="true">\
+        <div id="showModalId" tabindex="-1" class="modal fade" aria-hidden="true">\
         <div class="modal-dialog modal-dialog-centered">\
         <div class="modal-content"><div class="modal-body">\
         <h3 class="text-center m-5">Dismiss me by clicking on the backdrop.</h3>\
@@ -50,7 +50,7 @@ struct ModalTests {
         let output = element.markupString()
 
         #expect(output == """
-        <div id="dismissModalId" tabindex="-1" class="modal fade" aria-labelledby="modalLabel" aria-hidden="true">\
+        <div id="dismissModalId" tabindex="-1" class="modal fade" aria-hidden="true">\
         <div class="modal-dialog modal-dialog-centered"><div class="modal-content">\
         <div class="modal-body"><div class="text-end">\
         <button type="button" class="btn btn-close" label="Close" onclick="\
@@ -121,13 +121,76 @@ struct ModalTests {
         let output = element.markupString()
 
         #expect(output == """
-        <div id="headerModalId" tabindex="-1" class="modal fade" aria-labelledby="modalLabel" aria-hidden="true">\
+        <div id="headerModalId" tabindex="-1" class="modal fade" \
+        aria-labelledby="headerModalId-label" aria-hidden="true">\
         <div class="modal-dialog modal-dialog-centered"><div class="modal-content">\
-        <div class="modal-header"><h5>Header</h5>\
+        <div id="headerModalId-label" class="modal-header"><h5>Header</h5>\
         <button type="button" class="btn btn-close" label="Close" onclick="\
         const modal = document.getElementById('headerModalId');
         const modalInstance = bootstrap.Modal.getInstance(modal);
         if (modalInstance) { modalInstance.hide(); }"></button></div>\
+        <div class="modal-body"><p>Body</p></div></div></div></div>
+        """)
+    }
+
+    @Test("A modal with a header is labelled by that header", .publishingContext())
+    func modalIsLabelledByItsHeader() async throws {
+        let element = Modal(id: "settings") {
+            Text("Body")
+        } header: {
+            Text("Settings").font(.title5)
+        }
+
+        #expect(element.markupString() == """
+        <div id="settings" tabindex="-1" class="modal fade" aria-labelledby="settings-label" aria-hidden="true">\
+        <div class="modal-dialog modal-dialog-centered"><div class="modal-content">\
+        <div id="settings-label" class="modal-header"><h5>Settings</h5></div>\
+        <div class="modal-body"><p>Body</p></div></div></div></div>
+        """)
+    }
+
+    @Test("A modal without a header claims no label", .publishingContext())
+    func modalWithoutHeaderHasNoLabel() async throws {
+        let element = Modal(id: "plain") {
+            Text("Body")
+        }
+
+        #expect(element.markupString() == """
+        <div id="plain" tabindex="-1" class="modal fade" aria-hidden="true">\
+        <div class="modal-dialog modal-dialog-centered"><div class="modal-content">\
+        <div class="modal-body"><p>Body</p></div></div></div></div>
+        """)
+    }
+
+    @Test("Two modals on one page are labelled by different elements", .publishingContext())
+    func twoModalsDoNotShareALabel() async throws {
+        let page = Section {
+            Modal(id: "first") { Text("One") } header: { Text("First").font(.title5) }
+            Modal(id: "second") { Text("Two") } header: { Text("Second").font(.title5) }
+        }
+        let output = page.markupString()
+
+        let references = output.matches(of: #/aria-labelledby="([^"]+)"/#).map { String($0.1) }
+        #expect(references == ["first-label", "second-label"])
+
+        // Each referenced ID is declared exactly once on the page.
+        for reference in references {
+            #expect(output.matches(of: try Regex(#" id="\#(reference)""#)).count == 1)
+        }
+    }
+
+    @Test("A modal with no ID of its own claims no label", .publishingContext())
+    func modalWithoutIDHasNoLabel() async throws {
+        let element = Modal(id: "") {
+            Text("Body")
+        } header: {
+            Text("Untitled").font(.title5)
+        }
+
+        #expect(element.markupString() == """
+        <div tabindex="-1" class="modal fade" aria-hidden="true">\
+        <div class="modal-dialog modal-dialog-centered"><div class="modal-content">\
+        <div class="modal-header"><h5>Untitled</h5></div>\
         <div class="modal-body"><p>Body</p></div></div></div></div>
         """)
     }
@@ -150,7 +213,7 @@ struct ModalTests {
         let output = element.markup()
 
         #expect(output.string == """
-        <div id="footerModalId" tabindex="-1" class="modal fade" aria-labelledby="modalLabel" aria-hidden="true">\
+        <div id="footerModalId" tabindex="-1" class="modal fade" aria-hidden="true">\
         <div class="modal-dialog modal-dialog-centered"><div class="modal-content">\
         <div class="modal-body"><p>Body</p></div><div class="modal-footer">\
         <button type="button" class="btn btn-secondary" onclick="\
@@ -186,9 +249,9 @@ struct ModalTests {
 
         #expect(output.string == """
         <div id="headerAndFooterModalId" tabindex="-1" class="modal fade" \
-        aria-labelledby="modalLabel" aria-hidden="true">\
+        aria-labelledby="headerAndFooterModalId-label" aria-hidden="true">\
         <div class="modal-dialog modal-dialog-centered">\
-        <div class="modal-content"><div class="modal-header"><h5>Header</h5>\
+        <div class="modal-content"><div id="headerAndFooterModalId-label" class="modal-header"><h5>Header</h5>\
         <button type="button" class="btn btn-close" label="Close" onclick="\
         const modal = document.getElementById('headerAndFooterModalId');
         const modalInstance = bootstrap.Modal.getInstance(modal);

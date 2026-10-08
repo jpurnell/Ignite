@@ -134,7 +134,22 @@ public struct Modal: HTML {
         return copy
     }
 
-    /// Renders this element using publishing context passed in.
+    /// The ID of the element that names this modal for assistive technology, or `nil`
+    /// when nothing can.
+    ///
+    /// A modal is named by its header, so one without a header has no label. The ID is
+    /// built from the modal's own, which keeps it the same on every build and different
+    /// for every modal on a page; a modal with an empty ID therefore has no label either.
+    private var labelID: String? {
+        guard !header.isEmpty, !htmlID.isEmpty else { return nil }
+        return "\(htmlID)-label"
+    }
+
+    /// Renders the modal as Bootstrap's `modal` structure.
+    ///
+    /// When the modal has a header, the header is given the ID `<modal ID>-label` and the
+    /// modal points to it with `aria-labelledby`. A modal without a header has no
+    /// `aria-labelledby` attribute.
     /// - Returns: The HTML for this element.
     public func markup() -> Markup {
         Section {
@@ -144,6 +159,7 @@ public struct Modal: HTML {
                         Section {
                             header
                         }
+                        .id(labelID ?? "")
                         .class("modal-header")
                     }
 
@@ -169,7 +185,7 @@ public struct Modal: HTML {
         .class(animated ? "modal fade" : "modal")
         .tabFocus(.focusable)
         .id(htmlID)
-        .aria(.labelledBy, "modalLabel")
+        .aria(.labelledBy, labelID)
         .aria(.hidden, "true")
         .markup()
     }

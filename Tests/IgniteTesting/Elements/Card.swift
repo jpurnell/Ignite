@@ -80,7 +80,7 @@ class CardTests: IgniteTestSuite {
 
     @Test("Card Styles", .publishingContext(), arguments: zip(
         Card.Style.allCases,
-        ["card", "card text-bg-default", "card border-default"]))
+        ["card", "card", "card"]))
     func cardStyles(style: Card.Style, expectedClass: String) async throws {
         let element = Card {
             "Placeholder"
@@ -91,6 +91,41 @@ class CardTests: IgniteTestSuite {
 
         #expect(output == """
         <div class="\(expectedClass)"><div class="card-body">Placeholder</div></div>
+        """)
+    }
+
+    @Test("A solid card takes Bootstrap's text-bg class for its role", .publishingContext(), arguments: zip(
+        Role.standardRoles,
+        ["primary", "secondary", "success", "danger", "warning", "info", "light", "dark"]))
+    func solidCardWithRole(role: Role, name: String) async throws {
+        let implicit = Card { "Placeholder" }.role(role)
+        let explicit = Card { "Placeholder" }.role(role).cardStyle(.solid)
+        let expected = """
+        <div class="card text-bg-\(name)"><div class="card-body">Placeholder</div></div>
+        """
+
+        #expect(implicit.markupString() == expected)
+        #expect(explicit.markupString() == expected)
+    }
+
+    @Test("A bordered card takes Bootstrap's border class for its role", .publishingContext(), arguments: zip(
+        Role.standardRoles,
+        ["primary", "secondary", "success", "danger", "warning", "info", "light", "dark"]))
+    func borderedCardWithRole(role: Role, name: String) async throws {
+        let element = Card { "Placeholder" }.role(role).cardStyle(.bordered)
+
+        #expect(element.markupString() == """
+        <div class="card border-\(name)"><div class="card-body">Placeholder</div></div>
+        """)
+    }
+
+    @Test("A card whose role names no Bootstrap color is a plain card", .publishingContext(),
+          arguments: [Role.default, .none, .close], [Card.Style.solid, .bordered])
+    func cardWithoutContextualRole(role: Role, style: Card.Style) async throws {
+        let element = Card { "Placeholder" }.role(role).cardStyle(style)
+
+        #expect(element.markupString() == """
+        <div class="card"><div class="card-body">Placeholder</div></div>
         """)
     }
 

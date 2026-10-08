@@ -14,16 +14,18 @@ public struct DisallowRule: Sendable {
     /// - Parameters:
     ///   - name: The user-agent name of the robot, as it is written in robots.txt.
     ///   - paths: The paths the robot must not visit. Each one is written as its own `Disallow:` line.
+    ///   A path is matched from the root of the site, so one that does not begin with `/` is
+    ///   written with one added: `private` becomes `Disallow: /private`.
     public init(name: String, paths: [String]) {
         self.name = name
         self.paths = paths
     }
 
-    /// Creates a rule that keeps one robot away from the whole site, written as `Disallow: *`.
+    /// Creates a rule that keeps one robot away from the whole site, written as `Disallow: /`.
     /// - Parameter name: The user-agent name of the robot, as it is written in robots.txt.
     public init(name: String) {
         self.name = name
-        self.paths = ["*"]
+        self.paths = ["/"]
     }
 
     /// Creates a rule that keeps one well-known robot away from specific paths.
@@ -35,10 +37,10 @@ public struct DisallowRule: Sendable {
         self.paths = paths
     }
 
-    /// Creates a rule that keeps one well-known robot away from the whole site, written as `Disallow: *`.
+    /// Creates a rule that keeps one well-known robot away from the whole site, written as `Disallow: /`.
     /// - Parameter robot: The robot to restrict.
     public init(robot: KnownRobot) {
         self.name = robot.rawValue
-        self.paths = ["*"]
+        self.paths = ["/"]
     }
 }
