@@ -24,6 +24,7 @@ extension PublishingContext {
 
         await renderTagPages()
         await renderErrorPages()
+        pageDirectoryDepth = 0
     }
 
     /// Generates a sitemap.xml file for this site.
@@ -83,8 +84,30 @@ extension PublishingContext {
         }
     }
 
-    /// Generates a robots.txt file for this site.
+    /// Generates a robots.txt file for this site, if the site is somewhere a crawler
+    /// will read one.
+    ///
+    /// The Robots Exclusion Protocol (RFC 9309) has a crawler fetch `/robots.txt` from the
+    /// root of a host and nowhere else. A site published under a path –
+    /// `https://example.com/docs` – would write its file to `/docs/robots.txt`, which no
+    /// crawler requests, so its rules would look as if they were in force and do nothing.
+    /// For such a site no file is written, and the build says where the rules have to go.
+    /// The sitemap is still written: a sitemap may live in a subdirectory and describe
+    /// the pages beneath it, but crawlers only learn of it from the host's robots.txt.
     public func generateRobots() {
+        guard sitePathPrefix.isEmpty else {
+            let hostRobots = hostRootAddress + "/robots.txt"
+            let sitemap = hostRootAddress + sitePathPrefix + "/sitemap.xml"
+
+            addWarning("""
+            No robots.txt was written. Crawlers read robots.txt only at the root of a host, and this site is \
+            published under \(sitePathPrefix), where the file would never be read. Add this site's rules to \
+            \(hostRobots) instead, with \(sitePathPrefix) in front of each path, and add the line \
+            "Sitemap: \(sitemap)" there so that crawlers find this site's sitemap.
+            """)
+            return
+        }
+
         let generator = RobotsGenerator(site: site)
         let result = generator.generateRobots()
 
@@ -95,6 +118,27 @@ extension PublishingContext {
             logger.error("Failed to write robots.txt: \(error.localizedDescription, privacy: .public)")
             addError(.failedToWriteFile("robots.txt"))
         }
+    }
+
+    /// The address of the root of the site's host: its scheme, host and port, with no path
+    /// and no trailing slash.
+    private var hostRootAddress: String {
+        var address = site.url.absoluteString
+
+        // Everything from the site's own path onward goes; what is left is the host.
+        if let components = URLComponents(url: site.url, resolvingAgainstBaseURL: true) {
+            var root = URLComponents()
+            root.scheme = components.scheme
+            root.host = components.host
+            root.port = components.port
+            address = root.string ?? address
+        }
+
+        while address.hasSuffix("/") {
+            address.removeLast()
+        }
+
+        return address
     }
 
     /// Generates the CSS file containing all media query rules, including styles.

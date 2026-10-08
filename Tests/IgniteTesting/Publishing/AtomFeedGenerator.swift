@@ -78,8 +78,8 @@ struct AtomFeedGeneratorTests {
         <updated>\(article.date.asISO8601(timeZone: site.timeZone))</updated>\
         <generator uri="https://github.com/twostraws/Ignite" \
         version="\(Ignite.version)">Ignite</generator>\
-        <icon>\(config.image?.url ?? "")</icon>\
-        <logo>\(config.image?.url ?? "")</logo>\
+        <icon>\(site.url.absoluteString)/\(config.image?.url ?? "")</icon>\
+        <logo>\(site.url.absoluteString)/\(config.image?.url ?? "")</logo>\
         <entry>\
         <title>\(article.title.escapedForXML())</title>\
         <link href="\(article.path(in: site))" rel="alternate"/>\

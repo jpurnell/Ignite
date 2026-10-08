@@ -128,9 +128,11 @@ public struct MetaTag: HeadElement, Sendable {
 
         MetaTag(.openGraphSiteName, content: site.name)
 
+        // Crawlers fetch the image from wherever they are, so its address must be absolute.
         if let image = environment.page.image {
-            MetaTag(.openGraphImage, content: image)
-            MetaTag(.twitterImage, content: image)
+            let address = site.absoluteAddress(for: image.absoluteString)
+            MetaTag(.openGraphImage, content: address)
+            MetaTag(.twitterImage, content: address)
         }
 
         let pageTitle = environment.page.title

@@ -27,9 +27,74 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   not write yourself before using it as an element.
 - `Text(verbatim:)`, which shows a string exactly as written. `Text("…")` is
   unchanged and still treats its string as HTML.
+- `Link(_:sitePath:)`, `Link(sitePath:content:)` and
+  `LinkGroup(sitePath:content:)`, which link to a path within the site rather
+  than within the host. On a site deployed at `https://example.com/docs`,
+  `Link("About", sitePath: "/about")` leads to `/docs/about/`.
 
 ### Fixed
 
+- **On a site deployed in a subdirectory, links to the site's own pages lead
+  to them.** `Link(_:target:)` given a page or an article, `Link(article)`,
+  `LinkGroup(target:)` given a page or an article, and the tag links of
+  `Article.tagLinks()` wrote the page's path from the root of the host, so on
+  `https://example.com/subsite` a link to the About page went to
+  `https://example.com/about/`, outside the site. They now include the site's
+  path: `/subsite/about/`. If you had been writing the subdirectory into a
+  page's `path` yourself, remove it, or it will appear twice. Sites at the
+  root of their host are unchanged.
+
+  A string target – `Link("About", target: "/about")` – is still written as
+  you give it, since it may be meant for the host: `/about` is the host's
+  `/about` on a subsite too. Use the new `Link(_:sitePath:)` for a path
+  within the site.
+- A link's trailing slash is added to its path and to nothing else.
+  `/about#team` is written `/about/#team` where it was `/about#team/`, and
+  `/about?tab=2` is `/about/?tab=2`. Addresses with a scheme other than
+  `http`, `https` or `mailto` – `tel:+15551234`, `sms:` – and
+  protocol-relative addresses (`//cdn.example.com/a`) no longer gain a slash
+  at the end. Plain paths, `https:` and `mailto:` addresses are unchanged.
+- A privacy-sensitive `Link` or `LinkGroup` is written as an element. Its
+  opening tag was missing its `<`, so the page showed the text
+  `a href="#" …>` instead of a link.
+- **`useRelativePaths` writes paths relative to the page.** It removed the
+  leading slash and nothing more, which is only right for a page at the root
+  of a site at the root of its host:
+  - On a subsite the paths began with the subsite's name
+    (`subsite/css/bootstrap.min.css`), which from a page already inside that
+    folder points at `subsite/subsite/…`. They no longer do: `css/…`.
+  - From a page below the root the paths climb back to it: `/about` reaches
+    its stylesheet as `../css/bootstrap.min.css` and links home as `../`. They
+    were written `css/…`, which resolved inside `/about/`.
+  - A link to the site's root is `./` (or `../` from deeper). It was `/`,
+    the root of the disk or the host.
+  - A protocol-relative address is left alone. Its first slash was removed,
+    turning `//cdn.example.com/a.js` into a local path.
+  - Font files in `@font-face` rules are addressed relative to the stylesheet
+    (`../fonts/a.woff2`); they kept a path from the root, which does not
+    survive the site being moved.
+
+  A single-page site at the root of its host – what the option was written
+  for – generates the same output as before.
+- Addresses in metadata are absolute. Crawlers and feed readers do not see
+  the page an address was written in, so a path means nothing to them:
+  - `og:image` and `twitter:image` from a page's or an article's `image`. A
+    path such as `/images/share.png` is written
+    `https://example.com/images/share.png`, including the site's path on a
+    subsite. An image that is already an absolute address is unchanged.
+  - The feed image in the RSS (`<image><url>`), Atom (`<icon>`, `<logo>`) and
+    JSON (`icon`, `favicon`) feeds.
+  - The `image` of `StructuredData.article()`, when it is a path with no
+    leading slash; a path with one was already made absolute.
+
+  `og:url`, the canonical link, feed item links, sitemap locations and the
+  JSON-LD `url` were already absolute, on subsites too, and are now tested.
+- A site published under a path no longer writes a `robots.txt`. Crawlers
+  request `/robots.txt` from the root of a host and nowhere else, so
+  `https://example.com/subsite/robots.txt` was never read and its rules never
+  applied. The build now warns instead, naming the host's `robots.txt`, the
+  prefix each path needs there, and the `Sitemap:` line to add. The sitemap
+  is still written. Sites at the root of their host are unchanged.
 - **`Color(hex:)` reads the alpha of an eight-digit color as CSS defines it,
   and this changes the opacity of every `#RRGGBBAA` color.** The last two
   digits are alpha on the same `00`–`FF` scale as the color channels; they

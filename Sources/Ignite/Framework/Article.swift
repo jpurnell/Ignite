@@ -316,13 +316,13 @@ public struct Article: Sendable {
 
         return targets.map { target in
             if style == .automatic {
-                Link(target: target.path) {
+                Link(sitePath: target.path) {
                     Badge(target.name.escapedForHTML())
                         .role(.primary)
                 }
                 .relationship(.tag)
             } else {
-                Link(target.name.escapedForHTML(), target: target.path)
+                Link(target.name.escapedForHTML(), sitePath: target.path)
                     .relationship(.tag)
             }
         }

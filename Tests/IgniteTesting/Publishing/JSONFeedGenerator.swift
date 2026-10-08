@@ -203,8 +203,10 @@ struct JSONFeedGeneratorTests {
         let output = generator.generateFeed()
         let json = try parseJSON(output)
 
-        #expect(json["icon"] as? String == "path/to/image.png")
-        #expect(json["favicon"] as? String == "path/to/image.png")
+        // A feed is read away from the site, so the image's address is made absolute
+        // against it. This expected the path as configured, `path/to/image.png`.
+        #expect(json["icon"] as? String == "https://www.example.com/path/to/image.png")
+        #expect(json["favicon"] as? String == "https://www.example.com/path/to/image.png")
     }
 
     @Test("Language: matches site language", .publishingContext())

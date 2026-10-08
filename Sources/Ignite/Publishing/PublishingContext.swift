@@ -405,43 +405,107 @@ final class PublishingContext: @unchecked Sendable {
         }
     }
 
-    /// Converts a URL to a site-relative path string.
+    /// Converts a URL to the address to write in markup.
+    ///
+    /// An address on another host, a protocol-relative address and a path relative to the
+    /// page are returned as they are. So is a path from the root of the host, such as
+    /// `/about`, on a site that writes absolute paths: it is the author's address and is
+    /// not given the path of a subsite. On a site that uses relative paths there is no
+    /// host root to speak of, so such a path is taken to be within the site and is made
+    /// relative to the page being rendered.
     /// - Parameter url: The URL to convert.
-    /// - Returns: A string path, either preserving remote URLs or
-    /// making local URLs relative to the site root. When `site.useRelativePaths`
-    /// is true, local paths will have their leading slash removed.
+    /// - Returns: The address to write.
     func path(for url: URL) -> String {
         let path = url.relativeString
-        var result = if url.isFileURL {
-            site.url.appending(path: path).decodedPath
-        } else {
-            path
+
+        if url.isFileURL {
+            let result = site.url.appending(path: path).decodedPath
+            return site.useRelativePaths && result.hasPrefix("/") ? String(result.dropFirst()) : result
         }
 
-        if site.useRelativePaths, result.hasPrefix("/") {
-            result = String(result.dropFirst())
+        if site.useRelativePaths, path.hasPrefix("/"), !path.hasPrefix("//") {
+            return siteAddress(forRootRelativePath: path)
         }
 
-        return result
+        return path
     }
 
-    /// Returns a path with a trailing slash appended for local page URLs.
+    /// Returns the address to write for a link, with a trailing slash added to the path
+    /// of a page.
+    ///
     /// Static hosts serve directory-style pages (path/index.html) at path/,
-    /// so links should use the canonical form to avoid 301 redirects.
-    func linkPath(for url: URL) -> String {
-        var result = path(for: url)
+    /// so links should use the canonical form to avoid 301 redirects. Only the path is
+    /// touched: a query or a fragment stays after it (`/about#team` becomes
+    /// `/about/#team`), and an address with a scheme – `https:`, `mailto:`, `tel:` – or
+    /// on another host is never altered.
+    /// - Parameters:
+    ///   - url: The link's target.
+    ///   - withinSite: Whether a path from the root names a page of this site, in which
+    ///   case it is given the site's own path on a site deployed in a subdirectory. Pass
+    ///   `false` for an address written by the author, which is used as authored.
+    /// - Returns: The address to write in `href`.
+    func linkPath(for url: URL, withinSite: Bool = false) -> String {
+        let reference = url.relativeString
+        let isRootRelative = reference.hasPrefix("/") && !reference.hasPrefix("//")
 
-        let isExternal = url.scheme == "http" || url.scheme == "https" || url.scheme == "mailto"
-        if !isExternal,
-           !result.hasSuffix("/"),
-           !result.hasPrefix("#") {
-            let lastComponent = result.split(separator: "/").last.map(String.init) ?? ""
+        let result = if withinSite, isRootRelative {
+            siteAddress(forRootRelativePath: reference)
+        } else {
+            path(for: url)
+        }
+
+        // An address with a scheme or a host is someone else's; leave it exactly as it is.
+        guard url.scheme == nil, !reference.hasPrefix("//") else { return result }
+
+        // Work on the path alone, so a query or a fragment keeps its place after it.
+        let pathEnd = result.firstIndex { $0 == "?" || $0 == "#" } ?? result.endIndex
+        var path = String(result[..<pathEnd])
+        let suffix = result[pathEnd...]
+
+        if !path.isEmpty, !path.hasSuffix("/") {
+            let lastComponent = path.split(separator: "/").last.map(String.init) ?? ""
             if !lastComponent.contains(".") {
-                result += "/"
+                path += "/"
             }
         }
 
-        return result
+        return path + suffix
+    }
+
+    /// How many directories lie between the page being rendered and the root of the
+    /// site: 0 for the home page, 1 for `/about`, 2 for `/blog/post`.
+    ///
+    /// A site that uses relative paths needs it to reach its own files from a page that
+    /// is not at the root. It is 0 whenever no page is being rendered.
+    var pageDirectoryDepth = 0
+
+    /// Counts the directories in a page's path.
+    /// - Parameter path: A path within the site, with or without leading and trailing slashes.
+    /// - Returns: The number of path components.
+    static func directoryDepth(of path: String) -> Int {
+        path.split(separator: "/").count
+    }
+
+    /// Resolves a path from the root of the site into the address to write in markup.
+    ///
+    /// On a site that writes absolute paths this is the site's own path followed by the
+    /// path given: `/css/a.css` on a site at `https://example.com/subsite` is
+    /// `/subsite/css/a.css`.
+    ///
+    /// On a site that uses relative paths the result is relative to the page being
+    /// rendered, climbing one directory for each level the page is below the root:
+    /// `css/a.css` from the home page, `../css/a.css` from `/about`. The site's own path
+    /// is not part of it. A relative site is one that has to work wherever its folder
+    /// ends up – opened from disk, or served from a prefix nobody knew at build time –
+    /// and from inside that folder the files are found by climbing to its root, never by
+    /// naming the folder.
+    /// - Parameter path: A path beginning with a single `/`.
+    /// - Returns: The address to write.
+    func siteAddress(forRootRelativePath path: String) -> String {
+        guard site.useRelativePaths else { return "\(sitePathPrefix)\(path)" }
+
+        let relative = String(repeating: "../", count: pageDirectoryDepth) + path.dropFirst()
+        return relative.isEmpty ? "./" : relative
     }
 
     /// The path of the site within its host, with no trailing slash: empty for a site at
@@ -465,12 +529,11 @@ final class PublishingContext: @unchecked Sendable {
     /// protocol-relative address beginning `//`, which names another host.
     /// - Parameter path: A path string, typically starting with "/" for local assets.
     /// - Returns: The resolved path. For subsites, includes the subsite path prefix.
-    /// When `useRelativePaths` is true, the leading slash is removed.
+    /// When `useRelativePaths` is true, the path is relative to the page being rendered
+    /// and has no subsite prefix; see ``siteAddress(forRootRelativePath:)``.
     func assetPath(_ path: String) -> String {
         guard path.hasPrefix("/"), !path.hasPrefix("//") else { return path }
-
-        let fullPath = "\(sitePathPrefix)\(path)"
-        return site.useRelativePaths ? String(fullPath.dropFirst()) : fullPath
+        return siteAddress(forRootRelativePath: path)
     }
 
     /// Resolves a reference to a file the site serves, given as a URL.

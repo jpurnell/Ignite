@@ -73,8 +73,9 @@ struct AtomFeedGenerator {
         """
 
         if let image = feedConfig.image {
-            header += "<icon>\(image.url.escapedForXML())</icon>"
-            header += "<logo>\(image.url.escapedForXML())</logo>"
+            let address = site.absoluteAddress(for: image.url).escapedForXML()
+            header += "<icon>\(address)</icon>"
+            header += "<logo>\(address)</logo>"
         }
 
         return header

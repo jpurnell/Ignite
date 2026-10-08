@@ -49,6 +49,11 @@ public struct Link: InlineElement, NavigationItem, DropdownItem {
     /// The location to which this link should direct users.
     var url: String
 
+    /// Whether `url`, when it is a path from the root, names a page of this site rather
+    /// than an address the author wrote out. A site path is given the site's own path
+    /// when the site is deployed in a subdirectory; an authored address never is.
+    var isSitePath = false
+
     /// The style for this link. Defaults to `.automatic`.
     var style = Style.automatic
 
@@ -85,12 +90,51 @@ public struct Link: InlineElement, NavigationItem, DropdownItem {
 
     /// Creates a `Link` instance from the content you provide, linking to the
     /// URL specified.
+    ///
+    /// The target is written as you give it. In particular a path from the root, such as
+    /// `/about`, is a path from the root of the *host*: on a site deployed in a
+    /// subdirectory (`https://example.com/docs`) it leads to `https://example.com/about`,
+    /// outside the site. To link to a page of your own site wherever it is deployed, link
+    /// to the page or the article itself – `Link("About", target: AboutPage())` – or use
+    /// ``init(_:sitePath:)``. On a site with `useRelativePaths` there is no host root, and
+    /// a path from the root is always taken to be within the site.
     /// - Parameters:
     ///   - content: The user-facing content to show inside the `Link`.
     ///   - target: The URL you want to link to.
     public init(_ content: any InlineElement, target: String) {
         self.content = content
         self.url = target
+    }
+
+    /// Creates a `Link` instance from the content you provide, linking to a path
+    /// within this site.
+    ///
+    /// The path is taken from the root of the site, not of the host, so the link reaches
+    /// the same page wherever the site is deployed: `Link("About", sitePath: "/about")`
+    /// leads to `/about/` on a site at the root of its host and to `/docs/about/` on a site
+    /// at `https://example.com/docs`. Anything that is not a path from the root – an
+    /// address with a scheme, a protocol-relative address, a fragment, a path relative to
+    /// the page – is written as given, exactly as `init(_:target:)` writes it.
+    /// - Parameters:
+    ///   - content: The user-facing content to show inside the `Link`.
+    ///   - sitePath: A path from the root of this site, beginning with `/`.
+    public init(_ content: any InlineElement, sitePath: String) {
+        self.content = content
+        self.url = sitePath
+        self.isSitePath = true
+    }
+
+    /// Creates a `Link` wrapping the provided content and pointing to a path
+    /// within this site.
+    ///
+    /// See ``init(_:sitePath:)`` for how the path is resolved.
+    /// - Parameters:
+    ///   - sitePath: A path from the root of this site, beginning with `/`.
+    ///   - content: The user-facing content to show inside the `Link`.
+    public init(sitePath: String, @InlineElementBuilder content: () -> some InlineElement) {
+        self.content = content()
+        self.url = sitePath
+        self.isSitePath = true
     }
 
     /// Creates a `Link` instance from the content you provide, linking to the
@@ -114,6 +158,7 @@ public struct Link: InlineElement, NavigationItem, DropdownItem {
     ) {
         self.content = content()
         self.url = article.path
+        self.isSitePath = true
     }
 
     /// Creates a `Link` instance from the content you provide, linking to the path
@@ -124,6 +169,7 @@ public struct Link: InlineElement, NavigationItem, DropdownItem {
     public init(_ content: some InlineElement, target: any StaticPage) {
         self.content = content
         self.url = target.path
+        self.isSitePath = true
     }
 
     /// Creates a `Link` instance from the content you provide, linking to the
@@ -144,6 +190,7 @@ public struct Link: InlineElement, NavigationItem, DropdownItem {
     public init(_ content: String, target: Article) {
         self.content = content
         self.url = target.path
+        self.isSitePath = true
     }
 
     /// Convenience initializer that creates a new `Link` instance using the
@@ -152,6 +199,7 @@ public struct Link: InlineElement, NavigationItem, DropdownItem {
     public init(_ article: Article) {
         self.content = article.title.escapedForHTML()
         self.url = article.path
+        self.isSitePath = true
     }
 
     /// Controls in which window this page should be opened.
@@ -246,7 +294,7 @@ public struct Link: InlineElement, NavigationItem, DropdownItem {
         linkAttributes.append(dataAttributes: .init(name: "encoded-url", value: encodedUrl))
         linkAttributes.append(customAttributes: .init(name: "href", value: "#"))
 
-        return Markup("a\(linkAttributes)>\(displayContent)</a>")
+        return Markup("<a\(linkAttributes)>\(displayContent)</a>")
     }
 
     /// Renders a standard link with the provided URL and content.
@@ -259,7 +307,7 @@ public struct Link: InlineElement, NavigationItem, DropdownItem {
             return Markup()
         }
 
-        let path = publishingContext.linkPath(for: url)
+        let path = publishingContext.linkPath(for: url, withinSite: isSitePath)
         linkAttributes.append(customAttributes: .init(name: "href", value: path))
         let contentHTML = content.markupString()
         return Markup("<a\(linkAttributes)>\(contentHTML)</a>")

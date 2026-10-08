@@ -126,14 +126,17 @@ struct RelativePathsTests {
         #expect(result == "/subsite/css/styles.css")
     }
 
-    @Test("Subsite with relative paths includes subsite prefix without leading slash", .publishingContext())
-    func subsiteRelativePathsIncludePrefixWithoutSlash() throws {
+    // This expected `subsite/css/styles.css`. A relative path is resolved against the page
+    // it is written in, and the page is already inside the subsite's folder, so that
+    // address pointed at `subsite/subsite/css/styles.css`. A relative-path site is built to
+    // work wherever its folder is put; its own name has no place in its paths.
+    @Test("Subsite with relative paths writes page-relative paths without the subsite name", .publishingContext())
+    func subsiteRelativePathsOmitSubsiteName() throws {
         let result = try withPublishingContext(for: TestRelativePathsSubsite()) { context in
-            // assetPath should include subsite prefix but no leading slash
             context.assetPath("/css/styles.css")
         }
 
-        #expect(result == "subsite/css/styles.css")
+        #expect(result == "css/styles.css")
     }
 
     @Test("Subsite MetaLink with relative paths produces correct output", .publishingContext())
@@ -143,7 +146,8 @@ struct RelativePathsTests {
             return metaLink.markupString()
         }
 
-        #expect(output.contains("href=\"subsite/css/bootstrap.min.css\""))
+        // Relative to the page, without the subsite's name; see the test above.
+        #expect(output.contains("href=\"css/bootstrap.min.css\""))
     }
 
     // MARK: - External URLs Should Not Be Modified
@@ -269,8 +273,10 @@ struct RelativePathsTests {
         }
     }
 
-    @Test("Relative path image variants keep the subsite prefix", .publishingContext())
-    func relativePathImageVariantsKeepSubsitePrefix() throws {
+    // This expected `subsite/images/…`; see `subsiteRelativePathsOmitSubsiteName` for why
+    // a relative-path subsite does not name itself. The variants must still be found.
+    @Test("Relative path image variants on a subsite are found and written relative to the page", .publishingContext())
+    func relativePathImageVariantsOnSubsite() throws {
         let directories = try makeTemporarySiteDirectories()
         defer {
             try? FileManager.default.removeItem(at: directories.rootDirectory)
@@ -286,8 +292,8 @@ struct RelativePathsTests {
         PublishingContext.withCurrent(context) {
             let output = Image("/images/example.jpg", description: "Example image").markupString()
 
-            #expect(output.contains("src=\"subsite/images/example.jpg\""))
-            #expect(output.contains("srcset=\"subsite/images/example@2x.jpg 2x\""))
+            #expect(output.contains("src=\"images/example.jpg\""))
+            #expect(output.contains("srcset=\"images/example@2x.jpg 2x\""))
             #expect(!context.warnings.contains("Could not read the assets directory. Please file a bug report."))
         }
     }

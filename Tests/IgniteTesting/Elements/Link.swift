@@ -34,12 +34,16 @@ enum LinkDestination: Sendable {
 
     /// The `href` a link to ``page`` renders: the page's slug with the trailing slash
     /// that directory-style pages are served at.
+    ///
+    /// On the subsite this expected `/test-subsite-page/`, the page's path from the root
+    /// of the host – where the page is not. The page is part of the site, which lives at
+    /// `/subsite`, so a link to it has to include that.
     var expectedHref: String {
         switch self {
         case .standard:
             "/test-page/"
         case .subsite:
-            "/test-subsite-page/"
+            "/subsite/test-subsite-page/"
         }
     }
 }

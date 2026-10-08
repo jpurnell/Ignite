@@ -233,7 +233,12 @@ class AssetReferenceTests: IgniteTestSuite {
         #expect(output == #"<script src="js/code.js"></script><link href="css/styles.css" rel="stylesheet" />"#)
     }
 
-    @Test("A font in a stylesheet keeps its root-relative address on a relative-path site")
+    // This expected `/fonts/custom.woff2`, on the reasoning that an address in a stylesheet
+    // is resolved against the stylesheet, so the page-relative form would be wrong. That
+    // is right about the page-relative form, but a path from the root does not survive
+    // the site being opened from disk or moved under a prefix either. The stylesheet is
+    // `css/ignite-core.min.css`, so the address relative to it is `../fonts/custom.woff2`.
+    @Test("A font in a stylesheet is addressed relative to the stylesheet on a relative-path site")
     func relativePathSiteFont() throws {
         let local = try #require(URL(string: "/fonts/custom.woff2"))
         let font = Font(name: "Custom", sources: FontSource(url: local))
@@ -244,7 +249,7 @@ class AssetReferenceTests: IgniteTestSuite {
             """
             @font-face {
                 font-family: 'Custom';
-                src: url('/fonts/custom.woff2');
+                src: url('../fonts/custom.woff2');
                 font-weight: 400;
                 font-style: normal;
                 font-display: swap;

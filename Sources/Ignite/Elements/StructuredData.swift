@@ -163,9 +163,7 @@ extension StructuredData {
         }
 
         if let image = article.image {
-            let siteBase = environment.site.url.absoluteString
-                .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-            json["image"] = image.hasPrefix("/") ? siteBase + image : image
+            json["image"] = PublishingContext.shared.site.absoluteAddress(for: image)
         }
 
         let authorName = article.author

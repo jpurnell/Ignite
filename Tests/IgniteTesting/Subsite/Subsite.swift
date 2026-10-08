@@ -61,6 +61,8 @@ class SubsiteTests: IgniteSubsiteTestSuite {
 
     // MARK: - Link
 
+    // A string target is the author's own address and is written as given, so `/` is the
+    // root of the host. `Link(_:sitePath:)` is the spelling for the root of the site.
     @Test("String Target Test", .publishingContext(.subsite), arguments: ["/"], ["Go Home"])
     func target(for target: String, description: String) async throws {
         let element = Link(description, target: target)
@@ -73,7 +75,9 @@ class SubsiteTests: IgniteSubsiteTestSuite {
         let page = TestSubsitePage()
         let element = Link("This is a test", target: page).linkStyle(.button)
         let output = element.markupString()
-        #expect(output == "<a href=\"\(page.path)/\" class=\"btn btn-primary\">This is a test</a>")
+        // A page of the site is under the site's own path. This expected `page.path` alone,
+        // which on a subsite is an address at the root of the host, outside the site.
+        #expect(output == "<a href=\"/subsite\(page.path)/\" class=\"btn btn-primary\">This is a test</a>")
     }
 
     @Test("Page Content Test", .publishingContext(.subsite))
@@ -85,6 +89,9 @@ class SubsiteTests: IgniteSubsiteTestSuite {
         }
         let output = element.markupString()
 
-        #expect(output == "<a href=\"\(page.path)/\" class=\"link-plain d-inline-block\">MORE <p>CONTENT</p></a>")
+        // As above: a link group to a page of the site includes the site's path.
+        #expect(output == """
+        <a href="/subsite\(page.path)/" class="link-plain d-inline-block">MORE <p>CONTENT</p></a>
+        """)
     }
 }

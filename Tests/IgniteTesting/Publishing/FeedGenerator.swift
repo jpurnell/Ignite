@@ -79,7 +79,7 @@ struct FeedGeneratorTests {
         <language>\(site.language.rawValue)</language>\
         <generator>\(Ignite.version)</generator>\
         <image>\
-        <url>\(config.image?.url ?? "")</url>\
+        <url>\(site.url.absoluteString)/\(config.image?.url ?? "")</url>\
         <title>\(site.name)</title>\
         <link>\(site.url.absoluteString)</link>\
         <width>\(config.image?.width ?? 0)</width>\

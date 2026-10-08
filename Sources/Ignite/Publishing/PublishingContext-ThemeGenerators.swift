@@ -79,14 +79,20 @@ extension PublishingContext {
     /// A font the site serves itself, given as a path from the root of the site, is
     /// prefixed with the site's path like every other asset, so a site deployed in a
     /// subdirectory finds it. Any other address is written as given. So is every address
-    /// on a site that uses relative paths: a path in a stylesheet is resolved against the
-    /// stylesheet rather than the page, so the page-relative form would point elsewhere.
+    /// on another host.
+    ///
+    /// On a site that uses relative paths the address is relative to the stylesheet, not
+    /// to a page, because that is what a browser resolves it against. Ignite writes its
+    /// `@font-face` rules into `css/ignite-core.min.css`, one directory below the root of
+    /// the site, so a font at `/fonts/a.woff2` is `../fonts/a.woff2` from there.
     private func fontFileAddress(for url: URL) -> String {
-        guard !site.useRelativePaths, url.scheme == nil, url.host() == nil else {
-            return url.absoluteString
-        }
+        guard url.scheme == nil, url.host() == nil else { return url.absoluteString }
 
-        return assetPath(url.relativeString)
+        let path = url.relativeString
+        guard site.useRelativePaths else { return assetPath(path) }
+        guard path.hasPrefix("/"), !path.hasPrefix("//") else { return path }
+
+        return "../" + path.dropFirst()
     }
 
     /// Creates CSS rules for light theme

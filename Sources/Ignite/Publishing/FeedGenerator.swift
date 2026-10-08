@@ -23,7 +23,7 @@ struct FeedGenerator {
         if let image = feedConfig.image {
             result += """
             <image>\
-            <url>\(image.url.escapedForXML())</url>\
+            <url>\(site.absoluteAddress(for: image.url).escapedForXML())</url>\
             <title>\(site.name.escapedForXML())</title>\
             <link>\(site.url.absoluteString.escapedForXML())</link>\
             <width>\(image.width)</width>\

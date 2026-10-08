@@ -24,6 +24,10 @@ public struct LinkGroup: HTML {
     /// The location to which this link should direct users.
     var url: String
 
+    /// Whether `url`, when it is a path from the root, names a page of this site rather
+    /// than an address the author wrote out. See `Link.isSitePath`.
+    var isSitePath = false
+
     /// Creates a `Link` instance from the content you provide, linking to the
     /// URL specified.
     /// - Parameters:
@@ -34,6 +38,22 @@ public struct LinkGroup: HTML {
         self.url = target
     }
 
+    /// Creates a `LinkGroup` wrapping the provided content and pointing to a path
+    /// within this site.
+    ///
+    /// The path is taken from the root of the site, not of the host, so the link reaches
+    /// the same page wherever the site is deployed; `init(target:content:)` writes a
+    /// path from the root as given, which on a site deployed in a subdirectory leads
+    /// outside it. Anything that is not a path from the root is written as given.
+    /// - Parameters:
+    ///   - sitePath: A path from the root of this site, beginning with `/`.
+    ///   - content: The user-facing content to show inside the `LinkGroup`.
+    public init(sitePath: String, @HTMLBuilder content: @escaping () -> some HTML) {
+        self.content = content()
+        self.url = sitePath
+        self.isSitePath = true
+    }
+
     /// Creates a Link wrapping the provided content and pointing to the given page
     /// - Parameters:
     ///  - target: The new target to apply.
@@ -41,6 +61,7 @@ public struct LinkGroup: HTML {
     public init(target: any StaticPage, @HTMLBuilder content: @escaping () -> some HTML) {
         self.content = content()
         self.url = target.path
+        self.isSitePath = true
     }
 
     /// Creates a `Link` wrapping the provided content and pointing to the path
@@ -51,6 +72,7 @@ public struct LinkGroup: HTML {
     public init(target article: Article, @HTMLBuilder content: @escaping () -> some HTML) {
         self.content = content()
         self.url = article.path
+        self.isSitePath = true
     }
 
     /// Controls in which window this page should be opened.
@@ -110,7 +132,7 @@ public struct LinkGroup: HTML {
         linkAttributes.append(dataAttributes: .init(name: "encoded-url", value: encodedUrl))
         linkAttributes.append(customAttributes: .init(name: "href", value: "#"))
 
-        return Markup("a\(linkAttributes)>\(displayContent)</a>")
+        return Markup("<a\(linkAttributes)>\(displayContent)</a>")
     }
 
     /// Renders a standard link with the provided URL and content.
@@ -123,7 +145,7 @@ public struct LinkGroup: HTML {
             return Markup()
         }
 
-        let path = publishingContext.linkPath(for: url)
+        let path = publishingContext.linkPath(for: url, withinSite: isSitePath)
         linkAttributes.append(customAttributes: .init(name: "href", value: path))
         let contentHTML = content.markupString()
         return Markup("<a\(linkAttributes)>\(contentHTML)</a>")

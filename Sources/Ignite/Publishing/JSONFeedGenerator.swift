@@ -84,6 +84,7 @@ struct JSONFeedGenerator {
         }
 
         let siteAuthor = site.author.isEmpty ? nil : site.author
+        let imageAddress = feedConfig.image.map { site.absoluteAddress(for: $0.url) }
 
         let feed = JSONFeed(
             version: "https://jsonfeed.org/version/1.1",
@@ -92,8 +93,8 @@ struct JSONFeedGenerator {
             feed_url: site.url.appending(path: feedConfig.paths[.json] ?? "/feed.json").absoluteString,
             description: site.description,
             language: site.language.rawValue,
-            icon: feedConfig.image?.url,
-            favicon: feedConfig.image?.url,
+            icon: imageAddress,
+            favicon: imageAddress,
             authors: siteAuthor.map { [JSONFeedAuthor(name: $0)] },
             items: Array(feedItems)
         )
