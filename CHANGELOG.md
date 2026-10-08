@@ -666,6 +666,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   against small real child processes; and the built tool is run to check its
   exit status and where its messages go. None of this changes how the tool
   behaves, apart from the fixes listed above.
+- The documentation says what the fork does. `README.md` opens with what this
+  fork is and how it differs, names this repository where it named
+  upstream's, states the requirements `Package.swift` declares (Swift 6.2,
+  macOS 13), and describes `Text(verbatim:)`, `Link(_:sitePath:)`, relative
+  paths, and the command-line tool's exit statuses and use of standard error.
+  The DocC catalogue gains an article, *Migrating from upstream Ignite*,
+  listing every difference a site author moving from upstream will see.
 
 ## [0.6.9] - 2026-04-21
 

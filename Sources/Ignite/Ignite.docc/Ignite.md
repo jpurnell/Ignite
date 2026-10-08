@@ -8,7 +8,13 @@ Ignite is a static site builder for Swift developers, offering an expressive, po
 
 Ignite doesn't try to convert SwiftUI code to HTML, or simply map HTML tags to Swift code. Instead, it aims to use SwiftUI-like syntax to help you build great websites even if you have no knowledge of HTML or CSS.
 
+This is a fork of [Ignite](https://github.com/twostraws/Ignite), maintained separately from it. Its rule is to keep upstream's public API, and it differs in what a site generates, in how a build reports trouble, and in how the command-line tool exits: strings that are text are escaped, generated IDs and class names are the same on every build, links work on a site deployed in a subdirectory and on one opened from a folder, mistakes in a site become build warnings rather than stopping the process, and a failed command exits with a non-zero status. <doc:MigratingFromUpstream> lists every difference.
+
 ## Topics
+
+### Essentials
+
+- <doc:MigratingFromUpstream>
 
 ### Actions
 

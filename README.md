@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-    <img src="https://img.shields.io/badge/macOS-14.0+-2980b9.svg" />
-    <img src="https://img.shields.io/badge/swift-6.0+-8e44ad.svg" />
+    <img src="https://img.shields.io/badge/macOS-13.0+-2980b9.svg" />
+    <img src="https://img.shields.io/badge/swift-6.2+-8e44ad.svg" />
     <a href="https://twitter.com/twostraws">
         <img src="https://img.shields.io/badge/Contact-@twostraws-95a5a6.svg?style=flat" alt="Twitter: @twostraws" />
     </a>
@@ -15,11 +15,31 @@ Ignite is a static site builder for Swift developers, offering an expressive, po
 Ignite doesn't try to convert SwiftUI code to HTML, or simply map HTML tags to Swift code. Instead, it aims to use SwiftUI-like syntax to help you build great websites even if you have no knowledge of HTML or CSS.
 
 
+## This is a fork
+
+This repository is a fork of [twostraws/Ignite](https://github.com/twostraws/Ignite), maintained separately from it on its `main` branch. It began at upstream's 0.6.9 and has no pull requests open against upstream. Its rule is to keep upstream's public API and to add beside it, so a site written for upstream should build against the fork; what the site generates is not the same.
+
+The differences a site author will see:
+
+- **Text is escaped.** Attribute values, titles, Markdown text and code are escaped on output. A string used as an element – `Text("…")` – is still HTML; `Text(verbatim:)` shows a string exactly as written.
+- **Builds are reproducible.** Generated IDs are numbered per page (`ig-accordion-1`) rather than random, and CSS rules are written in a fixed order: two builds of an unchanged site produce identical files.
+- **Subdirectory sites work.** On `https://example.com/docs`, links to the site's own pages and files include `/docs`. A string target is still written as given; `Link("About", sitePath: "/about")` links within the site. Such a site writes no `robots.txt`, since crawlers only read the one at the root of a host.
+- **Relative-path sites open from a folder.** With `useRelativePaths`, paths are relative to each page and links name the page's file (`about/index.html`).
+- **Mistakes are warnings, not crashes.** Nothing in the library stops the process; a build warns and falls back, or throws a `PublishingError`. `PublishingOutput` chooses where a build's results are written.
+- **Colors follow CSS.** The last two digits of `#RRGGBBAA` are alpha from `00` to `FF`, and out-of-range components are clamped.
+- **Markup follows Bootstrap and names things for screen readers.** Roles produce only classes Bootstrap defines; icons, icon buttons and unlabelled fields are named or hidden.
+- **The command-line tool tells scripts when it failed.** A failed `ignite build`, `ignite new` or `ignite run` exits with 1 and writes its ❌ message to standard error.
+
+[CHANGELOG.md](CHANGELOG.md) records every change and its reasoning, and the documentation's *Migrating from upstream Ignite* article (`Sources/Ignite/Ignite.docc/MigratingFromUpstream.md`) lists every difference in one place.
+
+It needs Swift 6.2 or later and macOS 13 or later.
+
+
 ## Getting started
 
 The easiest way to get started is to use the Ignite command-line tool included with this package:
 
-1. Run `git clone https://github.com/twostraws/Ignite` to clone this repository to your computer.
+1. Run `git clone https://github.com/jpurnell/Ignite` to clone this repository to your computer.
 2. Change into the new directory, e.g. `cd Ignite`.
 3. Now run `make` to build the Ignite command-line tool.
 4. Then run `make install` to install the Ignite command-line tool to `/usr/local/bin`.
@@ -28,11 +48,16 @@ The easiest way to get started is to use the Ignite command-line tool included w
 > [!Note]
 > To change install directory: `make install PREFIX_DIR=/my/install/dir`
 
+`make install` exits with a non-zero status if it could not install the tool.
+
 Once that command-line tool is installed, you can run the following command to create a new site called ExampleSite:
 
 ```shell
 ignite new ExampleSite
 ```
+
+> [!Important]
+> `ignite new` clones upstream's [Ignite Starter Template](https://github.com/twostraws/IgniteStarter), whose `Package.swift` depends on upstream Ignite. To build the new site with this fork, change that dependency to `.package(url: "https://github.com/jpurnell/Ignite.git", branch: "main")` and raise the first line to `// swift-tools-version: 6.2`.
 
 Once installed, the command-line tool is helpful for running a local web server for testing and for building your project.
 
@@ -51,6 +76,8 @@ That creates a new folder called Build with the site files. Now you can preview 
 
 Once you've built your site and are ready to see how it looks, do *not* just double-click one of the files in Finder. This will open the file directly in your browser, which means it won't know how to locate the rest of your site – the stylesheets, JavaScript code, etc – so it will not display correctly.
 
+The exception is a site that sets `useRelativePaths` to `true` in its `Site`. Such a site writes every path relative to the page it is on and links to each page's own file, so it does open from a folder, and can be moved to any folder or served from any path.
+
 Instead, the best way to preview your site is using the Ignite CLI tool, which you installed in Getting Started above:
 
 - Run `ignite run --preview` to preview your site and open it in your web browser.
@@ -67,7 +94,11 @@ Basic Ignite code looks similar to SwiftUI code:
 ```swift
 Text("Swift rocks")
     .font(.title1)
-    
+
+// A string given to Text is HTML. To show a string exactly as written – one you
+// did not write yourself, or one with < or & in it – use Text(verbatim:).
+Text(verbatim: "1 < 2 & 3 > 2")
+
 Text(markdown: "Add *inline* Markdown")
     .foregroundStyle(.secondary)
 
@@ -79,6 +110,10 @@ Divider()
 Image("logo.jpg")
     .accessibilityLabel("The Swift logo.")
     .padding()
+
+// An icon with a description is announced by screen readers; with an empty
+// description it is decoration and is hidden from them.
+Image(systemName: "star-fill", description: "Favourite")
 ```
 
 But it also includes a range of more advanced controls such as dropdown buttons:
@@ -89,7 +124,7 @@ Dropdown("Click Me") {
     Link("Carousels", target: CarouselExamples())
     Divider()
     Text("Or you can just…")
-    Link("Go back home", target: "/")
+    Link("Go back home", sitePath: "/")
 }
 .role(.primary)
 ```
@@ -150,7 +185,7 @@ Ignite sites are just Swift package, but they use a specific folder structure to
 
 This folder structure is already in place in the [Ignite Starter Template](https://github.com/twostraws/IgniteStarter) repository, and I recommend you start with that.
 
-Alternatively, you can bring Ignite into an existing project using Swift Package Manager by adding a package dependency for <https://github.com/twostraws/Ignite>.
+Alternatively, you can bring Ignite into an existing project using Swift Package Manager by adding a package dependency for <https://github.com/jpurnell/Ignite>, on its `main` branch.
 
 Once that completes, import Ignite into your Swift code wherever needed:
 
@@ -179,7 +214,9 @@ And it results in this **Build** structure:
 │   ├── …
 ```
 
-**A precondition for this to work is to have a layout available to render your content.** If you don't have a valid layout in place, Ignite will issue a warning saying "Your site must provide at least one layout in order to render Markdown."
+**A precondition for this to work is to have a layout available to render your content.** If you don't have a valid layout in place, the build reports the error "Your site must provide at least one layout in order to render Markdown."
+
+An article's `title` and `description` are plain text: when they come from the first heading and paragraph of the Markdown, tags are removed and character references such as `&amp;` and `&copy;` are decoded. Its `text` is HTML.
 
 You can create custom layouts for articles by making types conform to the `ArticlePage` protocol, which will automatically be given an `article` property to access the content it is displaying. For example:
 
@@ -267,6 +304,8 @@ ignite run --preview
 
 That will launch a local web server you should use to preview your site, and also open it in your browser. If you're working in Xcode, you can continue performing builds as normal then refresh your browser to see your changes.
 
+Each command exits with a status of 0 when it worked and 1 when it did not, so a script or a CI step can rely on it: `ignite build && ./deploy.sh` deploys only a site that built. A command has failed when the program it ran – `swift build`, your site, `git clone`, the local server – exited with a failure, whatever that program printed. Messages beginning ❌, and the compiler's errors, are written to standard error; progress and the final ✅ are written to standard output.
+
 > [!Tip]
 > The Ignite command-line tool has various configuration options available. Run `ignite help` to get general help, or add `help` before a subcommand to get further details, e.g. `ignite help run`.
 
@@ -287,13 +326,14 @@ That will launch a local web server you should use to preview your site, and als
 
 ## Contributing
 
-I welcome all contributions, whether that's adding new tests, fixing up existing code, adding comments, or improving this README – everyone is welcome!
+Contributions to upstream Ignite belong at [twostraws/Ignite](https://github.com/twostraws/Ignite), and its contribution guidelines apply there. This fork does not open pull requests against upstream.
 
-- You must comment your code thoroughly, using documentation comments or regular comments as applicable.
-- Please ensure you run SwiftLint in the Sources directory, and fix all outstanding issues.
+Changes to this fork are made test-first and recorded in [CHANGELOG.md](CHANGELOG.md):
+
+- Write a failing test that asserts the exact generated output, see it fail, then make the change. Pin what correct input produces today, so that only the broken cases move.
+- Run `swift test`, and `quality-gate --check all --exclude test --strict --continue-on-failure`; both must pass with no warnings. The Git hooks run them on every commit and push.
+- Document every public declaration, and record every change to generated output in the changelog.
 - All code must be licensed under the MIT license so it can benefit the most people.
-- Ensure you build IgniteSamples using your modified copy of Ignite, and compare it to [the live version](https://github.com/twostraws/IgniteSamples).
-- If you create a new element, please consider adding it to the IgniteSamples repository, so folks can see it more easily.
 
 
 ## Credits
