@@ -156,6 +156,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   host named `css`. They are written as `/css/…`.
 - A protocol-relative address (`//cdn.example.com/…`) is no longer prefixed
   with a subsite's path in a stylesheet link or an image.
+- The command-line tool exits with a non-zero status when a command fails.
+  `ignite build`, `ignite new` and `ignite run` wrote their ❌ message and then
+  exited with 0, so a script or a CI step calling `ignite build` could not tell
+  that the build had failed. Every path that writes ❌ now exits with 1: no
+  `Package.swift`, a compile error, a failure while generating the site, a
+  template address that is not https, a folder that already exists, a failed
+  clone, no directory to serve, no free port, and a missing server script. The
+  messages are unchanged and still go to standard error; successful commands
+  still exit with 0.
 
 ### Changed
 

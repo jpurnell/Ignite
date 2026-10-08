@@ -17,6 +17,8 @@ struct BuildCommand: ParsableCommand {
     )
 
     /// Runs this command. Automatically called by Argument Parser.
+    /// - Throws: `ExitCode.failure` when the site could not be built, so the tool exits
+    /// with a non-zero status and a script that called it can tell.
     func run() throws {
         try run(output: .standard, errors: .standardError)
     }
@@ -26,12 +28,14 @@ struct BuildCommand: ParsableCommand {
     ///   - output: Receives progress, the site's own output, and the final result.
     ///   - errors: Receives the reasons a build could not finish, along with
     ///   whatever the compiler and the site wrote to standard error.
+    /// - Throws: `ExitCode.failure` once the reason has been written to `errors`, when
+    /// there is no package to build, it does not compile, or generating the site fails.
     func run(output: Output, errors: Output) throws {
         // Ensure we're in a valid directory.
         guard FileManager.default.fileExists(atPath: "./Package.swift") else {
             logger.error("No Package.swift in the current directory; nothing to build.")
             errors.line("❌ Can't find Package.swift in the current directory.")
-            return
+            throw ExitCode.failure
         }
 
         output.line("⚙️  Building your site...")
@@ -47,7 +51,7 @@ struct BuildCommand: ParsableCommand {
 
             errors.line("")
             errors.line("❌ Failed to build.")
-            return
+            throw ExitCode.failure
         } else if error.contains("warning:") {
             // Warnings can just be printed; they won't hold
             // up a successful build.
@@ -66,7 +70,7 @@ struct BuildCommand: ParsableCommand {
 
             errors.line("")
             errors.line("❌ Failed to generate HTML.")
-            return
+            throw ExitCode.failure
         } else if runError.contains("warning:") {
             // Warnings can just be printed; they won't hold
             // up a successful build.

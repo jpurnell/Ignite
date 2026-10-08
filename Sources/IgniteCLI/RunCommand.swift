@@ -30,6 +30,8 @@ struct RunCommand: ParsableCommand {
     var preview = false
 
     /// Runs this command. Automatically called by Argument Parser.
+    /// - Throws: `ExitCode.failure` when the server could not be started, so the tool
+    /// exits with a non-zero status and a script that called it can tell.
     func run() throws {
         try run(output: .standard, errors: .standardError)
     }
@@ -38,12 +40,14 @@ struct RunCommand: ParsableCommand {
     /// - Parameters:
     ///   - output: Receives the server's address and how to stop it.
     ///   - errors: Receives the reasons the server could not be started.
+    /// - Throws: `ExitCode.failure` once the reason has been written to `errors`, when
+    /// there is no directory to serve, no free port, or the server script is missing.
     func run(output: Output, errors: Output) throws {
         // Make sure we actually have a folder to serve up.
         guard FileManager.default.fileExists(atPath: "./\(directory)") else {
             logger.error("Nothing to serve: no directory named \(directory, privacy: .public).")
             errors.line("❌ Failed to find directory named '\(directory)'.")
-            return
+            throw ExitCode.failure
         }
 
         // Detect if the site is an subsite
@@ -56,7 +60,7 @@ struct RunCommand: ParsableCommand {
             if currentPort >= 9000 {
                 logger.error("No free port below 9000, starting from \(port, privacy: .public).")
                 errors.line("❌ No available ports found in range 8000-8999.")
-                return
+                throw ExitCode.failure
             }
         }
 
@@ -84,7 +88,7 @@ struct RunCommand: ParsableCommand {
             errors.line("❌ Critical server script missing: \(serverScriptURL.path)")
             errors.line("   This suggests a corrupted installation. Please reinstall with:")
             errors.line("   make clean && make install")
-            return
+            throw ExitCode.failure
         }
 
         logger.info("Serving \(directory, privacy: .public) on port \(currentPort, privacy: .public).")
