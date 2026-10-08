@@ -112,6 +112,7 @@ public struct Item: HTML {
         return Section {
             Text {
                 Button(title)
+                    .componentPart()
                     .class("accordion-button", startsOpen ? "" : "collapsed")
                     .data("bs-toggle", "collapse")
                     .data("bs-target", "#\(itemID)")

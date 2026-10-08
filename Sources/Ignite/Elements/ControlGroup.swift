@@ -93,6 +93,14 @@ public struct ControlGroup: HTML, FormItem {
             items.append(lastItem)
         }
 
+        // A label and help text describe the group as a whole. `<label>` can only be tied
+        // to a single control, and a group may hold several or none, so the group itself
+        // is given the role and pointed at both.
+        let isDescribed = label != nil || helpText != nil
+        let groupID = isDescribed ? PublishingContext.nextElementID("group") : ""
+        let labelID = label == nil ? nil : "\(groupID)-label"
+        let helpID = helpText == nil ? nil : "\(groupID)-help"
+
         let content = Section {
             ForEach(items) { item in
                 switch item {
@@ -113,7 +121,7 @@ public struct ControlGroup: HTML, FormItem {
         .class("input-group")
         .class(size?.rawValue)
 
-        guard label != nil || helpText != nil else {
+        guard isDescribed else {
             return content.markup()
         }
 
@@ -121,13 +129,18 @@ public struct ControlGroup: HTML, FormItem {
             if let label {
                 ControlLabel(label)
                     .class("form-label")
+                    .id(labelID ?? "")
             }
 
             content
+                .customAttribute(name: "role", value: "group")
+                .aria(.labelledBy, labelID)
+                .aria(.describedBy, helpID)
 
             if let helpText {
                 Section(helpText)
                     .class("form-text")
+                    .id(helpID ?? "")
             }
         }
         .markup()
@@ -138,11 +151,10 @@ public struct ControlGroup: HTML, FormItem {
     }
 
     private func renderTextField(_ textField: TextField) -> some InlineElement {
-        var textField = textField.labelStyle(labelStyle)
-        if labelStyle != .floating {
-            textField.label = nil
-        }
-        return textField
+        let textField = textField.labelStyle(labelStyle)
+        // Only a floating label fits inside an input group. Any other label is taken off
+        // the page, and its text stays with the field as its accessible name.
+        return labelStyle == .floating ? textField : textField.withLabelAsAccessibleName()
     }
 
     private func renderButton(_ button: Button) -> any InlineElement {

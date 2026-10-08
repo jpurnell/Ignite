@@ -45,9 +45,15 @@ public struct Image: InlineElement, LazyLoadable {
 
     /// Creates a new `Image` instance from the name of one of the built-in
     /// icons. See https://icons.getbootstrap.com for the list.
+    ///
+    /// An icon with a description is announced by screen readers as an image of that
+    /// name. An icon whose description is empty is decoration and is hidden from them;
+    /// use that for an icon beside text that already says what it means. An icon with
+    /// no description at all is hidden too, and the build warns about it.
     /// - Parameters:
     ///   - systemName: An image name chosen from https://icons.getbootstrap.com
-    ///   - description: An description of your image suitable for screen readers.
+    ///   - description: A description of your image suitable for screen readers, or
+    ///   the empty string for a decorative icon.
     public init(systemName: String, description: String? = nil) {
         self.systemImage = systemName
         self.description = description
@@ -83,6 +89,11 @@ public struct Image: InlineElement, LazyLoadable {
     }
 
     /// Renders a system image into the current publishing context.
+    ///
+    /// An icon is an empty `<i>` drawn by a font, so it has no text of its own. With a
+    /// description it is exposed as an image of that name (`role="img"` and `aria-label`);
+    /// without one it is decoration, and is hidden from assistive technology
+    /// (`aria-hidden="true"`) so that a screen reader does not stop on nothing.
     /// - Parameters:
     ///   - icon: The system image to render.
     ///   - description: The accessibility label to use.
@@ -90,6 +101,18 @@ public struct Image: InlineElement, LazyLoadable {
     private func render(icon: String, description: String) -> Markup {
         var attributes = attributes
         attributes.append(classes: "bi-\(icon)")
+
+        // A name the author set with `aria(.label, …)` is kept in place of the description.
+        if attributes.hasAccessibleName == false, description.isEmpty == false {
+            attributes.aria.append(.init(name: AriaType.label.rawValue, value: description))
+        }
+
+        if attributes.hasAccessibleName {
+            attributes.append(customAttributes: .init(name: "role", value: "img"))
+        } else {
+            attributes.aria.append(.init(name: AriaType.hidden.rawValue, value: "true"))
+        }
+
         return Markup("<i\(attributes)></i>")
     }
 
@@ -135,9 +158,18 @@ public struct Image: InlineElement, LazyLoadable {
     /// Renders this element using publishing context passed in.
     /// - Returns: The HTML for this element.
     public func markup() -> Markup {
-        if description == nil {
+        if description == nil, let systemImage {
+            // `Image(decorative:)` takes a file, so it is no answer for an icon.
+            if attributes.hasAccessibleName == false, attributes.isHiddenFromAssistiveTechnology == false {
+                publishingContext.addWarning("""
+                \(systemImage): this icon has no description, so it is hidden from screen readers. \
+                Give it a description, or an empty one – Image(systemName:description:) with "" – \
+                if it is decorative.
+                """)
+            }
+        } else if description == nil {
             publishingContext.addWarning("""
-            \(path?.relativePath ?? systemImage ?? "Image"): adding images without a description is not recommended. \
+            \(path?.relativePath ?? "Image"): adding images without a description is not recommended. \
             Provide a description or use Image(decorative:) to silence this warning.
             """)
         }

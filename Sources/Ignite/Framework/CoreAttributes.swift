@@ -148,6 +148,20 @@ public struct CoreAttributes: Equatable, Sendable {
         self.classes.formUnion(classes)
     }
 
+    /// Whether these attributes give their element a name for assistive technology:
+    /// an `aria-label`, an `aria-labelledby` or a `title` that is not empty.
+    var hasAccessibleName: Bool {
+        let namingAttributes = [AriaType.label.rawValue, AriaType.labelledBy.rawValue]
+        let isNamedByARIA = aria.contains { namingAttributes.contains($0.name) && $0.value?.isEmpty == false }
+        return isNamedByARIA || customAttributes.contains { $0.name == "title" && $0.value?.isEmpty == false }
+    }
+
+    /// Whether these attributes take their element away from assistive technology
+    /// with `aria-hidden="true"`.
+    var isHiddenFromAssistiveTechnology: Bool {
+        aria.contains { $0.name == AriaType.hidden.rawValue && $0.value == "true" }
+    }
+
     /// Appends multiple CSS classes.
     /// - Parameter classes: The CSS classes to append.
     mutating func append(classes: String?...) {

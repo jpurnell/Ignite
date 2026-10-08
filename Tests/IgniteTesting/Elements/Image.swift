@@ -35,7 +35,7 @@ class ImageTests: IgniteTestSuite {
     func icon(systemName: String, description: String) async throws {
         let element = Image(systemName: systemName, description: description)
         let output = element.markupString()
-        #expect(output == "<i class=\"bi-browser-safari\"></i>")
+        #expect(output == "<i role=\"img\" class=\"bi-browser-safari\" aria-label=\"Safari logo\"></i>")
     }
 
     @Test("Image variants are matched by name without regard to case", arguments: [

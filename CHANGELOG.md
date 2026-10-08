@@ -443,6 +443,50 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   them, so a spacer on `.all` axes matched neither and rendered an empty
   `<div>`. Nothing in Ignite gives a spacer both axes today, so no generated
   site changes.
+- **Icons, icon buttons and unlabelled fields are named for assistive
+  technology, or hidden from it.** Compared against the markup in Bootstrap
+  5.3's and Bootstrap Icons' documentation:
+  - `Image(systemName:description:)` dropped its description: every icon was
+    a bare `<i class="bi-…">`, which a screen reader either skips or stops on
+    with nothing to say. An icon with a description is now an image of that
+    name – `<i role="img" class="bi-star" aria-label="Favourite"></i>` – and
+    an icon with an empty description, or none, is hidden:
+    `<i class="bi-star" aria-hidden="true"></i>`. An icon with no description
+    still adds a build warning, which now says how to mark an icon as
+    decorative (`description: ""`); it used to point at `Image(decorative:)`,
+    which takes a file.
+  - `Label` treats its icon as decoration, since the title beside it says the
+    same thing. `Label(_:systemImage:)` writes `aria-hidden="true"` on the
+    icon, and `Label(_:image:)` writes `alt=""` where it repeated the title
+    (`alt="Home"` next to the text `Home`, which is read out twice).
+  - `Button(_:systemImage:)` writes `aria-hidden="true"` on its icon.
+  - `FeedLink` marks its RSS icon as decorative, so a site that uses it no
+    longer gets a warning about an image it did not write.
+  - The header cells of a `Table` carry `scope="col"`.
+  - The filter field of a `Table(filterTitle:)` has `aria-label` (the filter
+    title) and `aria-controls` (the table's ID). It had only a placeholder.
+  - A `TextField` whose label is not shown keeps the label's text as
+    `aria-label`: in a `Form` with `labelStyle(.hidden)`, in a form placed in
+    a navigation bar, in a `ControlGroup` whose label style is not floating,
+    and so in `SubscribeForm`, whose email field had no name at all.
+  - A `ControlGroup` with a label or help text ties them to the group. The
+    `<label>` pointed at nothing; the group is now `role="group"` with
+    `aria-labelledby` and `aria-describedby`, and the label and help text have
+    IDs (`ig-group-1-label`, `ig-group-1-help`). Taking an ID moves the
+    numbers of the generated IDs after it on the page up by one.
+  - New build warnings, for what cannot be decided for you: a `Button` with
+    nothing to announce – no text, no described image, no `aria-label` – and a
+    `TextField` with no label and no `aria-label`.
+
+  Elements that already had a name are written as before.
+- The buttons inside Bootstrap components are written with the component's
+  class and without `btn`, as Bootstrap writes them: the button of an
+  accordion `Item` (`accordion-button`), the indicators and the previous and
+  next controls of a `Carousel`, and the toggler of a `NavigationBar`
+  (`navbar-toggler`). `btn` is a standalone button's class and its hover
+  rule outranks the component's own: the toggler lost its border, and a
+  collapsed accordion header its background, under the pointer. A `Button`
+  you write yourself still has `btn`, whatever other class you give it.
 
 ### Changed
 

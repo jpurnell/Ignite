@@ -188,7 +188,7 @@ class NonTrappingPathsTests: IgniteTestSuite {
         let itemID = "ig-accordion-item-1"
         #expect(output == """
         <div class="accordion-item"><h2 class="accordion-header">\
-        <button type="button" class="accordion-button collapsed btn" data-bs-toggle="collapse" \
+        <button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" \
         data-bs-target="#\(itemID)" aria-expanded="false" aria-controls="\(itemID)">Shipping</button></h2>\
         <div id="\(itemID)" class="accordion-collapse collapse">\
         <div class="accordion-body"><p>Three days.</p></div></div></div>

@@ -270,6 +270,7 @@ public struct NavigationBar: HTML {
             Span()
                 .class(toggleIcon.rawValue)
         }
+        .componentPart()
         .style(toggleMenuStyle.styles)
         .class("navbar-toggler")
         .data("bs-toggle", "collapse")

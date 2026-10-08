@@ -5,6 +5,8 @@
 // See LICENSE for license information.
 //
 
+import Foundation
+
 /// A form label with support for various styles
 struct ControlLabel: InlineElement {
     /// The content and behavior of this HTML.
@@ -23,6 +25,16 @@ struct ControlLabel: InlineElement {
     /// - Parameter text: The inline element to display within the label.
     init(_ text: any InlineElement) {
         self.text = text
+    }
+
+    /// The label as the text a reader would see, without its markup.
+    var plainText: String {
+        text.markupString().plainTextFromHTML().trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Whether the label has anything in it for a screen reader to announce.
+    var namesItsControl: Bool {
+        text.markupString().namesItsElement
     }
 
     func markup() -> Markup {

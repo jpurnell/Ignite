@@ -97,7 +97,7 @@ class FormTests: IgniteTestSuite {
             """
             <form id="\(element.attributes.id)" class="row g-3">\
             <div class="col-auto">\
-            <input id="field" type="text" placeholder="MyPlaceholder" class="form-control" />\
+            <input id="field" type="text" placeholder="MyPlaceholder" class="form-control" aria-label="MyLabel" />\
             </div>\
             <div class="col-auto d-flex align-items-end">\
             <button type="submit" class="w-100 btn">Submit</button>\

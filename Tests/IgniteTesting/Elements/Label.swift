@@ -20,7 +20,7 @@ class LabelTests: IgniteTestSuite {
 
         #expect(output == """
         <span style="display: inline-flex; align-items: center">\
-        <img src="/images/logo.png" alt="Logo" style="margin-right: 10px" />\
+        <img src="/images/logo.png" alt="" style="margin-right: 10px" />\
         Logo\
         </span>
         """)

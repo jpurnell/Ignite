@@ -170,9 +170,13 @@ public struct Table: HTML {
 
         if let filterTitle {
             tableAttributes.id = PublishingContext.nextElementID("table")
+            // A placeholder is a hint, not a name, and vanishes once something is typed:
+            // the field is named with the same words, and says which table it filters.
+            let escapedTitle = filterTitle.escapedForHTML()
             output += """
             <input class=\"form-control mb-2\" type=\"text\" \
-            placeholder=\"\(filterTitle.escapedForHTML())\" \
+            placeholder=\"\(escapedTitle)\" \
+            aria-label=\"\(escapedTitle)\" aria-controls=\"\(tableAttributes.id.escapedForHTML())\" \
             onkeyup=\"igniteFilterTable(this.value, \(tableAttributes.id.javaScriptStringLiteral()))\">
             """
         }
@@ -185,7 +189,7 @@ public struct Table: HTML {
 
         if let header {
             let headerHTML = header.map {
-                "<th>\($0.markupString())</th>"
+                "<th scope=\"col\">\($0.markupString())</th>"
             }.joined()
 
             output += "<thead><tr>\(headerHTML)</tr></thead>"

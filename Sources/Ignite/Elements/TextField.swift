@@ -149,18 +149,64 @@ public struct TextField: InlineElement, FormItem {
         return copy
     }
 
+    /// The build warning for a field that assistive technology has no name for.
+    static let missingLabelWarning = """
+    A TextField has no label, so a screen reader has nothing to announce for it. \
+    Give it a label – labelStyle(.hidden) keeps one off the page – or name it with .aria(.label, "…").
+    """
+
+    /// Takes the label off the page and keeps its text as the input's accessible name.
+    ///
+    /// A field whose label is not shown still needs a name: a placeholder is a hint that
+    /// disappears as soon as something is typed. The label's text becomes the input's
+    /// `aria-label`, unless the author has already named the field.
+    /// - Returns: A text field with no label element.
+    func withLabelAsAccessibleName() -> Self {
+        var copy = self
+
+        if let label, isNamedByAttributes == false {
+            let name = label.plainText
+            if name.isEmpty == false {
+                copy.input.attributes.aria.append(.init(name: AriaType.label.rawValue, value: name))
+            }
+        }
+
+        copy.label = nil
+        return copy
+    }
+
+    /// Whether the author named this field with `aria-label`, `aria-labelledby` or `title`.
+    private var isNamedByAttributes: Bool {
+        attributes.hasAccessibleName || input.attributes.hasAccessibleName
+    }
+
+    /// Whether this field is kept away from the people a name would be for: hidden from
+    /// assistive technology, or taken out of the tab order, as a spam trap is.
+    private var isOutOfReach: Bool {
+        let isHidden = attributes.isHiddenFromAssistiveTechnology || input.attributes.isHiddenFromAssistiveTechnology
+        let customAttributes = attributes.customAttributes.union(input.attributes.customAttributes)
+        return isHidden || customAttributes.contains { $0.name == "tabindex" && $0.value == "-1" }
+    }
+
     /// Renders the input together with its label, arranged according to the field's label style.
     /// - Returns: The HTML for this element.
     public func markup() -> Markup {
-        switch style {
+        let field = style == .hidden ? withLabelAsAccessibleName() : self
+
+        let isLabelled = field.label?.namesItsControl ?? false
+        if isLabelled == false, field.isNamedByAttributes == false, field.isOutOfReach == false {
+            PublishingContext.warn(Self.missingLabelWarning)
+        }
+
+        return switch field.style {
         case .top:
-            renderTopLabeledTextField()
+            field.renderTopLabeledTextField()
         case .leading:
-            renderFrontLabeledTextField()
+            field.renderFrontLabeledTextField()
         case .floating:
-            renderFloatingTextField()
+            field.renderFloatingTextField()
         case .hidden:
-            renderPlainTextField()
+            field.renderPlainTextField()
         }
     }
 

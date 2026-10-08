@@ -56,6 +56,11 @@ public struct Button: InlineElement, FormItem {
     /// Whether the button is disabled and cannot be interacted with.
     private var isDisabled = false
 
+    /// Whether this is the button of a Bootstrap component – an accordion's header, a
+    /// carousel's control, a navigation bar's toggler – which takes its whole appearance
+    /// from the component's own class and must not be given `btn` as well.
+    private var isComponentPart = false
+
     /// Creates a button with no label. Used in some situations where
     /// exact styling is performed by Bootstrap, e.g. in Carousel.
     public init() {
@@ -139,6 +144,19 @@ public struct Button: InlineElement, FormItem {
         return copy
     }
 
+    /// Marks this as the button of a Bootstrap component, which is styled by the
+    /// component's class alone.
+    ///
+    /// Bootstrap writes these buttons without `btn`: that class brings a standalone
+    /// button's padding, border and hover colors, and its hover rule is more specific
+    /// than the component's own, so it wins.
+    /// - Returns: A button that does not add `btn` or a role or size class.
+    func componentPart() -> Self {
+        var copy = self
+        copy.isComponentPart = true
+        return copy
+    }
+
     /// Returns an array containing the correct CSS classes to style this button
     /// based on the role and size passed in. This is used for buttons, links, and
     /// dropdowns, which is why it's shared.
@@ -183,11 +201,17 @@ public struct Button: InlineElement, FormItem {
         }
     }
 
+    /// The build warning for a button that assistive technology has no name for.
+    static let missingNameWarning = """
+    A Button has no text, so a screen reader has nothing to announce for it. \
+    Give it a title, describe its icon, or name it with .aria(.label, "…").
+    """
+
     /// Renders this element using publishing context passed in.
     /// - Returns: The HTML for this element.
     public func markup() -> Markup {
         var buttonAttributes = attributes
-            .appending(classes: Button.classes(forRole: role, size: size))
+            .appending(classes: isComponentPart ? [] : Button.classes(forRole: role, size: size))
             .appending(aria: Button.aria(forRole: role))
 
         if isDisabled {
@@ -196,9 +220,15 @@ public struct Button: InlineElement, FormItem {
 
         var labelHTML = ""
         if let systemImage, !systemImage.isEmpty {
-            labelHTML = "<i class=\"bi bi-\(systemImage.escapedForHTML())\"></i> "
+            // The icon sits beside the title, which names the button, so it is decoration.
+            labelHTML = "<i class=\"bi bi-\(systemImage.escapedForHTML())\" aria-hidden=\"true\"></i> "
         }
         labelHTML += label.markupString()
+
+        if buttonAttributes.hasAccessibleName == false, labelHTML.namesItsElement == false {
+            PublishingContext.warn(Self.missingNameWarning)
+        }
+
         return Markup("<button type=\"\(type.htmlName)\"\(buttonAttributes)>\(labelHTML)</button>")
     }
 }

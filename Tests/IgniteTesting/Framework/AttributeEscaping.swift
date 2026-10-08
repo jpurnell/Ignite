@@ -181,9 +181,9 @@ struct AttributeEscapingTests {
     @Test("A button's icon name cannot end its class attribute", .publishingContext())
     func buttonIconIsEscaped() {
         #expect(Button("Go", systemImage: "arrow-right").markupString()
-            == #"<button type="button" class="btn"><i class="bi bi-arrow-right"></i> Go</button>"#)
+            == #"<button type="button" class="btn"><i class="bi bi-arrow-right" aria-hidden="true"></i> Go</button>"#)
         #expect(Button("Go", systemImage: #"x"><script>"#).markupString()
-            == #"<button type="button" class="btn"><i class="bi bi-x&quot;&gt;&lt;script&gt;"></i> Go</button>"#)
+            == #"<button type="button" class="btn"><i class="bi bi-x&quot;&gt;&lt;script&gt;" aria-hidden="true"></i> Go</button>"#)
     }
 
     @Test("A tag name is reduced to the characters a name can hold", .publishingContext())

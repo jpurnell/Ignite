@@ -21,7 +21,7 @@ public struct FeedLink: HTML {
             ForEach(sortedFormats) { format in
                 Text {
                     if builtInIconsEnabled != .none {
-                        Image(systemName: "rss-fill")
+                        Image(systemName: "rss-fill", description: "")
                             .foregroundStyle("#f26522")
                             .margin(.trailing, .px(10))
                     }

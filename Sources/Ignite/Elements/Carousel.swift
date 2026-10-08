@@ -129,6 +129,7 @@ public struct Carousel: HTML {
             Section {
                 ForEach(0 ..< items.count) { index in
                     Button()
+                        .componentPart()
                         .data("bs-target", "#\(carouselID)")
                         .data("bs-slide-to", String(index))
                         .class(index == 0 ? "active" : nil)
@@ -154,6 +155,7 @@ public struct Carousel: HTML {
                 Span("Previous")
                     .class("visually-hidden")
             }
+            .componentPart()
             .class("carousel-control-prev")
             .data("bs-target", "#\(carouselID)")
             .data("bs-slide", "prev")
@@ -166,6 +168,7 @@ public struct Carousel: HTML {
                 Span("Next")
                     .class("visually-hidden")
             }
+            .componentPart()
             .class("carousel-control-next")
             .data("bs-target", "#\(carouselID)")
             .data("bs-slide", "next")

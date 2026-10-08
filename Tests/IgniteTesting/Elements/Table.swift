@@ -30,7 +30,7 @@ class TableTests: IgniteTestSuite {
             "Value"
         }
         let output = element.markupString()
-        #expect(output.contains("<thead><tr><th>Name</th><th>Value</th></tr></thead>"))
+        #expect(output.contains("<thead><tr><th scope=\"col\">Name</th><th scope=\"col\">Value</th></tr></thead>"))
     }
 
     @Test("Table with rows renders content inside tbody", .publishingContext())
@@ -117,7 +117,7 @@ class TableTests: IgniteTestSuite {
             "Name"
         }
         let output = element.markupString()
-        #expect(output.contains("<thead><tr><th>Name</th></tr></thead>"))
+        #expect(output.contains("<thead><tr><th scope=\"col\">Name</th></tr></thead>"))
         #expect(output.contains("Alice"))
     }
 

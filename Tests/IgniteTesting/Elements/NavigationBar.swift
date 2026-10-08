@@ -210,7 +210,7 @@ class NavigationBarTests: IgniteTestSuite {
 
         #expect(navContents.contains("""
         <button type="button" \
-        class="navbar-toggler btn" \
+        class="navbar-toggler" \
         data-bs-toggle="collapse" \
         data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" \
         aria-expanded="false" aria-label="Toggle navigation">\
