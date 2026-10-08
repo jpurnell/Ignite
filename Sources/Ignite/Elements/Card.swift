@@ -174,15 +174,15 @@ public struct Card: HTML {
     /// to show, so it carries `card` alone and takes Bootstrap's standard card background
     /// and border, rather than a class such as `text-bg-default` that does not exist.
     var cardClasses: String? {
-        guard Role.standardRoles.contains(role) else { return nil }
+        guard let color = role.themeColorName else { return nil }
 
         return switch style {
         case .default:
             nil
         case .solid:
-            "text-bg-\(role.rawValue)"
+            "text-bg-\(color)"
         case .bordered:
-            "border-\(role.rawValue)"
+            "border-\(color)"
         }
     }
 

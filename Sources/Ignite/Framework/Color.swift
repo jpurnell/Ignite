@@ -567,46 +567,61 @@ public struct Color: CustomStringConvertible, Equatable, Hashable, Sendable {
         self.init(red: intWhite, green: intWhite, blue: intWhite, opacity: intOpacity%)
     }
 
-    /// Creates a new color from a HTML hex color string. Must start with #, e.g.
+    /// Creates a new color from a CSS hex color string. Must start with #, e.g.
     /// `#FFE700`.
-    /// - Parameter hex: The hex string to parse. May contain 6 or 8
-    ///  characters, excluding the leading #.
+    ///
+    /// The four forms CSS defines are read the way CSS reads them:
+    /// - `#RRGGBB`: red, green and blue, each from `00` to `FF`.
+    /// - `#RRGGBBAA`: the same, followed by alpha on the same `00`–`FF` scale, so `80` is
+    ///   about half opaque and `FF` is fully opaque. Alpha is not a percentage: `#FF800032`
+    ///   has an alpha of `0x32`, which is 50 out of 255 – about 20% – not 50%.
+    /// - `#RGB` and `#RGBA`: shorthand in which each digit stands for itself doubled, so
+    ///   `#F80` is `#FF8800` and `#F808` is `#FF880088`.
+    ///
+    /// Opacity is stored as a whole percentage, so alpha is rounded to the nearest percent.
+    /// A string in any other form – no leading `#`, a different number of digits, or a
+    /// character that is not a hex digit – gives opaque black.
+    /// - Parameter hex: The hex string to parse: `#` followed by 3, 4, 6 or 8 hex digits.
     public init(hex: String) {
-        let red, green, blue, alpha: Int
-
-        if hex.hasPrefix("#") {
-            let start = hex.index(hex.startIndex, offsetBy: 1)
-            let hexColor = String(hex[start...])
-
-            if hexColor.count == 8 {
-                let scanner = Scanner(string: hexColor)
-                var hexNumber: UInt64 = 0
-
-                if scanner.scanHexInt64(&hexNumber) {
-                    red = Int((hexNumber & 0xff000000) >> 24)
-                    green = Int((hexNumber & 0x00ff0000) >> 16)
-                    blue = Int((hexNumber & 0x0000ff00) >> 8)
-                    alpha = Int(hexNumber & 0x000000ff)
-
-                    self.init(red: red, green: green, blue: blue, opacity: alpha%)
-                    return
-                }
-            } else if hexColor.count == 6 {
-                let scanner = Scanner(string: hexColor)
-                var hexNumber: UInt64 = 0
-
-                if scanner.scanHexInt64(&hexNumber) {
-                    red = Int((hexNumber & 0xff0000) >> 16)
-                    green = Int((hexNumber & 0x00ff00) >> 8)
-                    blue = Int(hexNumber & 0x0000ff)
-
-                    self.init(red: red, green: green, blue: blue)
-                    return
-                }
-            }
+        guard let channels = Self.hexChannels(hex) else {
+            self.init(white: 0)
+            return
         }
 
-        self.init(white: 0)
+        // Alpha is a fraction of 255. Half is added before dividing so that the result is
+        // rounded to the nearest percent rather than towards zero.
+        let opacity = (channels.alpha * 100 + 127) / 255
+        self.init(red: channels.red, green: channels.green, blue: channels.blue, opacity: opacity%)
+    }
+
+    /// Reads the channels of a CSS hex color, each as a value from 0 through 255.
+    /// - Parameter hex: The string to parse.
+    /// - Returns: The channels, with an alpha of 255 when the string has none, or `nil`
+    /// if the string is not `#` followed by 3, 4, 6 or 8 hex digits.
+    private static func hexChannels(_ hex: String) -> (red: Int, green: Int, blue: Int, alpha: Int)? {
+        guard hex.hasPrefix("#") else { return nil }
+
+        let digits = hex.unicodeScalars.dropFirst().map { scalar in
+            scalar.properties.isASCIIHexDigit ? Int(String(scalar), radix: 16) : nil
+        }
+
+        let values = digits.compactMap(\.self)
+        guard values.count == digits.count else { return nil }
+
+        let channels: [Int]
+
+        switch values.count {
+        case 3, 4:
+            // Each shorthand digit stands for itself twice: `F` is `FF`, which is 15 × 17.
+            channels = values.map { $0 * 17 }
+        case 6, 8:
+            channels = stride(from: 0, to: values.count, by: 2).map { values[$0] * 16 + values[$0 + 1] }
+        default:
+            return nil
+        }
+
+        let alpha = channels.count == 4 ? channels[3] : 255
+        return (channels[0], channels[1], channels[2], alpha)
     }
 
     /// Multiplies the opacity of this color by the given amount.

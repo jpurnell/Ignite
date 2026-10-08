@@ -37,4 +37,25 @@ class ImageTests: IgniteTestSuite {
         let output = element.markupString()
         #expect(output == "<i class=\"bi-browser-safari\"></i>")
     }
+
+    @Test("Image variants are matched by name without regard to case", arguments: [
+        ("photo@2x", "photo", Image.Variant.light),
+        ("photo~light", "Photo", .light),
+        ("PHOTO~DARK", "photo", .dark),
+        ("photo@2x~dark", "photo", .dark),
+        // `I` and `i` are the letters a Turkish locale does not consider the same;
+        // a file name must match the same way wherever the site is built.
+        ("ICON@2x", "icon", .light),
+        ("icon~dark", "ICON", .dark)
+    ])
+    func variantMatching(filename: String, imageName: String, expected: Image.Variant) {
+        #expect(Image.variant(ofFileNamed: filename, forImageNamed: imageName) == expected)
+    }
+
+    @Test("Files that are not variants of an image are not matched", arguments: [
+        ("photo", "photo"), ("other@2x", "photo"), ("photograph@2x", "photo"), ("ıcon@2x", "icon"), ("İcon@2x", "icon")
+    ])
+    func nonVariants(filename: String, imageName: String) {
+        #expect(Image.variant(ofFileNamed: filename, forImageNamed: imageName) == nil)
+    }
 }

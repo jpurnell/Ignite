@@ -49,7 +49,7 @@ public struct Spacer: HTML, NavigationItem {
     /// - Returns: A new `Spacer` with the specified axis.
     func axis(_ axis: Axis) -> Self {
         var copy = self
-        copy.axis = .horizontal
+        copy.axis = axis
         return copy
     }
 

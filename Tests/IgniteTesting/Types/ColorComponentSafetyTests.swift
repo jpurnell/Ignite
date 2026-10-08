@@ -137,11 +137,14 @@ struct ColorComponentSafetyTests {
         #expect(Color(red: 300, green: -5, blue: 128, opacity: 150%).description == "rgb(255 0 128 / 100%)")
     }
 
-    @Test("Hex colors are unchanged, except that an alpha above 100 is no longer above 100%")
+    // This test pinned the alpha byte read as a percentage – `32` as 50% and `64` as 100% –
+    // which was the behavior then, clamped. CSS defines alpha as a fraction of 255, so
+    // `32` is 20% and `64` is 39%; only `FF` is 100%. The expectations follow CSS now.
+    @Test("An eight-digit hex color's alpha is a fraction of 255 and never above 100%")
     func hexColors() {
         #expect(Color(hex: "#FF8000").description == "rgb(255 128 0 / 100%)")
-        #expect(Color(hex: "#FF800032").description == "rgb(255 128 0 / 50%)")
-        #expect(Color(hex: "#FF800064").description == "rgb(255 128 0 / 100%)")
+        #expect(Color(hex: "#FF800032").description == "rgb(255 128 0 / 20%)")
+        #expect(Color(hex: "#FF800064").description == "rgb(255 128 0 / 39%)")
         #expect(Color(hex: "#FF8000FF").description == "rgb(255 128 0 / 100%)")
     }
 }

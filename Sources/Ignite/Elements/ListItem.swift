@@ -26,8 +26,10 @@ public struct ListItem: HTML, ListableElement {
     /// - Returns: A new `ListItem` instance with the updated role.
     /// - Note: The role modifier only has an effect when the parent list's style is `.group`.
     public func role(_ role: Role) -> Self {
+        guard let color = role.themeColorName else { return self }
+
         var copy = self
-        copy.attributes.append(classes: "list-group-item-\(role.rawValue)")
+        copy.attributes.append(classes: "list-group-item-\(color)")
         return copy
     }
 

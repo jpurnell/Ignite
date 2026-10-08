@@ -29,40 +29,32 @@ public struct Badge: InlineElement {
         var outputClasses = ["badge"]
         outputClasses.append(contentsOf: attributes.classes)
 
+        // Bootstrap defines these classes for its eight theme colors only; a badge whose
+        // role is not one of them has no color classes to carry.
+        let color = role.themeColorName
+
         switch style {
         case .default:
-            switch role {
-            case .default:
-                break
-
-            default:
-                outputClasses.append("text-bg-\(role.rawValue)")
+            if let color {
+                outputClasses.append("text-bg-\(color)")
             }
 
         case .subtle:
-            switch role {
-            case .default:
-                outputClasses.append("bg-subtle")
-                outputClasses.append("text-emphasis")
-
-            default:
-                outputClasses.append("bg-\(role.rawValue)-subtle")
-                outputClasses.append("text-\(role.rawValue)-emphasis")
+            if let color {
+                outputClasses.append("bg-\(color)-subtle")
+                outputClasses.append("text-\(color)-emphasis")
             }
 
         case .subtleBordered:
-            switch role {
-            case .default:
-                outputClasses.append("bg-subtle")
-                outputClasses.append("border")
-                outputClasses.append("border-subtle")
-                outputClasses.append("text-emphasis")
+            if let color {
+                outputClasses.append("bg-\(color)-subtle")
+            }
 
-            default:
-                outputClasses.append("bg-\(role.rawValue)-subtle")
-                outputClasses.append("border")
-                outputClasses.append("border-\(role.rawValue)-subtle")
-                outputClasses.append("text-\(role.rawValue)-emphasis")
+            outputClasses.append("border")
+
+            if let color {
+                outputClasses.append("border-\(color)-subtle")
+                outputClasses.append("text-\(color)-emphasis")
             }
         }
 

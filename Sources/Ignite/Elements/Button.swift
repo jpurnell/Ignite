@@ -158,21 +158,24 @@ public struct Button: InlineElement, FormItem {
             break
         }
 
-        switch role {
-        case .default:
-            break
-        default:
-            outputClasses.append("btn-\(role.rawValue)")
+        // Bootstrap colors a button with `btn-<theme color>` and draws a close button
+        // with `btn-close`. No other role has a button class.
+        if let color = role.themeColorName {
+            outputClasses.append("btn-\(color)")
+        } else if role == .close {
+            outputClasses.append("btn-close")
         }
 
         return outputClasses
     }
 
     /// Adds the correct ARIA attribute for Close buttons, if needed.
+    ///
+    /// A close button shows only an icon, so `aria-label` is what a screen reader announces.
     static func aria(forRole role: Role) -> Attribute? {
         switch role {
         case .close:
-            Attribute(name: "label", value: "Close")
+            Attribute(name: AriaType.label.rawValue, value: "Close")
         default:
             nil
         }

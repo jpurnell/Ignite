@@ -49,4 +49,13 @@ class SpacerTests: IgniteTestSuite {
         let output = element.markupString()
         #expect(output.contains("width: 30px"))
     }
+
+    @Test("Spacer uses the axis it is given", .publishingContext())
+    func axisIsHonoured() async throws {
+        #expect(Spacer().axis(.vertical).markupString() == "<div class=\"mt-auto\"></div>")
+        #expect(Spacer().axis(.horizontal).markupString() == "<div class=\"ms-auto\"></div>")
+        #expect(Spacer().axis(.horizontal).axis(.vertical).markupString() == "<div class=\"mt-auto\"></div>")
+        #expect(Spacer(size: 30).axis(.horizontal).axis(.vertical).markupString()
+            == "<div style=\"height: 30px\"></div>")
+    }
 }

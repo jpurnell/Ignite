@@ -52,3 +52,16 @@ public enum Role: String, CaseIterable, Sendable {
         .primary, .secondary, .success, .danger, .warning, .info, .light, .dark
     ]
 }
+
+extension Role {
+    /// The name of the Bootstrap theme color this role stands for, or `nil` if it is not one.
+    ///
+    /// Bootstrap defines the colored variant of each component – `alert-*`, `text-bg-*`,
+    /// `list-group-item-*`, `btn-*`, `link-*`, `border-*` – for its eight theme colors and
+    /// for nothing else. `.default`, `.none` and `.close` are not colors, so a class built
+    /// from their names, such as `alert-none`, would be one that no stylesheet defines.
+    /// Every element that turns a role into a colored class asks here first.
+    var themeColorName: String? {
+        Role.standardRoles.contains(self) ? rawValue : nil
+    }
+}

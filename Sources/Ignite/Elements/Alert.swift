@@ -25,12 +25,8 @@ public struct Alert: HTML {
         var outputClasses = ["alert"]
         outputClasses.append(contentsOf: attributes.classes)
 
-        switch role {
-        case .default:
-            break
-
-        default:
-            outputClasses.append("alert-\(role.rawValue)")
+        if let color = role.themeColorName {
+            outputClasses.append("alert-\(color)")
         }
 
         return outputClasses

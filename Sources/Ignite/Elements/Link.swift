@@ -71,10 +71,12 @@ public struct Link: InlineElement, NavigationItem, DropdownItem {
             outputClasses.append("link-underline-opacity-\(hoverDecoration)-hover")
             fallthrough
         default:
+            // `link-plain` is Ignite's own class, defined in ignite-core.css; the colored
+            // link classes are Bootstrap's and exist for its theme colors only.
             if role == .none {
                 outputClasses.append("link-plain")
-            } else if role != .default {
-                outputClasses.append("link-\(role.rawValue)")
+            } else if let color = role.themeColorName {
+                outputClasses.append("link-\(color)")
             }
         }
 

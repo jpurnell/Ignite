@@ -30,6 +30,44 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **`Color(hex:)` reads the alpha of an eight-digit color as CSS defines it,
+  and this changes the opacity of every `#RRGGBBAA` color.** The last two
+  digits are alpha on the same `00`–`FF` scale as the color channels; they
+  were read as a percentage. `#FF800032` is now 20% opaque (0x32 is 50 of
+  255), where it was 50%; `#FF800080` is 50%, where it was 100%; only `FF` is
+  100%. If you chose the last two digits to get a particular percentage, use
+  `Color(hex: "#FF8000").opacity(0.5)` or work out the CSS value (percentage
+  × 255 ÷ 100, in hex). Six-digit colors are unchanged. Also:
+  - The shorthand forms `#RGB` and `#RGBA` are read, each digit standing for
+    itself doubled (`#F80` is `#FF8800`). They used to give black.
+  - A string containing anything but hex digits after the `#` gives opaque
+    black, as documented. `#12G45678` used to be read as far as the `G`.
+  - `Color.opacity` is a whole percentage, so alpha is rounded to the nearest
+    percent: `#FF800032` is written `rgb(255 128 0 / 20%)`, not 19.6%.
+- A close button has an accessible name. `Button().role(.close)`, and the
+  close buttons Ignite adds to modals, carried `label="Close"`, which is not
+  an HTML attribute; it is now `aria-label="Close"`.
+- A role produces only classes that Bootstrap defines. The colored variants of
+  alerts, badges, list items, buttons and links exist for Bootstrap's eight
+  theme colors, and a role that is not one of them – `.default`, `.none`,
+  `.close` – no longer produces a class named after itself. Elements with one
+  of the eight theme-color roles are unchanged. Removed from the output:
+  - `Alert`: `alert-none`, `alert-close`.
+  - `Badge`: `text-bg-none`, `text-bg-close`, the `-none-` and `-close-`
+    forms of the subtle styles, and, for a badge with no role in a subtle
+    style, `bg-subtle`, `text-emphasis` and `border-subtle`. A subtle bordered
+    badge keeps `border`.
+  - `ListItem`: `list-group-item-default`, `list-group-item-none`,
+    `list-group-item-close`.
+  - `Button`, `Dropdown` and a `Link` styled as a button: `btn-none`.
+    `btn-close` is a Bootstrap class and is kept.
+  - `Link`: `link-close`. `link-plain`, which `.none` produces, is Ignite's
+    own class and is kept.
+- `Image` finds the `@2x`, `~dark` and `~light` variants of a file the same
+  way on every machine. File names were compared using the build machine's
+  locale, under which – in Turkish, for one – `ICON@2x.png` is not a variant
+  of `icon.png`. Under an English locale the same variants are found as
+  before.
 - `ignite build` and `ignite new` decide whether a command worked by its exit
   status. They searched what it wrote to standard error for `error:` or
   `fatal` instead, so a failure that printed neither was reported as
@@ -243,9 +281,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `Double` initializers do: red, green and blue to 0 through 255, opacity to 0%
   through 100%. Out-of-range values used to pass straight into the CSS, as in
   `rgb(300 -5 128 / 150%)`, and an opacity that was not a number stopped the
-  build. In-range colors are unchanged. One visible consequence: an eight-digit
-  hex color whose last two digits are above `64` is written with 100% opacity
-  where it was written with up to 255%, which browsers already drew as 100%.
+  build. In-range colors are unchanged. (Eight-digit hex colors, which this
+  clamp first touched, are now read as CSS defines them – see the entry on
+  `Color(hex:)` above.)
 - A site deployed in a subdirectory (`https://example.com/subsite`) now finds
   all of its own files. Images and stylesheets were already given the
   subdirectory's path; these were not, and so were requested from the root of

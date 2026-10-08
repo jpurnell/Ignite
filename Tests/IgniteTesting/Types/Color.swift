@@ -79,7 +79,43 @@ struct ColorTypeTests {
         #expect(color.red == 255)
         #expect(color.green == 128)
         #expect(color.blue == 0)
-        #expect(color.opacity == 50)
+        // This expected 50, which read the alpha byte 0x32 (50 in decimal) as 50%. CSS
+        // defines the last two digits as alpha on the same 00–FF scale as the color
+        // channels, so 0x32 is 50/255 – 19.6%, which is 20 to the nearest percent.
+        #expect(color.opacity == 20)
+    }
+
+    @Test("Hex alpha is a fraction of 255, as CSS defines it", .publishingContext(), arguments: [
+        ("#FF8000FF", 100), ("#FF800000", 0), ("#FF800080", 50), ("#FF800001", 0), ("#FF8000FE", 100),
+        ("#FF8000BF", 75), ("#ff8000bf", 75)
+    ])
+    func hexAlphaIsOutOf255(hex: String, expectedOpacity: Int) async throws {
+        let color = Color(hex: hex)
+        #expect(color.red == 255)
+        #expect(color.green == 128)
+        #expect(color.blue == 0)
+        #expect(color.opacity == expectedOpacity)
+    }
+
+    @Test("Hex init with 3-char string doubles each digit", .publishingContext())
+    func hexInitThreeChar() async throws {
+        #expect(Color(hex: "#F80") == Color(hex: "#FF8800"))
+        #expect(Color(hex: "#F80").description == "rgb(255 136 0 / 100%)")
+    }
+
+    @Test("Hex init with 4-char string doubles each digit, alpha included", .publishingContext())
+    func hexInitFourChar() async throws {
+        #expect(Color(hex: "#F808") == Color(hex: "#FF880088"))
+        // 0x88 is 136, and 136/255 is 53.3%.
+        #expect(Color(hex: "#F808").description == "rgb(255 136 0 / 53%)")
+        #expect(Color(hex: "#F80F").description == "rgb(255 136 0 / 100%)")
+        #expect(Color(hex: "#F800").description == "rgb(255 136 0 / 0%)")
+    }
+
+    @Test("Hex init with characters that are not hex digits falls back to opaque black", .publishingContext(),
+          arguments: ["#12G45678", "#+F8000", "#-F80", "#0xFF80", "#FF 800", "#", "#F8", "#F8000", "#FF8000F"])
+    func hexInitNonHexDigits(hex: String) async throws {
+        #expect(Color(hex: hex).description == "rgb(0 0 0 / 100%)")
     }
 
     @Test("Hex init with invalid string falls back to opaque black", .publishingContext())

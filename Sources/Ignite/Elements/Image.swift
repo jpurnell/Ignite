@@ -162,15 +162,47 @@ public struct Image: InlineElement, LazyLoadable {
     }
 }
 
-private extension Image {
+extension Image {
+    /// The appearance a variant of an image is for.
+    enum Variant: Sendable {
+        /// A variant for light appearance, or for any appearance at a higher pixel density.
+        case light
+
+        /// A variant for dark appearance.
+        case dark
+    }
+
+    /// Decides whether a file is a variant of an image, and of which appearance.
+    ///
+    /// Names are compared without regard to case, and without regard to the locale of
+    /// the machine running the build: the comparison a locale would make differs from
+    /// place to place – under a Turkish locale `ICON` and `icon` are different names –
+    /// so the same site would find different variants depending on where it was built.
+    /// - Parameters:
+    ///   - filename: The file's name without its extension, such as `photo@2x~dark`.
+    ///   - imageName: The image's name without modifiers or extension, such as `photo`.
+    /// - Returns: The variant the file provides, or `nil` if it is not a variant of the image.
+    static func variant(ofFileNamed filename: String, forImageNamed imageName: String) -> Variant? {
+        let baseFilename = filename.split(separator: "~").first?.split(separator: "@").first ?? ""
+        guard baseFilename.compare(imageName, options: .caseInsensitive) == .orderedSame else { return nil }
+
+        if filename.range(of: "~dark", options: .caseInsensitive) != nil {
+            return .dark
+        } else if filename.range(of: "~light", options: .caseInsensitive) != nil || isDensityVariant(filename) {
+            return .light
+        }
+
+        return nil
+    }
+
     /// Checks if a filename contains a pixel density descriptor (e.g., "@2x").
-    func isDensityVariant(_ name: String) -> Bool {
+    private static func isDensityVariant(_ name: String) -> Bool {
         let densityPattern = /.*@\d+x.*/
         return name.contains(densityPattern)
     }
 
     /// Extracts the pixel density descriptor from a filename (e.g., "2x" from "image@2x.jpg").
-    func getDensityDescriptor(_ name: String) -> String? {
+    private func getDensityDescriptor(_ name: String) -> String? {
         let densityPattern = /@(\d+)x/
         guard let match = name.firstMatch(of: densityPattern) else { return nil }
         return "\(match.output.1)x"
@@ -180,7 +212,7 @@ private extension Image {
     /// supporting combined modifiers like `@2x~dark`.
     /// - Parameter path: The path to the original image file
     /// - Returns: A tuple containing arrays of URLs for light and dark variants
-    func findVariants(for path: String) -> (light: [URL], dark: [URL]) {
+    private func findVariants(for path: String) -> (light: [URL], dark: [URL]) {
         let assetURL = assetURL(for: path)
         let assetPath = assetURL.deletingLastPathComponent()
         let pathExtension = assetURL.pathExtension
@@ -202,24 +234,25 @@ private extension Image {
 
         return files.reduce(into: ([URL](), [URL]())) { result, file in
             let filename = file.deletingPathExtension().lastPathComponent
-            let baseFilename = filename.split(separator: "~").first?.split(separator: "@").first ?? ""
-            guard baseFilename.localizedCaseInsensitiveCompare(baseImageName) == .orderedSame else { return }
 
-            if filename.localizedCaseInsensitiveContains("~dark") {
+            switch Self.variant(ofFileNamed: filename, forImageNamed: String(baseImageName)) {
+            case .dark:
                 result.1.append(file)
-            } else if filename.localizedCaseInsensitiveContains("~light") || isDensityVariant(filename) {
+            case .light:
                 result.0.append(file)
+            case nil:
+                break
             }
         }
     }
 
     /// Resolves a local image path to its file location inside the site's assets directory.
-    func assetURL(for path: String) -> URL {
+    private func assetURL(for path: String) -> URL {
         publishingContext.assetsDirectory.appending(path: normalizeAssetPath(path))
     }
 
     /// Converts a source or published asset path to a path relative to the site's assets directory.
-    func normalizeAssetPath(_ path: String) -> String {
+    private func normalizeAssetPath(_ path: String) -> String {
         var assetPath = stripSitePrefix(from: path)
 
         if assetPath.hasPrefix("/") {
@@ -230,7 +263,7 @@ private extension Image {
     }
 
     /// Removes a site's subpath from a published asset path so it can be mapped back to Assets/.
-    func stripSitePrefix(from path: String) -> String {
+    private func stripSitePrefix(from path: String) -> String {
         let sitePath = normalizedSitePath()
         guard !sitePath.isEmpty else {
             return path
@@ -249,7 +282,7 @@ private extension Image {
     }
 
     /// Normalizes the site path by removing the trailing slash while preserving the leading slash.
-    func normalizedSitePath() -> String {
+    private func normalizedSitePath() -> String {
         let sitePath = publishingContext.site.url.path
         guard sitePath != "/" else {
             return ""
@@ -266,7 +299,7 @@ private extension Image {
     /// e.g., `"/images/hero@2x.jpg 2x"` or `"images/hero@2x.jpg 2x"` when `useRelativePaths` is enabled.
     /// - Parameter variants: An array of image variant URLs
     /// - Returns: An HTML attribute containing the srcset value, or nil if no valid variants exist
-    func generateSourceSet(_ variants: [URL]) -> Attribute? {
+    private func generateSourceSet(_ variants: [URL]) -> Attribute? {
         let assetsDirectory = publishingContext.assetsDirectory.resolvingSymlinksInPath()
 
         let sources = variants.compactMap { variant in
