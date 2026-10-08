@@ -522,11 +522,15 @@ public struct Color: CustomStringConvertible, Equatable, Hashable, Sendable {
     ///   - blue: How much blue to use, in the range of 0 through 255.
     ///   - opacity: How opaque the color should be, in the range of 0
     ///   (transparent) through to 100% (opaque). Defaults to 100%,
+    /// - Note: Values outside those ranges are clamped to them, as they are by the
+    /// initializers that take `Double` components: red, green and blue to 0 through 255,
+    /// and opacity – rounded to a whole percentage – to 0% through 100%. An opacity that
+    /// is not a number is treated as 0%.
     public init(red: Int, green: Int, blue: Int, opacity: Percentage = 100%) {
-        self.red = red
-        self.green = green
-        self.blue = blue
-        self.opacity = opacity.roundedValue
+        self.red = min(max(red, 0), 255)
+        self.green = min(max(green, 0), 255)
+        self.blue = min(max(blue, 0), 255)
+        self.opacity = Self.component(opacity.value.rounded(), upperBound: 100)
     }
 
     /// Creates a new color from the specified RGB components, optionally also

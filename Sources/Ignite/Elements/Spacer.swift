@@ -56,22 +56,21 @@ public struct Spacer: HTML, NavigationItem {
     /// Renders this element using publishing context passed in.
     /// - Returns: The HTML for this element.
     public func markup() -> Markup {
-        if spacingAmount == .automatic {
+        switch spacingAmount {
+        case .automatic:
             Section {}
                 .class(axis == .horizontal ? "ms-auto" : nil)
                 .class(axis == .vertical ? "mt-auto" : nil)
                 .markup()
-        } else if case let .semantic(spacingAmount) = spacingAmount {
+        case .semantic(let spacingAmount):
             Section {}
                 .margin(axis == .vertical ? .top : .leading, spacingAmount)
                 .markup()
-        } else if case let .exact(int) = spacingAmount {
+        case .exact(let int):
             Section {}
                 .frame(width: axis == .horizontal ? .px(int) : nil)
                 .frame(height: axis == .vertical ? .px(int) : nil)
                 .markup()
-        } else {
-            fatalError("Unknown spacing amount: \(String(describing: spacingAmount))")
         }
     }
 }

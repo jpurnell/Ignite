@@ -42,6 +42,10 @@ extension Layout {
     }
 
     /// Resolves this layout to document head and body content.
+    ///
+    /// A layout written with `@DocumentBuilder` always produces a document. One that
+    /// returns something else is still rendered: a `Body` or block HTML as before, and
+    /// anything else – an inline element, say – as the whole content of a body.
     func documentContent() -> (head: Head, body: Body) {
         let body = body
 
@@ -54,7 +58,9 @@ extension Layout {
                 AnyHTML(html)
             })
         } else {
-            fatalError("Layouts must return Document, Body, or HTML content.")
+            (Head(), Body {
+                body.markupString()
+            })
         }
     }
 }

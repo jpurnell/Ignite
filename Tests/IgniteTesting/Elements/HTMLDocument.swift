@@ -79,7 +79,8 @@ class HTMLDocumentTests: IgniteTestSuite {
             site: site,
             allContent: publishingContext.allContent,
             pageMetadata: publishingContext.environment.page,
-            pageContent: publishingContext.site.homePage)
+            pageContent: publishingContext.site.homePage,
+            context: publishingContext)
 
         /// Initialize Document with the TestSite language set above.
         let sut = publishingContext.withEnvironment(values) {

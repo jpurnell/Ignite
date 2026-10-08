@@ -158,7 +158,8 @@ struct PublishingContextIsolationTests {
                 description: "",
                 url: URL(static: "https://example.com").appending(path: title.lowercased())
             ),
-            pageContent: context.site.homePage
+            pageContent: context.site.homePage,
+            context: context
         )
     }
 }

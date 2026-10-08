@@ -108,7 +108,8 @@ public struct EnvironmentValues: @unchecked Sendable {
         allContent: [Article],
         pageMetadata: PageMetadata,
         pageContent: any LayoutContent,
-        httpError: HTTPError = EmptyHTTPError()
+        httpError: HTTPError = EmptyHTTPError(),
+        context: PublishingContext
     ) {
         self.decode = DecodeAction(sourceDirectory: sourceDirectory)
         self.articles = ArticleLoader(content: allContent)
@@ -128,7 +129,7 @@ public struct EnvironmentValues: @unchecked Sendable {
             description: site.description,
             url: site.url)
 
-        self.pageContent = PublishingContext.shared.withEnvironment(self) {
+        self.pageContent = context.withEnvironment(self) {
             pageContent.body
         }
     }
@@ -139,7 +140,8 @@ public struct EnvironmentValues: @unchecked Sendable {
         allContent: [Article],
         pageMetadata: PageMetadata,
         pageContent: any LayoutContent,
-        article: Article
+        article: Article,
+        context: PublishingContext
     ) {
         self.decode = DecodeAction(sourceDirectory: sourceDirectory)
         self.articles = ArticleLoader(content: allContent)
@@ -160,7 +162,7 @@ public struct EnvironmentValues: @unchecked Sendable {
 
         self.article = article
 
-        self.pageContent = PublishingContext.shared.withEnvironment(self) {
+        self.pageContent = context.withEnvironment(self) {
             pageContent.body
         }
     }
@@ -171,7 +173,8 @@ public struct EnvironmentValues: @unchecked Sendable {
         allContent: [Article],
         pageMetadata: PageMetadata,
         pageContent: any LayoutContent,
-        category: any Category
+        category: any Category,
+        context: PublishingContext
     ) {
         self.decode = DecodeAction(sourceDirectory: sourceDirectory)
         self.articles = ArticleLoader(content: allContent)
@@ -192,7 +195,7 @@ public struct EnvironmentValues: @unchecked Sendable {
 
         self.category = category
 
-        self.pageContent = PublishingContext.shared.withEnvironment(self) {
+        self.pageContent = context.withEnvironment(self) {
             pageContent.body
         }
     }

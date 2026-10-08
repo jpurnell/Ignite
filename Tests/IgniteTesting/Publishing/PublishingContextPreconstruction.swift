@@ -101,7 +101,7 @@ struct PublishingContextPreconstructionTests {
             try? FileManager.default.removeItem(at: temporaryCSS)
         }
 
-        context.animationManager.write(to: temporaryCSS)
+        context.animationManager.write(to: temporaryCSS, reportingTo: context)
 
         let generatedCSS = try String(contentsOf: temporaryCSS, encoding: .utf8)
         #expect(generatedCSS.contains("@keyframes"))

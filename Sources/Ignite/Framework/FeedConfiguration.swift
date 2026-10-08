@@ -58,19 +58,32 @@ public struct FeedConfiguration: Sendable {
         /// The height of the feed image. Must be 400 points of lower.
         var height: Int
 
+        /// The largest width RSS 2.0 allows a channel image to declare.
+        static let maximumWidth = 144
+
+        /// The largest height RSS 2.0 allows a channel image to declare.
+        static let maximumHeight = 400
+
         /// Creates a new `FeedImage` from the configuration options provided.
+        ///
+        /// RSS allows a feed image to be at most 144 pixels wide and 400 high. A larger
+        /// size is declared in the feed at those limits, and a warning is added to the
+        /// build so you can resize the image to match.
         /// - Parameters:
         ///   - url: The URL to your feed image.
         ///   - width: The width of the feed image. Must be 144 points or lower.
         ///   - height: The height of the feed image. Must be 400 points of lower.
         public init(url: String, width: Int, height: Int) {
-            if width > 144 || height > 400 {
-                fatalError("FeedConfiguration images must be no greater than 144 pixels wide by 400 pixels high.")
-            }
-
             self.url = url
-            self.width = width
-            self.height = height
+            self.width = min(width, Self.maximumWidth)
+            self.height = min(height, Self.maximumHeight)
+
+            if self.width != width || self.height != height {
+                PublishingContext.warn("""
+                The feed image \(url) was given as \(width) by \(height) pixels, but RSS allows at most \
+                \(Self.maximumWidth) by \(Self.maximumHeight). It is declared as \(self.width) by \(self.height).
+                """)
+            }
         }
     }
 

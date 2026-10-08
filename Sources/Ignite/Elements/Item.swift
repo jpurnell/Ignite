@@ -90,13 +90,23 @@ public struct Item: HTML {
         return copy
     }
 
-    /// Renders this element using publishing context passed in.
+    /// Renders this item as Bootstrap's `accordion-item`.
+    ///
+    /// An `Accordion` tells each of its items which accordion it belongs to before
+    /// rendering it. An item rendered anywhere else has no accordion: it still renders,
+    /// and opens and closes on its own, but Bootstrap's accordion styling comes from the
+    /// enclosing accordion, so a warning is added to the build.
     /// - Returns: The HTML for this element.
     public func markup() -> Markup {
-        guard let parentID, let parentOpenMode else {
-            fatalError("Accordion sections must not be rendered without a parentID and parentOpenMode in place.")
+        if parentID == nil {
+            PublishingContext.warn("""
+            An accordion Item was rendered outside an Accordion. \
+            It opens and closes on its own, without accordion styling.
+            """)
         }
 
+        let parentID = parentID ?? "accordion"
+        let parentOpenMode = parentOpenMode ?? .all
         let itemID = "\(parentID)-item\(UUID().uuidString.truncatedHash)"
 
         return Section {

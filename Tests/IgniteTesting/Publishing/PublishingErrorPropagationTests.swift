@@ -28,7 +28,12 @@ class PublishingErrorPropagationTests: IgniteTestSuite {
         }
 
         let resourceValues = try url.resourceValues(forKeys: Set(Article.resourceKeys))
-        return try Article(from: url, resourceValues: resourceValues, deployPath: "posts/example")
+        return try Article(
+            from: url,
+            resourceValues: resourceValues,
+            deployPath: "posts/example",
+            context: publishingContext
+        )
     }
 
     @Test("Copying a resource Ignite does not ship throws missingSiteResource", .publishingContext())

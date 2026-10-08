@@ -49,7 +49,8 @@ extension PublishingContext {
             site: site,
             allContent: allContent,
             pageMetadata: pageMetadata,
-            pageContent: page)
+            pageContent: page,
+            context: self)
 
         let outputString = withEnvironment(values) {
             page.layout.documentMarkupString()
@@ -78,7 +79,8 @@ extension PublishingContext {
             allContent: allContent,
             pageMetadata: pageMetadata,
             pageContent: layout,
-            article: article)
+            article: article,
+            context: self)
 
         let outputString = withEnvironment(values) {
             layout.layout.documentMarkupString()
@@ -124,7 +126,8 @@ extension PublishingContext {
                 allContent: allContent,
                 pageMetadata: metadata,
                 pageContent: tagLayout,
-                category: category)
+                category: category,
+                context: self)
 
             let outputString = withEnvironment(values) {
                 tagLayout.layout.documentMarkupString()
@@ -150,7 +153,8 @@ extension PublishingContext {
                 allContent: allContent,
                 pageMetadata: metadata,
                 pageContent: site.errorPage,
-                httpError: error
+                httpError: error,
+                context: self
             )
 
             let outputString = withEnvironment(values) {

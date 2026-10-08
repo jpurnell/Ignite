@@ -129,6 +129,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
     ends in a slash; it had two.
   - A robot name or path containing a line break can no longer start a new
     line of the file.
+- `Color(red:green:blue:opacity:)` with `Int` components clamps them, as the
+  `Double` initializers do: red, green and blue to 0 through 255, opacity to 0%
+  through 100%. Out-of-range values used to pass straight into the CSS, as in
+  `rgb(300 -5 128 / 150%)`, and an opacity that was not a number stopped the
+  build. In-range colors are unchanged. One visible consequence: an eight-digit
+  hex color whose last two digits are above `64` is written with 100% opacity
+  where it was written with up to 255%, which browsers already drew as 100%.
 
 ### Changed
 
@@ -136,17 +143,40 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   tool. Nothing read either; a stale index unit had been hiding that from the
   unreachable-code check.
 
-- Most force unwraps, `fatalError` calls and other traps were removed from the
+- Force unwraps, `fatalError` calls and other traps were removed from the
   library, the command-line tool and the tests, in favour of thrown errors,
-  build warnings and safe fallbacks. Four public paths still trap:
-  `KeyframeProxy.callAsFunction` outside 0%–100%, `Text(placeholderLength:)`
-  below 1, `Article.type`, and `NavigationItem.markup()`.
+  build warnings and safe fallbacks. No `fatalError` or `precondition` is left
+  in the library. The last of them now behave as follows:
+  - `KeyframeProxy.callAsFunction` – and so every keyframe – moves a position
+    outside 0%–100% to the nearer end and adds a build warning. A position that
+    is not a number goes to 0%.
+  - `Text(placeholderLength:)` asked for fewer than 1 word produces empty text
+    and adds a build warning.
+  - `Article.type` is the empty string for content with no type: a Markdown
+    file directly in Content, and the empty article a non-article page reads
+    from `@Environment(\.article)`.
+  - A type of your own that conforms to `NavigationItem` or `FormItem` renders
+    its `body`, like any other element you write.
+  - `FeedConfiguration.FeedImage` given a size beyond the RSS limit of 144 by
+    400 pixels declares the image at the limit and adds a build warning.
+  - An accordion `Item` rendered outside an `Accordion` renders on its own and
+    adds a build warning.
+  - A `Layout` whose `body` is not a document, a `Body` or block HTML – only
+    possible by bypassing `@DocumentBuilder` – is rendered as the content of a
+    body.
+  - `Percentage.roundedValue` returns 0 for a percentage that is not a number,
+    and the nearest `Int` for one beyond `Int`'s range.
+  - Rendering with no publish in progress – calling `markup()` from a test or a
+    script of your own – no longer stops the process. Elements that read site
+    settings see a placeholder site with every default, and anything they
+    record is discarded, since there is no build to report it to. A warning goes
+    to the unified log. Inside `Site.publish()` nothing changes.
 - The publish pipeline throws `PublishingError` where it used to stop the
   process with `fatalError`.
 - Out-of-range `Color` components given as `Double` are clamped: red, green,
   blue and white to 0 through 255, opacity to 0% through 100%. A component
   above 1 used to pass through as a value above 255. The initializer that
-  takes `Int` components does not clamp.
+  takes `Int` components clamps to the same ranges.
 - Vimeo, YouTube and Spotify embed IDs are percent-encoded into the path of the
   embed address, so an ID cannot change the host or the query.
 - The command-line tool runs commands as argument arrays, directly, rather than

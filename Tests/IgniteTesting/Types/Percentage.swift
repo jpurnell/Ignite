@@ -35,6 +35,20 @@ struct PercentageTests {
         #expect(percent.roundedValue == expected)
     }
 
+    @Test("Rounding a negative or halfway percentage goes away from zero, as before", arguments: zip(
+        [-25.4, -25.5, -0.4, 0.5, 99.5],
+        [-25, -26, 0, 1, 100]))
+    func roundedValueOfNegativesAndHalves(value: Double, expected: Int) {
+        #expect(Percentage(value).roundedValue == expected)
+    }
+
+    @Test("Rounding a percentage that no integer can hold does not stop the process", arguments: zip(
+        [Double.nan, Double.infinity, -Double.infinity, 1e300, -1e300],
+        [0, Int.max, Int.min, Int.max, Int.min]))
+    func roundedValueOfUnrepresentable(value: Double, expected: Int) {
+        #expect(Percentage(value).roundedValue == expected)
+    }
+
     @Test("Subtracting percentages", .publishingContext(), arguments: [
         (Percentage(25.4), Percentage(22.4), 3.0),
         (Percentage(16.335), Percentage(49), -32.665),

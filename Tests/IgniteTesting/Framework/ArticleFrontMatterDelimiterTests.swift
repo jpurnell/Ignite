@@ -27,7 +27,12 @@ class ArticleFrontMatterDelimiterTests: IgniteTestSuite {
         }
 
         let resourceValues = try url.resourceValues(forKeys: Set(Article.resourceKeys))
-        return try Article(from: url, resourceValues: resourceValues, deployPath: "posts/example")
+        return try Article(
+            from: url,
+            resourceValues: resourceValues,
+            deployPath: "posts/example",
+            context: publishingContext
+        )
     }
 
     @Test("Front matter followed by a body is parsed as before", .publishingContext())

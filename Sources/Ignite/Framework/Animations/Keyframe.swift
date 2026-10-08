@@ -11,20 +11,37 @@ public typealias Keyframe = Animation.Frame
 public extension Animation {
     /// A single keyframe in an animation sequence.
     struct Frame: Hashable, Sendable {
-        /// The position in the animation timeline, between `0%` and `100%`
+        /// The position in the animation timeline, always between `0%` and `100%`
         let position: Percentage
 
         /// The property transformations to apply at this position
         var styles: OrderedSet<InlineStyle>
 
-        /// Creates a frame with a single predefined animation
+        /// Creates a frame with a single predefined animation.
+        ///
+        /// CSS has no keyframe before `0%` or after `100%`. A position outside that range
+        /// is a mistake in the site rather than a reason to stop building it, so it is
+        /// moved to the nearer end – a position that is not a number goes to `0%` – and a
+        /// warning is added to the build.
         init(_ position: Percentage, data: OrderedSet<InlineStyle> = []) {
-            precondition(
-                position >= 0% && position <= 100%,
-                "Animation frame position must be between 0% and 100%, got \(position)%"
-            )
-            self.position = position
+            let clamped = Self.clamped(position)
+            if clamped != position {
+                PublishingContext.warn("""
+                A keyframe was placed at \(position.value)%, outside 0% through 100%. \
+                It was moved to \(clamped.value)%.
+                """)
+            }
+
+            self.position = clamped
             self.styles = data
+        }
+
+        /// The nearest position to `position` that lies between `0%` and `100%`.
+        private static func clamped(_ position: Percentage) -> Percentage {
+            // NaN fails every comparison, so it leaves through the first guard.
+            guard position.value > 0 else { return 0% }
+            guard position.value < 100 else { return 100% }
+            return position
         }
     }
 

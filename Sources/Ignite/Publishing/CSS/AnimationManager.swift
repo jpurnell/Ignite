@@ -49,8 +49,10 @@ final class AnimationManager {
     }
 
     /// Generates and writes CSS for all registered animations to a file.
-    /// - Parameter file: The URL where the CSS file should be written
-    func write(to file: URL) {
+    /// - Parameters:
+    ///   - file: The URL where the CSS file should be written
+    ///   - context: The publish to report a failed write to
+    func write(to file: URL, reportingTo context: PublishingContext) {
         let cssBlocks = animations.map { components in
             let generator = AnimationClassGenerator(trigger: components.trigger, animation: components.animation)
             return generator.build()
@@ -63,7 +65,7 @@ final class AnimationManager {
         } catch {
             let reason = error.localizedDescription
             logger.error("Failed to append animations to \(file.path, privacy: .public): \(reason, privacy: .public)")
-            PublishingContext.shared.addError(.failedToWriteFile("css/ignite-core.min.css"))
+            context.addError(.failedToWriteFile("css/ignite-core.min.css"))
         }
     }
 }

@@ -38,9 +38,14 @@ public struct Percentage: Hashable, Sendable {
         self.value = Value(value)
     }
 
-    /// Returns the percentage as a whole number, rounded to the nearest integer
+    /// Returns the percentage as a whole number, rounded to the nearest integer.
+    ///
+    /// A percentage that is not a number rounds to 0, and one too large or too small to
+    /// be a `RoundedValue` – infinity included – rounds to the largest or smallest there is.
     public var roundedValue: RoundedValue {
-        RoundedValue(round(value))
+        let rounded = value.rounded()
+        guard !rounded.isNaN else { return 0 }
+        return RoundedValue(exactly: rounded) ?? (rounded > 0 ? .max : .min)
     }
 
     /// Returns the percentage value with a specified number of decimal places

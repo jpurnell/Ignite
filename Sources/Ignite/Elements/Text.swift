@@ -63,8 +63,8 @@ public struct Text: HTML, DropdownItem {
     /// placeholder text is generated identically each time. Two placeholders
     /// of the same length read the same; to vary them, pass your own generator
     /// to ``init(placeholderLength:using:)``.
-    /// - Parameter placeholderLength: How many placeholder words to generate.
-    /// - Precondition: `placeholderLength` must be at least 1.
+    /// - Parameter placeholderLength: How many placeholder words to generate. Asking for
+    /// fewer than 1 produces empty text and adds a warning to the build.
     public init(placeholderLength: Int) {
         var generator = PlaceholderWordGenerator(seed: UInt64(truncatingIfNeeded: placeholderLength))
         self.init(placeholderLength: placeholderLength, using: &generator)
@@ -75,12 +75,19 @@ public struct Text: HTML, DropdownItem {
     ///
     /// The same generator in the same state always produces the same text.
     /// - Parameters:
-    ///   - placeholderLength: How many placeholder words to generate.
+    ///   - placeholderLength: How many placeholder words to generate. Asking for
+    ///   fewer than 1 produces empty text and adds a warning to the build.
     ///   - generator: The source of randomness used to pick the words and
     ///   punctuation that follow the opening "Lorem ipsum" phrase.
-    /// - Precondition: `placeholderLength` must be at least 1.
     public init(placeholderLength: Int, using generator: inout some RandomNumberGenerator) {
-        precondition(placeholderLength > 0, "placeholderLength must be at least 1.")
+        guard placeholderLength > 0 else {
+            PublishingContext.warn("""
+            Text(placeholderLength:) was asked for \(placeholderLength) words; it needs at least 1. \
+            The text was left empty.
+            """)
+            self.content = ""
+            return
+        }
 
         let baseWords = ["Lorem", "ipsum", "dolor", "sit", "amet,", "consectetur", "adipiscing", "elit."]
 

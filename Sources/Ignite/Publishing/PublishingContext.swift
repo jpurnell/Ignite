@@ -30,17 +30,41 @@ final class PublishingContext: @unchecked Sendable {
         currentContext
     }
 
-    /// The publishing context currently bound to this task.
+    /// The publishing context currently bound to this task, or a detached one when no
+    /// publish is in progress.
+    ///
+    /// Elements reach their context through this as they render, and rendering can be
+    /// asked for with no publish running – `markup()` is public. That used to stop the
+    /// process. It now gets a context of its own for a ``DetachedSite``: the element
+    /// renders with a site's default settings, and anything it records – warnings,
+    /// errors, CSS registrations – goes into a context nobody reads, because there is no
+    /// build to report to. Each read outside a publish gets a new one, so no state is
+    /// shared between unrelated callers or across threads.
+    ///
+    /// Code that runs as part of a publish should be handed its context rather than
+    /// reading this, so that a missing context shows up where it happens.
     static var shared: PublishingContext {
-        guard let currentContext else {
-            fatalError("""
-            PublishingContext.shared accessed outside a publishing context. \
-            Wrap rendering in PublishingContext.withCurrent(_:operation:) or \
-            PublishingContext.withInitialized(...).
-            """)
+        if let currentContext {
+            return currentContext
         }
 
-        return currentContext
+        logger.warning("""
+        Rendering outside a publish: no publishing context is current, so site settings are defaults \
+        and warnings are not reported. Render inside Site.publish() to use your site.
+        """)
+        return PublishingContext(detachedFrom: DetachedSite())
+    }
+
+    /// Adds a warning to the publish in progress, and to the unified log whether or not
+    /// there is one.
+    ///
+    /// Use this for an authoring mistake found where no context is at hand – in an
+    /// initializer, for example. With no publish in progress the log is the only place
+    /// the warning can go.
+    /// - Parameter message: The warning to record.
+    static func warn(_ message: String) {
+        logger.warning("\(message, privacy: .public)")
+        currentContext?.addWarning(message)
     }
 
     /// Runs a synchronous operation with the given context available through task-local lookup.
@@ -179,6 +203,25 @@ final class PublishingContext: @unchecked Sendable {
         sourceDirectory = sourceBuildDirectories.source
         buildDirectory = sourceBuildDirectories.build.appending(path: buildDirectoryPath)
 
+        assetsDirectory = sourceDirectory.appending(path: "Assets")
+        fontsDirectory = sourceDirectory.appending(path: "Fonts")
+        contentDirectory = sourceDirectory.appending(path: "Content")
+        includesDirectory = sourceDirectory.appending(path: "Includes")
+    }
+
+    /// Creates a context that belongs to no publish, for rendering outside one.
+    ///
+    /// Nothing is read from or written to disk to make it. Its directories are a location
+    /// in the temporary directory that is never created, so an element that looks for a
+    /// file there finds none; and it writes its results nowhere.
+    /// - Parameter site: The site whose settings elements will read.
+    private init(detachedFrom site: any Site) {
+        self.site = site
+        self.logOptions = .silent
+        self.output = PublishingOutput { _ in }
+
+        sourceDirectory = FileManager.default.temporaryDirectory.appending(path: "ignite-detached")
+        buildDirectory = sourceDirectory.appending(path: "Build")
         assetsDirectory = sourceDirectory.appending(path: "Assets")
         fontsDirectory = sourceDirectory.appending(path: "Fonts")
         contentDirectory = sourceDirectory.appending(path: "Content")
@@ -449,7 +492,8 @@ final class PublishingContext: @unchecked Sendable {
             let article = try Article(
                 from: deploy.url,
                 resourceValues: deploy.resourceValues,
-                deployPath: deploy.path
+                deployPath: deploy.path,
+                context: self
             )
             if article.isPublished {
                 allContent.append(article)

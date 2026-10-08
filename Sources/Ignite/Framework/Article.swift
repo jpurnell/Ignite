@@ -65,15 +65,12 @@ public struct Article: Sendable {
     /// The type of this content. This is automatically provided by Ignite based
     /// on the first subdirectory of your Markdown file. For example, a file placed
     /// in Content/stories will have the type "stories".
+    ///
+    /// Content with no type has the empty string as its type: a Markdown file placed
+    /// directly in Content, outside any subdirectory, and the empty article that
+    /// `@Environment(\.article)` gives a page that is not an article.
     public var type: String {
-        if let type = metadata["type"] {
-            type as? String ?? ""
-        } else {
-            fatalError("""
-            Unable to retrieve type for article '\(title)'. \
-            Please file a bug report on the Ignite project.
-            """)
-        }
+        metadata["type"] as? String ?? ""
     }
 
     /// An array of the tags used to describe this content.
@@ -136,10 +133,13 @@ public struct Article: Sendable {
     ///   last modification date for this content.
     ///   - deployPath: optional String used as site url path for the content.
     ///   If nil (default), use `metadata["path"]` or path to content root.
+    ///   - context: The publish this article is being loaded for. Its site chooses the
+    ///   Markdown renderer, and a date that cannot be read is reported to it.
     init(
         from url: URL,
         resourceValues: URLResourceValues,
-        deployPath: String
+        deployPath: String,
+        context: PublishingContext
     ) throws {
         var markdown: String
 
@@ -151,7 +151,7 @@ public struct Article: Sendable {
 
         let processed = processMetadata(for: markdown)
 
-        let site = PublishingContext.shared.site
+        let site = context.site
         // Use whatever Markdown renderer was configured for the site we're publishing.
         let parser = try site.articleRenderer.init(markdown: processed, removeTitleFromBody: true)
 
@@ -159,7 +159,7 @@ public struct Article: Sendable {
         self.description = parser.description.strippingTags()
 
         resolveTitle(parser.title, url: url)
-        populateMetadataDates(urlValues: resourceValues)
+        populateMetadataDates(urlValues: resourceValues, context: context)
 
         self.path = metadata["path"] as? String ?? deployPath
 
@@ -222,15 +222,15 @@ public struct Article: Sendable {
     /// Populates the article's metadata with publication and modification dates.
     /// Uses filesystem dates when metadata dates are unavailable or invalid.
     /// - Parameter urlValues: Resource values containing filesystem creation and modification dates
-    private mutating func populateMetadataDates(urlValues: URLResourceValues) {
-        if let date = parseMetadataDate(for: "date") {
+    private mutating func populateMetadataDates(urlValues: URLResourceValues, context: PublishingContext) {
+        if let date = parseMetadataDate(for: "date", context: context) {
             metadata["date"] = date
         } else {
             metadata["date"] = urlValues.creationDate ?? Date.now
             hasAutomaticDate = true
         }
 
-        if let lastModified = parseMetadataDate(for: "modified", "lastModified") {
+        if let lastModified = parseMetadataDate(for: "modified", "lastModified", context: context) {
             metadata["lastModified"] = lastModified
         } else {
             metadata["lastModified"] = urlValues.contentModificationDate ?? Date.now
@@ -263,16 +263,17 @@ public struct Article: Sendable {
     }
 
     /// Extracts and parses a date from metadata using specified identifiers.
-    /// - Parameter ids: The metadata keys to check for date values
+    /// - Parameters:
+    ///   - ids: The metadata keys to check for date values
+    ///   - context: The publish to report a date in an unsupported format to
     /// - Returns: A parsed `Date` if found, `nil` otherwise
-    /// - Throws: An error if date parsing fails
-    private func parseMetadataDate(for ids: String...) -> Date? {
+    private func parseMetadataDate(for ids: String..., context: PublishingContext) -> Date? {
         for id in ids {
             guard let dateString = metadata[id] as? String else { continue }
             if let date = Self.frontMatterDate(from: dateString) {
                 return date
             } else {
-                PublishingContext.shared.addError(.badContentDateFormat)
+                context.addError(.badContentDateFormat)
                 continue
             }
         }

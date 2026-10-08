@@ -27,7 +27,12 @@ class ArticleFrontMatterSafetyTests: IgniteTestSuite {
         }
 
         let resourceValues = try url.resourceValues(forKeys: Set(Article.resourceKeys))
-        return try Article(from: url, resourceValues: resourceValues, deployPath: "posts/example")
+        return try Article(
+            from: url,
+            resourceValues: resourceValues,
+            deployPath: "posts/example",
+            context: publishingContext
+        )
     }
 
     @Test("Front matter with LF line endings is parsed", .publishingContext())

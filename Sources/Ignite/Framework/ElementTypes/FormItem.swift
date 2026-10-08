@@ -11,23 +11,21 @@ public protocol FormItem: BodyElement {}
 
 public extension FormItem where Self: HTML {
     /// Generates the complete `HTML` string representation of the element.
+    ///
+    /// Ignite's own conforming types render themselves. A type of your own that conforms
+    /// renders its `body`, as any other element you write does.
     func markup() -> Markup {
-        if isPrimitive {
-            body.markup()
-        } else {
-            fatalError("This protocol is not meant to be conformed to directly.")
-        }
+        body.markup()
     }
 }
 
 public extension FormItem where Self: InlineElement {
     /// Generates the complete `HTML` string representation of the element.
+    ///
+    /// Ignite's own conforming types render themselves. A type of your own that conforms
+    /// renders its `body`, as any other element you write does.
     func markup() -> Markup {
-        if isPrimitive {
-            body.markup()
-        } else {
-            fatalError("This protocol is not meant to be conformed to directly.")
-        }
+        body.markup()
     }
 }
 
