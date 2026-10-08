@@ -9,10 +9,11 @@
 /// of your page. For dedicated code blocks that sit on their own line, use
 /// `CodeBlock` instead.
 ///
-/// - Important: If your code contains angle brackets (`<`...`>`), such as Swift generics,
-/// the prettifier will interpret these as HTML tags and break the code's formatting.
-/// To avoid this issue, either set your site’s `shouldPrettify` property to `false`,
-/// or replace `<` and `>` with their character entity references, `&lt;` and `&gt;` respectively.
+/// - Note: Write the code as it is. Angle brackets and ampersands – `Array<Int>`,
+/// `a && b` – are escaped for you, so they are shown rather than read as HTML. A
+/// character reference such as `&lt;` is left as it is and shows the character it names,
+/// because earlier versions asked for angle brackets to be written that way; to show a
+/// reference itself, write its ampersand as `&amp;`.
 public struct Code: InlineElement {
     /// The content and behavior of this HTML.
     public var body: some InlineElement { self }
@@ -35,6 +36,6 @@ public struct Code: InlineElement {
     /// Renders this element using publishing context passed in.
     /// - Returns: The HTML for this element.
     public func markup() -> Markup {
-        Markup("<code\(attributes)>\(content)</code>")
+        Markup("<code\(attributes)>\(content.escapedForHTMLKeepingCharacterReferences())</code>")
     }
 }

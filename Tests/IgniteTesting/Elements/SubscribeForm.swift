@@ -47,7 +47,9 @@ class SubscribeFormTests: IgniteTestSuite {
     func mailchimpForm() async throws {
         let element = SubscribeForm(.mailchimp(username: "user", uValue: "abc", listID: "123"))
         let output = element.markupString()
-        #expect(output.contains("action=\"https://user.us1.list-manage.com/subscribe/post?u=abc&id=123\""))
+        // The address's `&` is written as `&amp;`, as it must be inside an attribute; a
+        // browser reads it back as `&`. It was written bare, which HTML does not allow.
+        #expect(output.contains("action=\"https://user.us1.list-manage.com/subscribe/post?u=abc&amp;id=123\""))
         #expect(output.contains("id=\"mc-embedded-subscribe-form\""))
         #expect(output.contains("name=\"mc-embedded-subscribe-form\""))
     }

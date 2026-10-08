@@ -22,9 +22,12 @@ class HintTests: IgniteTestSuite {
 
         let output = element.markupString()
 
+        // The hint's HTML is the value of an attribute, so its angle brackets are written
+        // as character references. Bootstrap reads the attribute back as `<em>hello</em>`
+        // and, because of `data-bs-html`, shows it as HTML – exactly as before.
         #expect(output == """
         <p><span data-bs-toggle="tooltip" \
-        data-bs-title="Why, <em>hello</em> there!" \
+        data-bs-title="Why, &lt;em&gt;hello&lt;/em&gt; there!" \
         data-bs-html="true">Hover over me\
         </span>\
         </p>

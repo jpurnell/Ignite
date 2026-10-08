@@ -39,7 +39,7 @@ public struct Video: InlineElement, LazyLoadable {
         for filename in files {
             if let fileType = videoType(for: filename) {
                 let source = publishingContext.assetPath(filename)
-                output += "<source src=\"\(source)\" type=\"\(fileType.rawValue)\" />"
+                output += "<source src=\"\(source.escapedForHTML())\" type=\"\(fileType.rawValue)\" />"
             }
         }
 

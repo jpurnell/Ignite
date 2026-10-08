@@ -138,6 +138,8 @@ public struct Table: HTML {
     }
 
     /// Updates the caption for this table to a different string.
+    ///
+    /// The label is plain text: `&`, `<` and `>` in it are shown as those characters.
     /// - Parameter label: The new accessibility label.
     /// - Returns: A new `Table` instance with the updated accessibility label.
     public func accessibilityLabel(_ label: String) -> Self {
@@ -170,7 +172,7 @@ public struct Table: HTML {
             tableAttributes.id = "table-\(UUID().uuidString.truncatedHash)"
             output += """
             <input class=\"form-control mb-2\" type=\"text\" \
-            placeholder=\"\(filterTitle)\" \
+            placeholder=\"\(filterTitle.escapedForHTML())\" \
             onkeyup=\"igniteFilterTable(this.value, \(tableAttributes.id.javaScriptStringLiteral()))\">
             """
         }
@@ -178,7 +180,7 @@ public struct Table: HTML {
         output += "<table\(tableAttributes)>"
 
         if let caption {
-            output += "<caption>\(caption)</caption>"
+            output += "<caption>\(caption.escapedForHTML())</caption>"
         }
 
         if let header {

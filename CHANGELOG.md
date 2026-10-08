@@ -22,9 +22,90 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   quoted JavaScript string literal that no input can end early. Use it in your
   own `Action` types wherever a Swift string becomes a JavaScript string. It is
   safe in an event attribute and inside a `<script>` element.
+- `String.escapedForHTML()`, which writes `&`, `<`, `>` and `"` as character
+  references so that a string is shown as text. Use it on any string you did
+  not write yourself before using it as an element.
+- `Text(verbatim:)`, which shows a string exactly as written. `Text("…")` is
+  unchanged and still treats its string as HTML.
 
 ### Fixed
 
+- **Attribute values are escaped.** Every attribute Ignite writes – `id`,
+  `class`, `style`, `data-*`, `aria-*`, `href`, `src`, `alt`, `title`, the
+  `content` of a `MetaTag`, anything set with `customAttribute` or `attribute`,
+  and event attributes – has `&`, `"`, `<` and `>` in its value written as
+  `&amp;`, `&quot;`, `&lt;` and `&gt;`. Values were written between double
+  quotes as they were given, so a `"` in an article title, an image
+  description or a tag ended the attribute, and whatever followed was read as
+  more attributes or as markup. Values containing none of those four
+  characters are written exactly as before. What changes:
+  - An address with `&` in its query is written with `&amp;`:
+    `href="/search?a=1&amp;b=2"`. Browsers read that back as `&`. Written bare,
+    `&copy=2` could be read as `©=2`. This applies to `Link`, `Image`, `Script`,
+    `MetaLink`, `Embed` (including the Spotify address Ignite builds) and the
+    Mailchimp address of `SubscribeForm`.
+  - `hint(markdown:)` and `hint(html:)` write the hint's HTML into
+    `data-bs-title` with its angle brackets escaped
+    (`Why, &lt;em&gt;hello&lt;/em&gt; there!`). Bootstrap reads the attribute
+    back as the same HTML and shows it as before.
+  - Hand-written JavaScript in an event attribute – `CustomAction`, or an
+    `Action` of your own – has `&`, `<` and `>` escaped as well as `"`. The
+    browser turns them back before running the code, so `if (a && b < c)` runs
+    as written. If you had written character references into such code
+    yourself to get it through the attribute, write the plain characters
+    instead. JavaScript that Ignite generates contains none of the four
+    characters and is unchanged.
+  - A value that already contains a character reference is text like any
+    other: `customAttribute(name: "title", value: "&quot;")` now shows `&quot;`
+    rather than `"`.
+  - The names of attributes and of `Tag` elements lose any character that
+    cannot be part of a name – whitespace, quotes, `<`, `>`, `/`, `=` – since a
+    name cannot be escaped. Valid names are unchanged.
+  - The attributes Ignite writes by hand are escaped the same way: the `src` of
+    `Audio` and `Video` sources, the dark-mode `srcset` of `Image`, the `src`
+    and `title` of `Embed`, the placeholder of a `Table` filter, the icon class
+    of `Button(_:systemImage:)`, and the `<base target>` of
+    `Head.defaultLinkTarget`.
+- **Plain text is escaped where Ignite knows it is plain text.** A string used
+  as an element (`Text("…")`, a string in a builder) is HTML and is still
+  written as given; these are not elements, and were written unescaped:
+  - `Title`, and the site's `titleSuffix`: `<title>Tom &amp; Jerry</title>`. A
+    title containing `</title>` used to end the element.
+  - Text in Markdown. `Tom & Jerry` is written `Tom &amp; Jerry`, and a tag
+    written as text – `&lt;script&gt;` or `\<script\>` – stays text; it used to
+    be written into the page as a real tag. HTML written in Markdown is still
+    passed through.
+  - The address of a Markdown link, the address and description of a Markdown
+    image, and the language of a fenced code block, which are attributes.
+  - Code: `Code`, `CodeBlock`, and Markdown code spans and code blocks escape
+    `<`, `>` and `&`, so `Array<Int>` is shown rather than read as a tag.
+    Character references already in the code (`&lt;`, `&#60;`) are left alone
+    and still show the character they name, so code written the way earlier
+    versions asked renders as it did.
+  - An article's `title` and `description` taken from its first heading and
+    paragraph are plain text: tags are removed, as before, and `&amp;`, `&lt;`,
+    `&gt;`, `&quot;`, `&apos;` and numeric references are decoded. A heading
+    `# Tom & Jerry` gives the title `Tom & Jerry` in the page title, the
+    metadata and the feeds alike.
+  - `Link(article)` shows the article's title as text, `ArticlePreview` shows
+    its description as text, and `Article.tagLinks()` shows each tag as text.
+    A title, description or tag containing HTML is now shown as written
+    instead of being rendered.
+  - `Table.accessibilityLabel(_:)`: the caption is text.
+- JSON-LD from `StructuredData` can no longer close its own `<script>`
+  element. Every `<` in the JSON is written as `<`, which means the same
+  character inside a JSON string, so a name or description containing
+  `</script>` stays data. JSON-LD with no `<` in it is unchanged.
+- The RSS feed, the Atom feed and the sitemap stay well-formed whatever an
+  article contains:
+  - Addresses are XML-escaped (`&` as `&amp;`): item links and GUIDs, the
+    site's address, the feed's own address, the feed image, and sitemap `loc`
+    entries.
+  - A description, author, tag or article body containing `]]>` no longer ends
+    its CDATA section; the section is split around it and reads back as the
+    same text.
+  - The RSS feed writes an article's own author when the site has no author.
+    It only wrote `dc:creator` when the site had one.
 - A site with only a dark theme has its theme written into `:root`. The
   `:root` ruleset that carries the theme's CSS variables was built and then
   dropped, so `ignite-core.min.css` contained the theme's media queries and

@@ -38,7 +38,8 @@ class EmbedTests: IgniteTestSuite {
     func spotifyEmbed() async throws {
         let element = Embed(spotifyID: "abc123", title: "My Track", type: .track, theme: 1)
         let output = element.markupString()
-        #expect(output.contains("src=\"https://open.spotify.com/embed/track/abc123?utm_source=generator&theme=1\""))
+        // The `&` between the query items is written as `&amp;` inside the attribute.
+        #expect(output.contains("src=\"https://open.spotify.com/embed/track/abc123?utm_source=generator&amp;theme=1\""))
         #expect(output.contains("title=\"My Track\""))
     }
 

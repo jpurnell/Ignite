@@ -47,6 +47,8 @@ public struct Tag: HTML {
     /// Renders this element.
     /// - Returns: The HTML for this element.
     public func markup() -> Markup {
+        // A tag name cannot be escaped, so it is held to the characters a name can contain.
+        let name = Attribute.markupName(name)
         let contentHTML = content.markupString()
         return Markup("<\(name)\(attributes)>\(contentHTML)</\(name)>")
     }

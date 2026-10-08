@@ -191,7 +191,7 @@ public struct Button: InlineElement, FormItem {
 
         var labelHTML = ""
         if let systemImage, !systemImage.isEmpty {
-            labelHTML = "<i class=\"bi bi-\(systemImage)\"></i> "
+            labelHTML = "<i class=\"bi bi-\(systemImage.escapedForHTML())\"></i> "
         }
         labelHTML += label.markupString()
         return Markup("<button type=\"\(type.htmlName)\"\(buttonAttributes)>\(labelHTML)</button>")

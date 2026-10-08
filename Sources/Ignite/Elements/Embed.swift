@@ -137,7 +137,7 @@ public struct Embed: HTML, LazyLoadable {
         }
 
         return Section {
-             #"<iframe src="\#(url)" title="\#(title)" allow="\#(allowPermissions)"></iframe>"#
+             #"<iframe src="\#(url.escapedForHTML())" title="\#(title.escapedForHTML())" allow="\#(allowPermissions)"></iframe>"#
         }
         .attributes(attributes)
         .markup()

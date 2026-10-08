@@ -9,11 +9,17 @@ import Foundation
 
 /// One piece of Markdown content for this site.
 ///
-/// - Important: If your content has code blocks containing angle brackets (`<`...`>`),
-/// such as Swift generics, the prettifier will interpret these as HTML tags and break
-/// the code's formatting. To avoid this issue, either set your site’s `shouldPrettify`
-/// property to `false`, or replace `<` and `>` with their character entity references,
-/// `&lt;` and `&gt;` respectively.
+/// Text in Markdown is plain text: `&`, `<` and `>` in it are escaped when the page is
+/// written, and so are the angle brackets and ampersands of code spans and code blocks,
+/// so `Array<Int>` can be written as it is. A character reference inside code, such as
+/// `&lt;`, is left alone and shows the character it names, because earlier versions asked
+/// for angle brackets in code to be written that way. HTML written in Markdown is passed
+/// through as HTML.
+///
+/// `title` and `description` are plain text too, whether they come from front matter or
+/// from the first heading and paragraph. Ignite escapes them wherever it writes them –
+/// the page title, metadata, feeds, `Link(article)` and `ArticlePreview`. If you put
+/// them into a page yourself, use `Text(verbatim:)` or `escapedForHTML()`.
 public struct Article: Sendable {
     /// The main title for this content.
     public var title: String = ""
@@ -156,7 +162,7 @@ public struct Article: Sendable {
         let parser = try site.articleRenderer.init(markdown: processed, removeTitleFromBody: true)
 
         self.text = parser.body
-        self.description = parser.description.strippingTags()
+        self.description = parser.description.plainTextFromHTML()
 
         resolveTitle(parser.title, url: url)
         populateMetadataDates(urlValues: resourceValues, context: context)
@@ -182,7 +188,7 @@ public struct Article: Sendable {
             // Assign a title that's better than the default empty string.
             self.title = url.deletingPathExtension().lastPathComponent
         } else {
-            self.title = title.strippingTags()
+            self.title = title.plainTextFromHTML()
         }
     }
 
@@ -311,12 +317,12 @@ public struct Article: Sendable {
         return targets.map { target in
             if style == .automatic {
                 Link(target: target.path) {
-                    Badge(target.name)
+                    Badge(target.name.escapedForHTML())
                         .role(.primary)
                 }
                 .relationship(.tag)
             } else {
-                Link(target.name, target: target.path)
+                Link(target.name.escapedForHTML(), target: target.path)
                     .relationship(.tag)
             }
         }

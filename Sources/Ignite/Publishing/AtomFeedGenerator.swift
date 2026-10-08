@@ -55,9 +55,9 @@ struct AtomFeedGenerator {
         }
 
         header += """
-        <link href="\(site.url.absoluteString)" rel="alternate"/>\
-        <link href="\(selfURL)" rel="self" type="application/atom+xml"/>\
-        <id>\(site.url.absoluteString)/</id>
+        <link href="\(site.url.absoluteString.escapedForXML())" rel="alternate"/>\
+        <link href="\(selfURL.escapedForXML())" rel="self" type="application/atom+xml"/>\
+        <id>\(site.url.absoluteString.escapedForXML())/</id>
         """
 
         let mostRecentDate = content.first?.date ?? Date.now
@@ -73,8 +73,8 @@ struct AtomFeedGenerator {
         """
 
         if let image = feedConfig.image {
-            header += "<icon>\(image.url)</icon>"
-            header += "<logo>\(image.url)</logo>"
+            header += "<icon>\(image.url.escapedForXML())</icon>"
+            header += "<logo>\(image.url.escapedForXML())</logo>"
         }
 
         return header
@@ -88,8 +88,8 @@ struct AtomFeedGenerator {
                 var entryXML = """
                 <entry>\
                 <title>\(item.title.escapedForXML())</title>\
-                <link href="\(item.path(in: site))" rel="alternate"/>\
-                <id>\(item.path(in: site))</id>\
+                <link href="\(item.path(in: site).escapedForXML())" rel="alternate"/>\
+                <id>\(item.path(in: site).escapedForXML())</id>\
                 <updated>\(item.date.asISO8601(timeZone: site.timeZone))</updated>\
                 <published>\(item.date.asISO8601(timeZone: site.timeZone))</published>
                 """
@@ -99,12 +99,12 @@ struct AtomFeedGenerator {
                     entryXML += "<author><name>\(authorName.escapedForXML())</name></author>"
                 }
 
-                entryXML += "<summary type=\"html\"><![CDATA[\(item.description)]]></summary>"
+                entryXML += "<summary type=\"html\">\(item.description.wrappedInCDATA())</summary>"
 
                 if feedConfig.mode == .full {
                     entryXML += """
                     <content type="html">\
-                    <![CDATA[\(item.text.makingAbsoluteLinks(relativeTo: site.url))]]>\
+                    \(item.text.makingAbsoluteLinks(relativeTo: site.url).wrappedInCDATA())\
                     </content>
                     """
                 }

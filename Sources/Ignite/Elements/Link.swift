@@ -148,7 +148,7 @@ public struct Link: InlineElement, NavigationItem, DropdownItem {
     /// title and path of the `Article` instance you provide.
     /// - Parameter article: A piece of content from your site.
     public init(_ article: Article) {
-        self.content = article.title
+        self.content = article.title.escapedForHTML()
         self.url = article.path
     }
 

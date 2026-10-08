@@ -39,8 +39,24 @@ public struct Text: HTML, DropdownItem {
     }
 
     /// Creates a new `Text` instance from one inline element.
+    ///
+    /// A string is an inline element, and a string used this way is HTML: tags and
+    /// character references in it are written to the page as they are, so
+    /// `Text("Hello <strong>world</strong>")` shows bold text. To show a string exactly
+    /// as written – one read from a file, or one containing `<` or `&` – use
+    /// ``init(verbatim:)``.
     public init(_ string: any InlineElement) {
         self.content = string
+    }
+
+    /// Creates a new `Text` instance that shows a string exactly as written.
+    ///
+    /// The string is plain text, not HTML: `&`, `<`, `>` and `"` in it are shown as those
+    /// characters rather than read as markup, so `Text(verbatim: "a < b")` shows `a < b`.
+    /// To do the same for a string used anywhere else, call `escapedForHTML()` on it.
+    /// - Parameter verbatim: The text to show.
+    public init(verbatim: String) {
+        self.content = verbatim.escapedForHTML()
     }
 
     /// Sets the maximum number of lines for the text to display.
@@ -148,7 +164,7 @@ public struct Text: HTML, DropdownItem {
                     $0.replacingOccurrences(of: "<p>", with: "")
                       .replacingOccurrences(of: "</p>", with: "")
                 }
-                .map(Text.init)
+                .map { Text($0) }
 
             self.content = HTMLCollection(paragraphs)
             self.isMultilineMarkdown = true

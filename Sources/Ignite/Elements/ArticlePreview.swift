@@ -64,7 +64,7 @@ public struct ArticlePreview: HTML {
     /// - Returns: The article preview with the default card layout.
     private func defaultCardLayout() -> some HTML {
         Card(imageName: article.image) {
-            Text(article.description)
+            Text(verbatim: article.description)
                 .margin(.bottom, .none)
         } header: {
             Text {

@@ -66,10 +66,12 @@ public struct MarkdownToHTML: ArticleRenderer, MarkupVisitor {
     /// - Returns: A HTML <pre> element with <code> inside, marked with
     /// CSS to remember which language was used.
     public func visitCodeBlock(_ codeBlock: Markdown.CodeBlock) -> String {
-        if let language = codeBlock.language {
-            #"<pre><code class="language-\#(language.lowercased())">\#(codeBlock.code)</code></pre>"#
+        let code = codeBlock.code.escapedForHTMLKeepingCharacterReferences()
+
+        return if let language = codeBlock.language {
+            #"<pre><code class="language-\#(language.lowercased().escapedForHTML())">\#(code)</code></pre>"#
         } else {
-            #"<pre><code>\#(codeBlock.code)</code></pre>"#
+            #"<pre><code>\#(code)</code></pre>"#
         }
     }
 
@@ -139,7 +141,7 @@ public struct MarkdownToHTML: ArticleRenderer, MarkupVisitor {
     public func visitImage(_ image: Markdown.Image) -> String {
         if let source = image.source {
             let title = image.plainText
-            return #"<img src="\#(source)" alt="\#(title)" class="img-fluid">"#
+            return #"<img src="\#(source.escapedForHTML())" alt="\#(title.escapedForHTML())" class="img-fluid">"#
         } else {
             return ""
         }
@@ -149,7 +151,7 @@ public struct MarkdownToHTML: ArticleRenderer, MarkupVisitor {
     /// - Parameter inlineCode: The inline code markup to process.
     /// - Returns: A HTML <code> tag containing the code.
     mutating public func visitInlineCode(_ inlineCode: Markdown.InlineCode) -> String {
-        "<code>\(inlineCode.code)</code>"
+        "<code>\(inlineCode.code.escapedForHTMLKeepingCharacterReferences())</code>"
     }
 
     /// Processes a chunk of inline HTML markup.
@@ -163,7 +165,7 @@ public struct MarkdownToHTML: ArticleRenderer, MarkupVisitor {
     /// - Parameter link: The link markup to process.
     /// - Returns: Returns a HTML <a> tag with the correct location and content.
     mutating public func visitLink(_ link: Markdown.Link) -> String {
-        var result = #"<a href="\#(link.destination ?? "#")">"#
+        var result = #"<a href="\#((link.destination ?? "#").escapedForHTML())">"#
 
         for child in link.children {
             result += visit(child)
@@ -319,10 +321,14 @@ public struct MarkdownToHTML: ArticleRenderer, MarkupVisitor {
     }
 
     /// Processes plain text markup.
+    ///
+    /// By the time text reaches here the Markdown parser has resolved its escapes and
+    /// character references, so `&lt;b&gt;` and `\\<b\\>` arrive as `<b>`. It is text,
+    /// not markup, and is escaped so that it is still text in the page.
     /// - Parameter text: The plain text markup to process.
-    /// - Returns: The same text that was read as input.
+    /// - Returns: The text, with `&`, `<`, `>` and `"` written as character references.
     mutating public func visitText(_ text: Markdown.Text) -> String {
-        text.plainText
+        text.plainText.escapedForHTML()
     }
 
     /// Process thematic break markup. This is written as --- in Markdown.

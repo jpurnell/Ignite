@@ -49,7 +49,7 @@ public struct CoreAttributes: Equatable, Sendable {
         if id.isEmpty {
             ""
         } else {
-            " id=\"\(id)\""
+            " id=\"\(id.escapedForHTML())\""
         }
     }
 
@@ -74,7 +74,7 @@ public struct CoreAttributes: Equatable, Sendable {
         if classes.isEmpty {
             ""
         } else {
-            " class=\"\(classes.joined(separator: " "))\""
+            " class=\"\(classes.joined(separator: " ").escapedForHTML())\""
         }
     }
 
@@ -84,7 +84,7 @@ public struct CoreAttributes: Equatable, Sendable {
             return ""
         } else {
             let stringified = styles.map(\.description).joined(separator: "; ")
-            return " style=\"\(stringified)\""
+            return " style=\"\(stringified.escapedForHTML())\""
         }
     }
 
@@ -105,20 +105,23 @@ public struct CoreAttributes: Equatable, Sendable {
 
     /// All events for this element, collapsed to down to a string.
     ///
-    /// Each event's JavaScript is the value of a double-quoted attribute, so any double
-    /// quote in it is written as `&quot;`. Without that, a quote in the JavaScript – from
-    /// a `CustomAction`, or from someone's own `Action` – would end the attribute partway
-    /// through the code. Ampersands are left alone: the actions Ignite generates contain
-    /// none, and hand-written code may already hold character references.
+    /// Each event's JavaScript is the value of a double-quoted attribute and is escaped as
+    /// one, like every other attribute value: `&`, `"`, `<` and `>` are written as character
+    /// references, which the browser turns back into the same JavaScript before running
+    /// it. Without that, a quote in the code – from a `CustomAction`, or from someone's
+    /// own `Action` – would end the attribute partway through, and text such as `&copy`
+    /// would reach the JavaScript engine as `©`. The JavaScript Ignite generates writes
+    /// those four characters as `\uXXXX` escapes inside its string literals, so it
+    /// contains none of them and is written here unchanged.
     var eventString: String {
         var result = ""
 
         for event in events where event.actions.isEmpty == false {
             let actions = event.actions.map { $0.compile() }
                 .joined(separator: "; ")
-                .replacing("\"", with: "&quot;")
+                .escapedForHTML()
 
-            result += " \(event.name)=\"\(actions)\""
+            result += " \(Attribute.markupName(event.name))=\"\(actions)\""
         }
 
         return result

@@ -61,7 +61,7 @@ public struct Head: MarkupElement {
 
         var contentHTML = items.map { $0.markupString() }
         if let defaultLinkTarget, let name = defaultLinkTarget.name {
-            contentHTML.insert("<base target=\"\(name)\" />", at: 0)
+            contentHTML.insert("<base target=\"\(name.escapedForHTML())\" />", at: 0)
         }
 
         return Markup("<head\(attributes)>\(contentHTML.joined())</head>")

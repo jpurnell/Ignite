@@ -23,9 +23,9 @@ struct FeedGenerator {
         if let image = feedConfig.image {
             result += """
             <image>\
-            <url>\(image.url)</url>\
+            <url>\(image.url.escapedForXML())</url>\
             <title>\(site.name.escapedForXML())</title>\
-            <link>\(site.url.absoluteString)</link>\
+            <link>\(site.url.absoluteString.escapedForXML())</link>\
             <width>\(image.width)</width>\
             <height>\(image.height)</height>\
             </image>
@@ -47,27 +47,27 @@ struct FeedGenerator {
             .map { item in
                 var itemXML = """
                 <item>\
-                <guid isPermaLink="true">\(item.path(in: site))</guid>\
+                <guid isPermaLink="true">\(item.path(in: site).escapedForXML())</guid>\
                 <title>\(item.title.escapedForXML())</title>\
-                <link>\(item.path(in: site))</link>\
-                <description><![CDATA[\(item.description)]]></description>\
+                <link>\(item.path(in: site).escapedForXML())</link>\
+                <description>\(item.description.wrappedInCDATA())</description>\
                 <pubDate>\(item.date.asRFC822(timeZone: site.timeZone))</pubDate>
                 """
 
                 let authorName = item.author ?? site.author
 
-                if site.author.isEmpty == false {
-                    itemXML += "<dc:creator><![CDATA[\(authorName)]]></dc:creator>"
+                if authorName.isEmpty == false {
+                    itemXML += "<dc:creator>\(authorName.wrappedInCDATA())</dc:creator>"
                 }
 
                 item.tags?.forEach { tag in
-                    itemXML += "<category><![CDATA[\(tag)]]></category>"
+                    itemXML += "<category>\(tag.wrappedInCDATA())</category>"
                 }
 
                 if feedConfig.mode == .full {
                     itemXML += """
                     <content:encoded>\
-                    <![CDATA[\(item.text.makingAbsoluteLinks(relativeTo: site.url))]]>\
+                    \(item.text.makingAbsoluteLinks(relativeTo: site.url).wrappedInCDATA())\
                     </content:encoded>
                     """
                 }
@@ -87,9 +87,9 @@ struct FeedGenerator {
         <channel>\
         <title>\(site.name.escapedForXML())</title>\
         <description>\((site.description ?? "").escapedForXML())</description>\
-        <link>\(site.url.absoluteString)</link>\
+        <link>\(site.url.absoluteString.escapedForXML())</link>\
         <atom:link
-            href="\(site.url.appending(path: feedConfig.path).absoluteString)"
+            href="\(site.url.appending(path: feedConfig.path).absoluteString.escapedForXML())"
             rel="self" type="application/rss+xml"
         />\
         <language>\(site.language.rawValue)</language>\

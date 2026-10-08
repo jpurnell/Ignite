@@ -131,11 +131,9 @@ public protocol Site {
 
     /// Controls whether HTML output should be formatted with proper indentation.
     ///
-    /// - Important: If your site has code blocks containing angle brackets (`<`...`>`),
-    /// such as Swift generics, the prettifier will interpret these as HTML tags
-    /// and break the code's formatting. To avoid this issue, either set this property
-    /// to `false` or replace `<` and `>` with their character entity references,
-    /// `&lt;` and `&gt;` respectively.
+    /// Code written with `Code`, `CodeBlock` or Markdown has its angle brackets
+    /// escaped, so the prettifier leaves it alone. HTML you write yourself inside a
+    /// `<pre>` element is still re-indented.
     var prettifyHTML: Bool { get }
 
     /// The path to the favicon

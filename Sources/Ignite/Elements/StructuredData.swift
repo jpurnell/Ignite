@@ -110,7 +110,13 @@ public struct StructuredData: HeadElement, Sendable {
         }
 
         guard let json, !json.isEmpty else { return Markup() }
-        return Markup("<script type=\"application/ld+json\">\n\(json)\n</script>")
+
+        // Inside a script element only `</script` – or `<!--` followed by `<script` – can
+        // end or confuse the element, and both need a `<`. In JSON a `<` can only occur
+        // inside a string, where `\u003C` means the same character, so writing every one
+        // that way keeps the data identical and the element closed only where it should be.
+        let scriptSafeJSON = json.replacing("<", with: "\\u003C")
+        return Markup("<script type=\"application/ld+json\">\n\(scriptSafeJSON)\n</script>")
     }
 }
 

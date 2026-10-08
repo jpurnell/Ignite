@@ -24,8 +24,12 @@ public struct Title: HeadElement {
     }
 
     /// Renders this element using publishing context passed in.
+    ///
+    /// The title and the site's title suffix are plain text – a `<title>` cannot contain
+    /// markup – so `&`, `<` and `>` in them are written as character references.
     /// - Returns: The HTML for this element.
     public func markup() -> Markup {
-        Markup("<title>\(text)\(publishingContext.site.titleSuffix)</title>")
+        let title = text + publishingContext.site.titleSuffix
+        return Markup("<title>\(title.escapedForHTML())</title>")
     }
 }

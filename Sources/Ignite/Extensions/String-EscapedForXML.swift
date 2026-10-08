@@ -21,3 +21,16 @@ public extension String {
             .replacingOccurrences(of: "'", with: "&apos;")
     }
 }
+
+extension String {
+    /// This string as one or more XML CDATA sections that together hold exactly this text.
+    ///
+    /// Nothing is escaped inside a CDATA section, and the only thing that ends one is
+    /// `]]>`. Where the text contains that sequence the section is closed after `]]` and a
+    /// new one opened before `>`, so a reader joins the pieces back into the original.
+    /// - Returns: The text, wrapped in `<![CDATA[` … `]]>`.
+    func wrappedInCDATA() -> String {
+        "<![CDATA[" + replacing("]]>", with: "]]]]><![CDATA[>") + "]]>"
+    }
+}
+

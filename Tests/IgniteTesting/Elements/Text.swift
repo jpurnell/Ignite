@@ -68,8 +68,10 @@ class TextTests: IgniteTestSuite {
         let element = Text(markdown: "*i*, **b**, and ***b&i***")
         let output = element.markupString()
 
+        // The `&` is text, so it is written as `&amp;`. It was written bare, which
+        // browsers tolerate here but would read as a character reference before `i;`.
         #expect(output == """
-        <p><em>i</em>, <strong>b</strong>, and <em><strong>b&i</strong></em></p>
+        <p><em>i</em>, <strong>b</strong>, and <em><strong>b&amp;i</strong></em></p>
         """)
     }
 
