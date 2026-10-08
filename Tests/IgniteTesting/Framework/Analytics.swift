@@ -134,4 +134,65 @@ struct AnalyticsTests {
         let expected = "script.file-downloads.hash.outbound-links.pageview-props.revenue.tagged-events.js"
         #expect(output.contains(expected))
     }
+
+    // MARK: - Hostile identifiers
+
+    /// An identifier that ends an attribute and a script element if written as-is.
+    private static let hostile = #"x"></script><script>alert(1)//"#
+
+    /// `hostile`, escaped for a double-quoted attribute.
+    private static let hostileAttribute = "x&quot;&gt;&lt;/script&gt;&lt;script&gt;alert(1)//"
+
+    @Test("A Clicky site ID that is not a number is written as a string, not as code", .publishingContext())
+    func clickyNonNumericID() throws {
+        let context = try PublishingContext.initialize(for: TestSite(), from: #filePath)
+        let output = PublishingContext.withCurrent(context) {
+            Analytics(.clicky(siteID: "1); alert(document.cookie); (0")).clickyCode(for: "1); alert(document.cookie); (0")
+        }
+
+        #expect(output == """
+        <!-- Clicky Analytics -->
+        <script>var clicky_site_ids = clicky_site_ids || []; \
+        clicky_site_ids.push('1); alert(document.cookie); (0');</script>
+        <script async src="//static.getclicky.com/js"></script>
+        """)
+        #expect(context.warnings.contains { $0.contains("Clicky") && $0.contains("number") })
+    }
+
+    @Test("A Clicky site ID cannot close its script element", .publishingContext())
+    func clickyScriptClosingID() {
+        let output = Analytics(.clicky(siteID: "</script>")).clickyCode(for: "</script>")
+        #expect(output.contains(#"clicky_site_ids.push('\u003C/script\u003E');</script>"#))
+    }
+
+    @Test("A Fathom site ID cannot end its attribute", .publishingContext())
+    func fathomHostileID() {
+        let output = Analytics(.fathom(siteID: Self.hostile)).fathomCode(for: Self.hostile)
+        #expect(output == """
+        <!-- Fathom Analytics -->
+        <script src="https://cdn.usefathom.com/script.js" data-site="\(Self.hostileAttribute)" defer></script>
+        """)
+    }
+
+    @Test("A Plausible domain cannot end its attribute", .publishingContext())
+    func plausibleHostileDomain() {
+        let output = Analytics(.plausible(domain: Self.hostile)).plausibleCode(for: Self.hostile, using: [])
+        #expect(output == """
+        <!-- Plausible Analytics -->
+        <script defer data-domain="\(Self.hostileAttribute)" src="https://plausible.io/js/script.js"></script>
+        """)
+    }
+
+    @Test("A TelemetryDeck app ID cannot end its attribute", .publishingContext())
+    func telemetryDeckHostileID() {
+        let output = Analytics(.telemetryDeck(siteID: Self.hostile)).telemetryDeckCode(for: Self.hostile)
+        #expect(output.contains("data-app-id=\"\(Self.hostileAttribute)\""))
+    }
+
+    @Test("A Google Analytics measurement ID cannot change the script's address", .publishingContext())
+    func googleAnalyticsHostileID() {
+        let output = Analytics(.googleAnalytics(measurementID: #"G-1&x=2"><b>"#))
+            .googleAnalyticsCode(for: #"G-1&x=2"><b>"#)
+        #expect(output.contains(#"<script async src="https://www.googletagmanager.com/gtag/js?id=G-1%26x%3D2%22%3E%3Cb%3E"></script>"#))
+    }
 }

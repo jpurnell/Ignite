@@ -16,16 +16,23 @@ public enum EmailPlatform: Sendable {
     /// Buttondown newsletter integration
     case buttondown(String)
 
+    /// The address the subscribe form posts to.
+    ///
+    /// Each identifier is percent-encoded as a single component of the address, so an
+    /// identifier cannot add a path, a query item or a different host of its own.
     var endpoint: String {
         switch self {
         case .mailchimp(let username, let uValue, let listID):
-            "https://\(username).us1.list-manage.com/subscribe/post?u=\(uValue)&id=\(listID)"
+            let host = "\(username.percentEncodedAsURLComponent()).us1.list-manage.com"
+            let query = "u=\(uValue.percentEncodedAsURLComponent())&id=\(listID.percentEncodedAsURLComponent())"
+            return "https://\(host)/subscribe/post?\(query)"
         case .kit(let token):
-            "https://app.convertkit.com/forms/\(token)/subscriptions"
+            return "https://app.convertkit.com/forms/\(token.percentEncodedAsURLComponent())/subscriptions"
         case .sendFox(let listID, let formID):
-            "https://sendfox.com/form/\(listID)/\(formID)"
+            let path = "\(listID.percentEncodedAsURLComponent())/\(formID.percentEncodedAsURLComponent())"
+            return "https://sendfox.com/form/\(path)"
         case .buttondown(let username):
-            "https://buttondown.com/api/emails/embed-subscribe/\(username)"
+            return "https://buttondown.com/api/emails/embed-subscribe/\(username.percentEncodedAsURLComponent())"
         }
     }
 

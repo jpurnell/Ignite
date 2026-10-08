@@ -50,9 +50,22 @@ public struct Analytics: HeadElement {
     /// - Parameter siteID: This site's Clicky identifier.
     /// - Returns: HTML for analytics tracking.
     func clickyCode(for siteID: String) -> String {
-        """
+        // A Clicky site ID is a number and is written as one. Anything else used to be
+        // written the same way – as JavaScript, to be run – so it is written as a string
+        // instead, which cannot run, and the build says why the ID looks wrong.
+        let isNumber = siteID.isEmpty == false && siteID.unicodeScalars.allSatisfy { ("0"..."9").contains($0) }
+        let argument = isNumber ? siteID : siteID.javaScriptStringLiteral()
+
+        if isNumber == false {
+            PublishingContext.warn("""
+            The Clicky site ID '\(siteID)' is not a number. Clicky site IDs are made of digits only; \
+            it was written into the page as text and Clicky is unlikely to recognise it.
+            """)
+        }
+
+        return """
         <!-- Clicky Analytics -->
-        <script>var clicky_site_ids = clicky_site_ids || []; clicky_site_ids.push(\(siteID));</script>
+        <script>var clicky_site_ids = clicky_site_ids || []; clicky_site_ids.push(\(argument));</script>
         <script async src="//static.getclicky.com/js"></script>
         """
     }
@@ -63,7 +76,7 @@ public struct Analytics: HeadElement {
     func fathomCode(for siteID: String) -> String {
         """
         <!-- Fathom Analytics -->
-        <script src="https://cdn.usefathom.com/script.js" data-site="\(siteID)" defer></script>
+        <script src="https://cdn.usefathom.com/script.js" data-site="\(siteID.escapedForHTML())" defer></script>
         """
     }
 
@@ -73,7 +86,7 @@ public struct Analytics: HeadElement {
     func googleAnalyticsCode(for measurementID: String) -> String {
         """
         <!-- Google Analytics 4 -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=\(measurementID)"></script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=\(measurementID.percentEncodedAsURLComponent())"></script>
         <script>
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
@@ -97,7 +110,7 @@ public struct Analytics: HeadElement {
 
         var script = """
         <!-- Plausible Analytics -->
-        <script defer data-domain="\(domain)" src="https://plausible.io/js/script\(measurementString).js"></script>
+        <script defer data-domain="\(domain.escapedForHTML())" src="https://plausible.io/js/script\(measurementString).js"></script>
         """
 
         if needs404Script {
@@ -121,7 +134,7 @@ public struct Analytics: HeadElement {
         <!-- TelemetryDeck Analytics -->
         <script
             src="https://cdn.telemetrydeck.com/websdk/telemetrydeck.min.js"
-            data-app-id="\(siteID)"
+            data-app-id="\(siteID.escapedForHTML())"
         ></script>
         """
     }

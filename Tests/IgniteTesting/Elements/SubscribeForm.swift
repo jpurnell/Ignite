@@ -137,4 +137,28 @@ class SubscribeFormTests: IgniteTestSuite {
         #expect(!output.contains("aria-hidden"))
         #expect(!output.contains("<script"))
     }
+
+    @Test("A newsletter identifier cannot add to the form's address", .publishingContext(), arguments: [
+        (EmailPlatform.mailchimp(username: "user", uValue: "a&b=c", listID: "1#2"),
+         "https://user.us1.list-manage.com/subscribe/post?u=a%26b%3Dc&id=1%232"),
+        (EmailPlatform.mailchimp(username: "evil.example/x?", uValue: "a", listID: "1"),
+         "https://evil.example%2Fx%3F.us1.list-manage.com/subscribe/post?u=a&id=1"),
+        (EmailPlatform.kit("abc/../def?x"), "https://app.convertkit.com/forms/abc%2F..%2Fdef%3Fx/subscriptions"),
+        (EmailPlatform.sendFox(listID: "1/2", formID: "3?4"), "https://sendfox.com/form/1%2F2/3%3F4"),
+        (EmailPlatform.buttondown("me#you"), "https://buttondown.com/api/emails/embed-subscribe/me%23you")
+    ])
+    func identifiersAreEncoded(platform: EmailPlatform, expected: String) {
+        #expect(platform.endpoint == expected)
+    }
+
+    @Test("Ordinary newsletter identifiers give the same address as before", .publishingContext(), arguments: [
+        (EmailPlatform.mailchimp(username: "user", uValue: "abc", listID: "123"),
+         "https://user.us1.list-manage.com/subscribe/post?u=abc&id=123"),
+        (EmailPlatform.kit("a1b2c3"), "https://app.convertkit.com/forms/a1b2c3/subscriptions"),
+        (EmailPlatform.sendFox(listID: "my-list", formID: "form_1"), "https://sendfox.com/form/my-list/form_1"),
+        (EmailPlatform.buttondown("user.name"), "https://buttondown.com/api/emails/embed-subscribe/user.name")
+    ])
+    func ordinaryIdentifiers(platform: EmailPlatform, expected: String) {
+        #expect(platform.endpoint == expected)
+    }
 }

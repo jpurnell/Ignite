@@ -30,6 +30,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Identifiers given to `Analytics` and `SubscribeForm` can no longer change the
+  code or the address they are written into. Identifiers made of letters,
+  digits, `-`, `.`, `_` and `~` generate the same output as before.
+  - Clicky wrote its site ID into a script as JavaScript, unquoted, so any
+    text given as the ID was run as code. An ID made of digits is still written
+    as a number. Anything else is written as a JavaScript string, which cannot
+    run, and the build warns that a Clicky site ID is a number.
+  - The Fathom site ID, the Plausible domain and the TelemetryDeck app ID are
+    escaped as attribute values.
+  - The Google Analytics measurement ID is percent-encoded in the address of
+    the `gtag/js` script, so it cannot add query items to it.
+  - The Mailchimp, Kit, SendFox and Buttondown identifiers of `SubscribeForm`
+    are percent-encoded into the form's address, so an identifier cannot add a
+    path, a query item or another host.
 - **Attribute values are escaped.** Every attribute Ignite writes – `id`,
   `class`, `style`, `data-*`, `aria-*`, `href`, `src`, `alt`, `title`, the
   `content` of a `MetaTag`, anything set with `customAttribute` or `attribute`,
